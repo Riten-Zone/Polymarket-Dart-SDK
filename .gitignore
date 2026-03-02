@@ -16,6 +16,9 @@ doc/api/
 # Test coverage output
 coverage/
 
+# Local documentation / planning notes (private)
+docs/plan
+
 # macOS
 .DS_Store
 
