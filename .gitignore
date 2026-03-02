@@ -17,7 +17,7 @@ doc/api/
 coverage/
 
 # Local documentation / planning notes (private)
-docs/plan
+docs/plan/ROADMAP.md
 
 # macOS
 .DS_Store
