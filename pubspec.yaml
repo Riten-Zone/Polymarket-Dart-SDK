@@ -1,0 +1,25 @@
+name: polymarket_dart
+description: A Dart SDK for the Polymarket CLOB API — REST, WebSocket, EIP-712 signing, HMAC auth, and order management.
+version: 0.1.0
+repository: https://github.com/Riten-Zone/Polymarket-Dart-SDK
+issue_tracker: https://github.com/Riten-Zone/Polymarket-Dart-SDK/issues
+topics:
+  - polymarket
+  - defi
+  - prediction-markets
+  - web3
+  - cryptocurrency
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  http: ^1.6.0
+  web_socket_channel: ^3.0.3
+  pointycastle: ^4.0.0
+  convert: ^3.1.2
+  crypto: ^3.0.6
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.6
