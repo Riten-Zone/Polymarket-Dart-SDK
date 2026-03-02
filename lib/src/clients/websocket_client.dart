@@ -2,7 +2,6 @@
 library;
 
 import 'dart:async';
-import 'dart:convert';
 
 import '../models/websocket_types.dart';
 import '../transport/websocket_transport.dart';

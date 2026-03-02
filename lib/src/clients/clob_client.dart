@@ -373,7 +373,8 @@ class ClobClient {
     CreateOrderOptions? options,
   }) async {
     _requireWallet();
-    final address = (await _wallet!.getAddress()).toLowerCase();
+    final wallet = _wallet!;
+    final address = (await wallet.getAddress()).toLowerCase();
     final tickSize = options?.tickSize ?? '0.01';
     final negRisk = options?.negRisk ?? false;
     final funder = options?.funder ?? address;
@@ -415,7 +416,7 @@ class ClobClient {
       negRisk: negRisk,
     );
 
-    final signature = await _wallet!.signTypedData(typedData);
+    final signature = await wallet.signTypedData(typedData);
 
     return SignedOrder(
       salt: salt,
@@ -440,7 +441,8 @@ class ClobClient {
     CreateOrderOptions? options,
   }) async {
     _requireWallet();
-    final address = (await _wallet!.getAddress()).toLowerCase();
+    final wallet = _wallet!;
+    final address = (await wallet.getAddress()).toLowerCase();
     final negRisk = options?.negRisk ?? false;
     final funder = options?.funder ?? address;
     final sideInt = args.side == OrderSide.buy ? 0 : 1;
@@ -469,7 +471,7 @@ class ClobClient {
       negRisk: negRisk,
     );
 
-    final signature = await _wallet!.signTypedData(typedData);
+    final signature = await wallet.signTypedData(typedData);
 
     return SignedOrder(
       salt: salt,
@@ -917,7 +919,8 @@ class ClobClient {
   /// Build Level 1 (EIP-712) auth headers.
   Future<Map<String, String>> _buildLevel1Headers({int nonce = 0}) async {
     _requireWallet();
-    final address = (await _wallet!.getAddress()).toLowerCase();
+    final wallet = _wallet!;
+    final address = (await wallet.getAddress()).toLowerCase();
     final timestamp =
         (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString();
     final typedData = buildClobAuthTypedData(
@@ -925,7 +928,7 @@ class ClobClient {
       timestamp: timestamp,
       nonce: nonce,
     );
-    final signature = await _wallet!.signTypedData(typedData);
+    final signature = await wallet.signTypedData(typedData);
     return {
       'POLY_ADDRESS': address,
       'POLY_SIGNATURE': signature,
