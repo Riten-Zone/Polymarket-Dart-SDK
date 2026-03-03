@@ -8,6 +8,9 @@ library;
 
 import 'dart:convert';
 import 'dart:math';
+import 'dart:typed_data';
+
+import 'package:pointycastle/digests/keccak.dart';
 
 import '../models/clob_types.dart';
 import '../signing/eip712.dart';
@@ -344,10 +347,16 @@ class ClobClient {
 
   /// Get all API keys associated with this wallet (Level 2 auth).
   Future<ApiKeysResponse> getApiKeys() async {
-    final headers = _buildLevel2Headers(method: 'GET', path: '/auth/api-key');
+    _requireCredentials();
+    final address = (await _wallet!.getAddress()).toLowerCase();
+    final headers = _buildLevel2Headers(
+      method: 'GET',
+      path: '/auth/api-keys',
+      walletAddress: address,
+    );
     final res = await _transport.get(
       PolymarketUrls.clob,
-      '/auth/api-key',
+      '/auth/api-keys',
       headers: headers,
     );
     return ApiKeysResponse.fromJson(res);
@@ -355,10 +364,16 @@ class ClobClient {
 
   /// Delete the current API key (Level 2 auth).
   Future<void> deleteApiKey() async {
-    final headers = _buildLevel2Headers(method: 'DELETE', path: '/auth/api-key');
+    _requireCredentials();
+    final address = (await _wallet!.getAddress()).toLowerCase();
+    final headers = _buildLevel2Headers(
+      method: 'DELETE',
+      path: '/auth/api-keys',
+      walletAddress: address,
+    );
     await _transport.delete(
       PolymarketUrls.clob,
-      '/auth/api-key',
+      '/auth/api-keys',
       headers: headers,
     );
   }
@@ -582,22 +597,22 @@ class ClobClient {
     _requireCredentials();
     final address = (await _wallet!.getAddress()).toLowerCase();
     final query = <String, String>{
-      'owner': address,
+      'owner': _checksumAddress(address),
       ...?params?.toQueryParams(),
     };
     if (nextCursor != null) query['next_cursor'] = nextCursor;
 
-    final queryStr = Uri(queryParameters: query).query;
-    final path = '/data/orders${queryStr.isNotEmpty ? '?$queryStr' : ''}';
-
+    // HMAC signs just the bare path — query params are added to the URL only.
+    const hmacPath = '/data/orders';
     final headers = _buildLevel2Headers(
       method: 'GET',
-      path: path,
+      path: hmacPath,
       walletAddress: address,
     );
     final res = await _transport.get(
       PolymarketUrls.clob,
-      path,
+      hmacPath,
+      queryParams: query,
       headers: headers,
     ) as Map<String, dynamic>;
     return OpenOrdersPage.fromJson(res);
@@ -695,22 +710,22 @@ class ClobClient {
     _requireCredentials();
     final address = (await _wallet!.getAddress()).toLowerCase();
     final query = <String, String>{
-      'maker': address,
+      'maker': _checksumAddress(address),
       ...?params?.toQueryParams(),
     };
     if (nextCursor != null) query['next_cursor'] = nextCursor;
 
-    final queryStr = Uri(queryParameters: query).query;
-    final path = '/data/trades${queryStr.isNotEmpty ? '?$queryStr' : ''}';
-
+    // HMAC signs just the bare path — query params are added to the URL only.
+    const hmacPath = '/data/trades';
     final headers = _buildLevel2Headers(
       method: 'GET',
-      path: path,
+      path: hmacPath,
       walletAddress: address,
     );
     final res = await _transport.get(
       PolymarketUrls.clob,
-      path,
+      hmacPath,
+      queryParams: query,
       headers: headers,
     ) as Map<String, dynamic>;
     return TradesPage.fromJson(res);
@@ -727,20 +742,22 @@ class ClobClient {
     _requireCredentials();
     final address = (await _wallet!.getAddress()).toLowerCase();
     final query = <String, String>{
-      'user': address,
+      'user': _checksumAddress(address),
+      'signature_type': '0',
       ...?params?.toQueryParams(),
     };
-    final queryStr = Uri(queryParameters: query).query;
-    final path = '/balance-allowance${queryStr.isNotEmpty ? '?$queryStr' : ''}';
 
+    // HMAC signs just the bare path — query params are added to the URL only.
+    const hmacPath = '/balance-allowance';
     final headers = _buildLevel2Headers(
       method: 'GET',
-      path: path,
+      path: hmacPath,
       walletAddress: address,
     );
     final res = await _transport.get(
       PolymarketUrls.clob,
-      path,
+      hmacPath,
+      queryParams: query,
       headers: headers,
     ) as Map<String, dynamic>;
     return BalanceAllowance.fromJson(res);
@@ -793,15 +810,17 @@ class ClobClient {
   Future<List<Notification>> getNotifications() async {
     _requireCredentials();
     final address = (await _wallet!.getAddress()).toLowerCase();
-    final path = '/notifications';
+    // HMAC signs just the bare path; signature_type is added to URL only.
+    const hmacPath = '/notifications';
     final headers = _buildLevel2Headers(
       method: 'GET',
-      path: path,
+      path: hmacPath,
       walletAddress: address,
     );
     final res = await _transport.get(
       PolymarketUrls.clob,
-      path,
+      hmacPath,
+      queryParams: {'signature_type': '0'},
       headers: headers,
     ) as List;
     return res
@@ -837,15 +856,16 @@ class ClobClient {
   Future<OrderScoring> isOrderScoring(String orderId) async {
     _requireCredentials();
     final address = (await _wallet!.getAddress()).toLowerCase();
-    final path = '/order-scoring?order_id=$orderId';
+    const hmacPath = '/order-scoring';
     final headers = _buildLevel2Headers(
       method: 'GET',
-      path: path,
+      path: hmacPath,
       walletAddress: address,
     );
     final res = await _transport.get(
       PolymarketUrls.clob,
-      path,
+      hmacPath,
+      queryParams: {'order_id': orderId},
       headers: headers,
     ) as Map<String, dynamic>;
     return OrderScoring.fromJson(res);
@@ -879,19 +899,19 @@ class ClobClient {
   Future<HeartbeatResponse> postHeartbeat({String? heartbeatId}) async {
     _requireCredentials();
     final address = (await _wallet!.getAddress()).toLowerCase();
-    final bodyMap = <String, dynamic>{};
-    if (heartbeatId != null) bodyMap['id'] = heartbeatId;
+    // Always include heartbeat_id key (even as null) to match Python SDK body format.
+    final bodyMap = <String, dynamic>{'heartbeat_id': heartbeatId};
     final body = jsonEncode(bodyMap);
     final headers = _buildLevel2Headers(
       method: 'POST',
-      path: '/heartbeat',
-      body: body.isEmpty ? '' : body,
+      path: '/v1/heartbeats',
+      body: body,
       walletAddress: address,
     );
     final res = await _transport.post(
       PolymarketUrls.clob,
-      '/heartbeat',
-      body: bodyMap.isEmpty ? null : bodyMap,
+      '/v1/heartbeats',
+      body: bodyMap,
       headers: headers,
     ) as Map<String, dynamic>;
     return HeartbeatResponse.fromJson(res);
@@ -955,6 +975,33 @@ class ClobClient {
       path: path,
       body: body,
     );
+  }
+
+  /// Convert an Ethereum address to its EIP-55 checksum form.
+  ///
+  /// Required for query parameters like `owner` and `maker` — the Polymarket
+  /// API normalises these to checksummed form before verifying the HMAC, so
+  /// our signed path must use the same casing.
+  static String _checksumAddress(String address) {
+    final addr = address.toLowerCase().replaceFirst('0x', '');
+    final digest = KeccakDigest(256);
+    final addrBytes = Uint8List.fromList(utf8.encode(addr));
+    final hash = Uint8List(32);
+    digest.update(addrBytes, 0, addrBytes.length);
+    digest.doFinal(hash, 0);
+
+    final checksummed = StringBuffer('0x');
+    for (var i = 0; i < addr.length; i++) {
+      final c = addr[i];
+      if ('0123456789'.contains(c)) {
+        checksummed.write(c);
+      } else {
+        final nibble =
+            i.isEven ? (hash[i ~/ 2] >> 4) & 0xF : hash[i ~/ 2] & 0xF;
+        checksummed.write(nibble >= 8 ? c.toUpperCase() : c);
+      }
+    }
+    return checksummed.toString();
   }
 
   // ---------------------------------------------------------------------------

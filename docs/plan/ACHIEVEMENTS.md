@@ -4,7 +4,29 @@
 
 ## Live Testing & Bug Fixes (post v0.1.0)
 
-### Integration test run: 18/18 passing against live API
+### Auth integration tests: 8/8 passing (L1 + L2) — 2026-03-03
+
+New test file `test/auth_test.dart` — runs against live API with a `.env` private key.
+
+**Bugs found and fixed (L1/L2 auth):**
+
+| File | Bug | Fix |
+|------|-----|-----|
+| `clob_client.dart` | `getApiKeys` path `/auth/api-key` (singular) → 405 | Changed to `/auth/api-keys` (plural) |
+| `clob_client.dart` | HMAC signed over full path including query string | **Sign bare path only** — query params added to URL after headers |
+| `clob_client.dart` | `getNotifications` included `?signature_type=0` in HMAC path | Keep HMAC path as `/notifications`; pass `signature_type=0` in `queryParams` only |
+| `clob_client.dart` | `postHeartbeat` wrong path `/heartbeat` → 404 | Changed to `/v1/heartbeats` |
+| `clob_client.dart` | `postHeartbeat` body `{}` not matching Python SDK `{"heartbeat_id":null}` | Always include `heartbeat_id` key in body |
+| `test/auth_test.dart` | `getBalanceAllowance` missing `asset_type` → 400 | Pass `BalanceAllowanceParams(assetType: 'COLLATERAL')` — uppercase required |
+| `clob_client.dart` | `owner`/`maker`/`user` query params sent lowercase | Added `_checksumAddress()` via `KeccakDigest(256)` — 4/4 EIP-55 test vectors pass |
+
+**Key architectural discovery:** CLOB always computes HMAC from the **bare path only** (no query string). All query params are added to the URL separately after generating auth headers.
+
+**Total tests: 23 unit + 18 L0 integration + 8 auth integration = 49/49 passing**
+
+---
+
+### L0 integration tests: 18/18 passing against live API
 
 **Bugs found and fixed:**
 
@@ -22,7 +44,7 @@
 - `getMidpoint`, `getPrice`, `getSpread`, `getOrderBook` require an active market with a live orderbook
 - First page of `/markets` endpoint returns mostly settled markets — Gamma API needed to find high-volume active ones
 
-**Total tests: 23 unit + 18 integration = 41/41 passing**
+**Total L0 integration tests: 18/18 passing**
 
 ---
 
