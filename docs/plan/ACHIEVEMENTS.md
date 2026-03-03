@@ -1,4 +1,32 @@
-# Achievements — `polymarket_dart` v0.1.0
+# Achievements — `polymarket_dart`
+
+---
+
+## Live Testing & Bug Fixes (post v0.1.0)
+
+### Integration test run: 18/18 passing against live API
+
+**Bugs found and fixed:**
+
+| File | Bug | Fix |
+|------|-----|-----|
+| `lib/src/clients/clob_client.dart:77` | `getServerTime` cast `as Map<String, dynamic>` — API returns raw `int` | Handle both `int` response and `{"time": n}` map |
+| `lib/src/clients/clob_client.dart:282` | `getFeeRateBps` used wrong path `/fee-rate-bps` | Corrected to `/fee-rate` |
+| `lib/src/clients/clob_client.dart:288` | `getFeeRateBps` parsed wrong key `fee_rate_bps` | Corrected to `base_fee` |
+| `lib/src/models/clob_types.dart:244` | `OrderBookSummary.timestamp` cast `as int?` — API returns timestamp as string `"1772557429580"` | Changed to `int.tryParse(json['timestamp'].toString())` |
+| `test/clob_client_test.dart` | Hardcoded Trump 2024 settled market token ID — no orderbook exists for settled markets | Replaced with dynamic discovery: `setUpAll` fetches top-5 markets by 24h volume from Gamma API |
+| `test/clob_client_test.dart` | Gamma API `clobTokenIds` is a JSON-encoded string `"[\"id1\",\"id2\"]"`, not a list | Added `jsonDecode` when `raw is String` |
+
+**Other discoveries:**
+- `getLastTradePrice` works for both active and settled markets
+- `getMidpoint`, `getPrice`, `getSpread`, `getOrderBook` require an active market with a live orderbook
+- First page of `/markets` endpoint returns mostly settled markets — Gamma API needed to find high-volume active ones
+
+**Total tests: 23 unit + 18 integration = 41/41 passing**
+
+---
+
+## v0.1.0 — Core SDK
 
 ## Overview
 First Dart/Flutter SDK for the Polymarket CLOB API. Built from scratch, structured

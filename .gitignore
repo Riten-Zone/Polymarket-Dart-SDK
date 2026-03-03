@@ -18,6 +18,7 @@ coverage/
 
 # Local documentation / planning notes (private)
 # docs/plan/ROADMAP.md
+docs/plan/TEST_NOTES.md
 
 # macOS
 .DS_Store

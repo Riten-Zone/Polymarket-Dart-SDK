@@ -241,7 +241,9 @@ class OrderBookSummary {
               ?.map((a) => OrderLevel.fromJson(a as Map<String, dynamic>))
               .toList() ??
           [],
-      timestamp: json['timestamp'] as int?,
+      timestamp: json['timestamp'] == null
+          ? null
+          : int.tryParse(json['timestamp'].toString()),
     );
   }
 }

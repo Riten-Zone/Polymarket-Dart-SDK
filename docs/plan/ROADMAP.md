@@ -2,14 +2,24 @@
 
 ---
 
-## Immediate: Live Testing & Bug Fixes
+## ✅ Done: Live Testing & Bug Fixes
 
-Run integration tests to catch any endpoint path mismatches:
-```bash
-dart test test/clob_client_test.dart --tags integration
+All 18 integration tests pass against the live API. Fixes applied:
+- `getServerTime` — API returns raw `int`, not JSON object
+- `getFeeRateBps` — path was `/fee-rate-bps`, correct is `/fee-rate`; key was `fee_rate_bps`, correct is `base_fee`
+- `OrderBookSummary.timestamp` — API returns timestamp as string, not int
+- Integration tests now use dynamic market discovery (Gamma API, top 5 by 24h volume)
+
+**Still to test (needs a private key, no money):**
+```dart
+final wallet = PrivateKeyWalletAdapter('0xYourKey');
+final client = ClobClient(wallet: wallet);
+final creds = await client.createOrDeriveApiKey();
+client.setCredentials(creds);
+final orders = await client.getOpenOrders(); // should return empty list, not throw
 ```
 
-**Known things to verify against the live API:**
+**Known L2 paths still unverified (low risk):**
 
 | Item | Risk | Notes |
 |------|------|-------|
@@ -18,17 +28,6 @@ dart test test/clob_client_test.dart --tags integration
 | `/data/trades` path | Medium | Might be `/trades` |
 | CLOB WS subscription message format | High | `action`/`channel` field names need live verification |
 | RTDS ping format | Medium | May expect plain `"PING"` string, not JSON `{"method":"ping"}` |
-| `getPricesHistory` response shape | Low | `history` key might differ |
-
-**Auth flow to test (needs a private key, no money):**
-```dart
-final wallet = PrivateKeyWalletAdapter('0xYourKey');
-final client = ClobClient(wallet: wallet);
-final creds = await client.createOrDeriveApiKey();
-// Verify creds.apiKey, creds.secret, creds.passphrase are returned
-client.setCredentials(creds);
-final orders = await client.getOpenOrders(); // should return empty list, not throw
-```
 
 ---
 
@@ -168,6 +167,7 @@ This is the key integration between `polymarket_dart` and the Riten Flutter app.
 | Version | Focus | Status |
 |---------|-------|--------|
 | v0.1.0 | Core CLOB — 42 methods, full auth, WebSocket, 23 tests | ✅ Done |
+| post v0.1 | Live testing — 18 integration tests passing, 4 bugs fixed | ✅ Done |
 | v0.2.0 | GammaClient, DataClient, Rewards, Readonly keys | Planned |
 | v0.3.0 | Pub.dev publish, dartdoc, README, example | Planned |
 | Future | RFQ, Builder features, Privy wallet adapter | Backlog |

@@ -74,8 +74,10 @@ class ClobClient {
 
   /// Get the server's current unix timestamp in seconds.
   Future<int> getServerTime() async {
-    final res = await _transport.get(PolymarketUrls.clob, '/time') as Map<String, dynamic>;
-    return res['time'] as int;
+    final res = await _transport.get(PolymarketUrls.clob, '/time');
+    // API returns a raw integer, not a JSON object
+    if (res is int) return res;
+    return (res as Map<String, dynamic>)['time'] as int;
   }
 
   // ---------------------------------------------------------------------------
@@ -282,10 +284,10 @@ class ClobClient {
   Future<int> getFeeRateBps(String tokenId) async {
     final res = await _transport.get(
       PolymarketUrls.clob,
-      '/fee-rate-bps',
+      '/fee-rate',
       queryParams: {'token_id': tokenId},
     ) as Map<String, dynamic>;
-    return (res['fee_rate_bps'] as num).toInt();
+    return (res['base_fee'] as num).toInt();
   }
 
   // ---------------------------------------------------------------------------

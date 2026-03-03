@@ -1,25 +1,54 @@
 /// Integration tests for ClobClient public endpoints (no auth required).
 ///
 /// These tests hit the live Polymarket CLOB API.
-/// Run selectively: dart test test/clob_client_test.dart
+/// Run selectively: dart test test/clob_client_test.dart --tags integration
 ///
 /// Skip these in CI unless you have network access.
 @Tags(['integration'])
 library;
 
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 import 'package:polymarket_dart/polymarket_dart.dart';
 
-// A real market condition ID (Trump 2024 win market — settled, always available)
-const kTestConditionId =
-    '0x5c0a010e984e5e1a0ec56f564e07e63c36c6b9bd09c8d4c2dcf91e9ca37c9df';
+/// Fetch the top active markets by 24h volume from the Gamma API.
+/// Returns a list of token IDs for the markets with the highest volume.
+Future<List<String>> _fetchHighVolumeTokenIds({int limit = 5}) async {
+  final uri = Uri.parse(
+    'https://gamma-api.polymarket.com/markets'
+    '?active=true&closed=false&order=volume24hr&ascending=false&limit=$limit',
+  );
+  final response = await http.get(uri);
+  if (response.statusCode != 200) return [];
 
-// A real YES token ID for the above market
-const kTestTokenId =
-    '21742633143463906290569050155826241533067272736897614950488156847949938836455';
+  final markets = jsonDecode(response.body) as List;
+  final tokenIds = <String>[];
+  for (final m in markets) {
+    // clobTokenIds is a JSON-encoded string in the Gamma API response
+    final raw = m['clobTokenIds'];
+    final ids = raw is String
+        ? (jsonDecode(raw) as List?)
+        : raw as List?;
+    if (ids != null && ids.isNotEmpty) {
+      tokenIds.add(ids[0] as String);
+    }
+  }
+  return tokenIds;
+}
 
 void main() {
   late ClobClient client;
+
+  // Resolved once for the whole test run — high-volume active market token IDs.
+  late List<String> liveTokenIds;
+  String? liveTokenId;
+
+  setUpAll(() async {
+    liveTokenIds = await _fetchHighVolumeTokenIds();
+    liveTokenId = liveTokenIds.isNotEmpty ? liveTokenIds.first : null;
+  });
 
   setUp(() {
     client = ClobClient();
@@ -52,12 +81,10 @@ void main() {
 
     test('getMarkets pagination cursor is returned', () async {
       final page = await client.getMarkets();
-      // Most pages have a nextCursor
       expect(page.nextCursor, isNotNull);
     }, timeout: const Timeout(Duration(seconds: 10)));
 
     test('getMarket by condition ID returns valid market', () async {
-      // Get a real condition ID from the first page
       final page = await client.getMarkets();
       final first = page.data.first;
       final market = await client.getMarket(first.conditionId);
@@ -68,44 +95,68 @@ void main() {
 
   group('Orderbook', () {
     test('getOrderBook returns bids and asks', () async {
-      final book = await client.getOrderBook(kTestTokenId);
+      if (liveTokenId == null) {
+        markTestSkipped('No active market token available');
+        return;
+      }
+      final book = await client.getOrderBook(liveTokenId!);
       expect(book.asset, isNotEmpty);
-      // Book may be empty for settled markets but structure should be valid
       expect(book.bids, isA<List<OrderLevel>>());
       expect(book.asks, isA<List<OrderLevel>>());
     }, timeout: const Timeout(Duration(seconds: 10)));
 
-    test('getOrderBooks for multiple tokens returns list', () async {
-      final books = await client.getOrderBooks([
-        BookParams(tokenId: kTestTokenId),
-      ]);
+    test('getOrderBooks for multiple high-volume tokens returns list', () async {
+      if (liveTokenIds.isEmpty) {
+        markTestSkipped('No active market tokens available');
+        return;
+      }
+      final params = liveTokenIds
+          .take(3)
+          .map((id) => BookParams(tokenId: id))
+          .toList();
+      final books = await client.getOrderBooks(params);
       expect(books, isA<List<OrderBookSummary>>());
-      expect(books.length, equals(1));
+      expect(books.length, greaterThan(0));
     }, timeout: const Timeout(Duration(seconds: 10)));
   });
 
   group('Pricing', () {
     test('getMidpoint returns a price string', () async {
-      final mid = await client.getMidpoint(kTestTokenId);
+      if (liveTokenId == null) {
+        markTestSkipped('No active market token available');
+        return;
+      }
+      final mid = await client.getMidpoint(liveTokenId!);
       expect(mid, isNotEmpty);
-      final price = double.tryParse(mid);
-      expect(price, isNotNull);
+      expect(double.tryParse(mid), isNotNull);
     }, timeout: const Timeout(Duration(seconds: 10)));
 
     test('getPrice BUY returns a price string', () async {
-      final price = await client.getPrice(kTestTokenId, 'BUY');
+      if (liveTokenId == null) {
+        markTestSkipped('No active market token available');
+        return;
+      }
+      final price = await client.getPrice(liveTokenId!, 'BUY');
       expect(price, isNotEmpty);
       expect(double.tryParse(price), isNotNull);
     }, timeout: const Timeout(Duration(seconds: 10)));
 
     test('getSpread returns a spread string', () async {
-      final spread = await client.getSpread(kTestTokenId);
+      if (liveTokenId == null) {
+        markTestSkipped('No active market token available');
+        return;
+      }
+      final spread = await client.getSpread(liveTokenId!);
       expect(spread, isNotEmpty);
       expect(double.tryParse(spread), isNotNull);
     }, timeout: const Timeout(Duration(seconds: 10)));
 
     test('getLastTradePrice returns a price string', () async {
-      final price = await client.getLastTradePrice(kTestTokenId);
+      if (liveTokenId == null) {
+        markTestSkipped('No active market token available');
+        return;
+      }
+      final price = await client.getLastTradePrice(liveTokenId!);
       expect(price, isNotEmpty);
       expect(double.tryParse(price), isNotNull);
     }, timeout: const Timeout(Duration(seconds: 10)));
@@ -113,26 +164,45 @@ void main() {
 
   group('Market config', () {
     test('getTickSize returns a valid tick size string', () async {
-      final tickSize = await client.getTickSize(kTestTokenId);
+      if (liveTokenId == null) {
+        markTestSkipped('No active market token available');
+        return;
+      }
+      final tickSize = await client.getTickSize(liveTokenId!);
       expect(['0.1', '0.01', '0.001', '0.0001'], contains(tickSize));
     }, timeout: const Timeout(Duration(seconds: 10)));
 
     test('getNegRisk returns a boolean', () async {
-      final negRisk = await client.getNegRisk(kTestTokenId);
+      if (liveTokenId == null) {
+        markTestSkipped('No active market token available');
+        return;
+      }
+      final negRisk = await client.getNegRisk(liveTokenId!);
       expect(negRisk, isA<bool>());
     }, timeout: const Timeout(Duration(seconds: 10)));
 
     test('getFeeRateBps returns a non-negative integer', () async {
-      final bps = await client.getFeeRateBps(kTestTokenId);
+      if (liveTokenId == null) {
+        markTestSkipped('No active market token available');
+        return;
+      }
+      final bps = await client.getFeeRateBps(liveTokenId!);
       expect(bps, greaterThanOrEqualTo(0));
     }, timeout: const Timeout(Duration(seconds: 10)));
   });
 
   group('Price history', () {
     test('getPricesHistory returns a list of price points', () async {
+      if (liveTokenId == null) {
+        markTestSkipped('No active market token available');
+        return;
+      }
+      // Fetch the condition ID for this token from the market list
+      final page = await client.getMarkets();
+      final conditionId = page.data.first.conditionId;
       final points = await client.getPricesHistory(
         PriceHistoryParams(
-          market: kTestConditionId,
+          market: conditionId,
           interval: '1w',
           fidelity: '10',
         ),
