@@ -28,6 +28,8 @@ docs/plan/TEST_NOTES.md
 *.iml
 .vscode/
 
+.env
+
 # Claude Code
 .claude/
 CLAUDE.md
