@@ -392,12 +392,14 @@ class MarketOrderArgs {
 class CreateOrderOptions {
   final String? tickSize; // '0.1' | '0.01' | '0.001' | '0.0001'
   final bool negRisk;
-  final String? funder; // override maker address
+  final String? funder; // override maker address (e.g. Gnosis Safe)
+  final int signatureType; // 0=EOA, 1=PolyProxy, 2=GnosisSafe
 
   const CreateOrderOptions({
     this.tickSize,
     this.negRisk = false,
     this.funder,
+    this.signatureType = 0,
   });
 }
 
@@ -434,7 +436,7 @@ class SignedOrder {
   });
 
   Map<String, dynamic> toJson() => {
-        'salt': salt,
+        'salt': int.parse(salt), // API requires integer, not string
         'maker': maker,
         'signer': signer,
         'taker': taker,

@@ -4,6 +4,22 @@
 
 ## Live Testing & Bug Fixes (post v0.1.0)
 
+### Path audit — 5 more wrong paths fixed — 2026-03-03
+
+Full comparison of all 42 ClobClient methods against Python SDK `endpoints.py`:
+
+| Method | Wrong path | Correct path |
+|--------|-----------|--------------|
+| `cancelAll` | `DELETE /orders` | `DELETE /cancel-all` |
+| `cancelMarketOrders` | `DELETE /orders` | `DELETE /cancel-market-orders` |
+| `getClosedOnlyMode` | `GET /closed-only-mode` | `GET /auth/ban-status/closed-only` |
+| `updateBalanceAllowance` | `POST /balance-allowance` | `POST /balance-allowance/update` |
+| `deleteApiKey` | `DELETE /auth/api-keys` | `DELETE /auth/api-key` (singular) |
+
+All 49 tests still pass after the fixes.
+
+---
+
 ### Auth integration tests: 8/8 passing (L1 + L2) — 2026-03-03
 
 New test file `test/auth_test.dart` — runs against live API with a `.env` private key.

@@ -10,24 +10,24 @@ All 18 integration tests pass against the live API. Fixes applied:
 - `OrderBookSummary.timestamp` — API returns timestamp as string, not int
 - Integration tests now use dynamic market discovery (Gamma API, top 5 by 24h volume)
 
-**Still to test (needs a private key, no money):**
-```dart
-final wallet = PrivateKeyWalletAdapter('0xYourKey');
-final client = ClobClient(wallet: wallet);
-final creds = await client.createOrDeriveApiKey();
-client.setCredentials(creds);
-final orders = await client.getOpenOrders(); // should return empty list, not throw
-```
+**✅ Done — auth tests 8/8 pass, all L2 paths verified against Python SDK**
 
-**Known L2 paths still unverified (low risk):**
+All CLOB endpoint paths have been audited against `py_clob_client/endpoints.py`. Fixes applied:
+- `getApiKeys`: `/auth/api-key` → `/auth/api-keys`
+- `cancelAll`: `/orders` → `/cancel-all`
+- `cancelMarketOrders`: `/orders` → `/cancel-market-orders`
+- `getClosedOnlyMode`: `/closed-only-mode` → `/auth/ban-status/closed-only`
+- `updateBalanceAllowance`: `/balance-allowance` → `/balance-allowance/update`
+- HMAC signs bare path only (not including query string)
+- EIP-55 checksummed addresses in query params (`owner`, `maker`, `user`)
 
-| Item | Risk | Notes |
-|------|------|-------|
-| `/data/order/{id}` path | Medium | Might be `/order/{id}` without `/data/` prefix |
-| `/data/orders` path | Medium | Might be `/orders` |
-| `/data/trades` path | Medium | Might be `/trades` |
-| CLOB WS subscription message format | High | `action`/`channel` field names need live verification |
-| RTDS ping format | Medium | May expect plain `"PING"` string, not JSON `{"method":"ping"}` |
+**Remaining unverified (needs funds or real usage):**
+
+| Item | Notes |
+|------|-------|
+| CLOB WS subscription message format | `action`/`channel` field names need live verification |
+| RTDS ping format | May expect plain `"PING"` string |
+| `postOrder` / `cancelOrder` end-to-end | Needs USDC on Polygon |
 
 ---
 
@@ -167,7 +167,7 @@ This is the key integration between `polymarket_dart` and the Riten Flutter app.
 | Version | Focus | Status |
 |---------|-------|--------|
 | v0.1.0 | Core CLOB — 42 methods, full auth, WebSocket, 23 tests | ✅ Done |
-| post v0.1 | Live testing — 18 integration tests passing, 4 bugs fixed | ✅ Done |
+| post v0.1 | Live testing — 49 tests passing, full path audit, all known bugs fixed | ✅ Done |
 | v0.2.0 | GammaClient, DataClient, Rewards, Readonly keys | Planned |
 | v0.3.0 | Pub.dev publish, dartdoc, README, example | Planned |
 | Future | RFQ, Builder features, Privy wallet adapter | Backlog |

@@ -56,7 +56,9 @@ class OrderbookUpdate {
               ?.map((a) => WsOrderLevel.fromJson(a))
               .toList() ??
           [],
-      timestamp: data['timestamp'] as int?,
+      timestamp: data['timestamp'] == null
+          ? null
+          : int.tryParse(data['timestamp'].toString()),
     );
   }
 }

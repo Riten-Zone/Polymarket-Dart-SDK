@@ -368,12 +368,12 @@ class ClobClient {
     final address = (await _wallet!.getAddress()).toLowerCase();
     final headers = _buildLevel2Headers(
       method: 'DELETE',
-      path: '/auth/api-keys',
+      path: '/auth/api-key',
       walletAddress: address,
     );
     await _transport.delete(
       PolymarketUrls.clob,
-      '/auth/api-keys',
+      '/auth/api-key',
       headers: headers,
     );
   }
@@ -417,6 +417,8 @@ class ClobClient {
     final expiration = args.expiration ?? '0';
     final taker = args.taker ?? PolymarketChain.zeroAddress;
 
+    final sigType = options?.signatureType ?? 0;
+
     final typedData = buildOrderTypedData(
       maker: funder,
       signer: address,
@@ -428,7 +430,7 @@ class ClobClient {
       nonce: nonce,
       feeRateBps: args.feeRateBps.toString(),
       side: sideInt,
-      signatureType: 0, // EOA
+      signatureType: sigType,
       salt: salt,
       negRisk: negRisk,
     );
@@ -437,8 +439,8 @@ class ClobClient {
 
     return SignedOrder(
       salt: salt,
-      maker: funder,
-      signer: address,
+      maker: _checksumAddress(funder),
+      signer: _checksumAddress(address),
       taker: taker,
       tokenId: args.tokenId,
       makerAmount: makerAmount,
@@ -447,7 +449,7 @@ class ClobClient {
       nonce: nonce,
       feeRateBps: args.feeRateBps.toString(),
       side: sideInt,
-      signatureType: 0,
+      signatureType: sigType,
       signature: signature,
     );
   }
@@ -472,6 +474,8 @@ class ClobClient {
     final salt = _generateSalt();
     final taker = args.taker ?? PolymarketChain.zeroAddress;
 
+    final sigType = options?.signatureType ?? 0;
+
     final typedData = buildOrderTypedData(
       maker: funder,
       signer: address,
@@ -483,7 +487,7 @@ class ClobClient {
       nonce: '0',
       feeRateBps: args.feeRateBps.toString(),
       side: sideInt,
-      signatureType: 0,
+      signatureType: sigType,
       salt: salt,
       negRisk: negRisk,
     );
@@ -492,8 +496,8 @@ class ClobClient {
 
     return SignedOrder(
       salt: salt,
-      maker: funder,
-      signer: address,
+      maker: _checksumAddress(funder),
+      signer: _checksumAddress(address),
       taker: taker,
       tokenId: args.tokenId,
       makerAmount: makerAmount,
@@ -502,7 +506,7 @@ class ClobClient {
       nonce: '0',
       feeRateBps: args.feeRateBps.toString(),
       side: sideInt,
-      signatureType: 0,
+      signatureType: sigType,
       signature: signature,
     );
   }
@@ -666,12 +670,12 @@ class ClobClient {
     final address = (await _wallet!.getAddress()).toLowerCase();
     final headers = _buildLevel2Headers(
       method: 'DELETE',
-      path: '/orders',
+      path: '/cancel-all',
       walletAddress: address,
     );
     await _transport.delete(
       PolymarketUrls.clob,
-      '/orders',
+      '/cancel-all',
       headers: headers,
     );
   }
@@ -686,13 +690,13 @@ class ClobClient {
     final body = jsonEncode(bodyMap);
     final headers = _buildLevel2Headers(
       method: 'DELETE',
-      path: '/orders',
+      path: '/cancel-market-orders',
       body: body,
       walletAddress: address,
     );
     await _transport.delete(
       PolymarketUrls.clob,
-      '/orders',
+      '/cancel-market-orders',
       body: jsonDecode(body),
       headers: headers,
     );
@@ -772,13 +776,13 @@ class ClobClient {
     final body = jsonEncode(params.toQueryParams());
     final headers = _buildLevel2Headers(
       method: 'POST',
-      path: '/balance-allowance',
+      path: '/balance-allowance/update',
       body: body,
       walletAddress: address,
     );
     await _transport.post(
       PolymarketUrls.clob,
-      '/balance-allowance',
+      '/balance-allowance/update',
       body: jsonDecode(body),
       headers: headers,
     );
@@ -788,7 +792,7 @@ class ClobClient {
   Future<BanStatus> getClosedOnlyMode() async {
     _requireCredentials();
     final address = (await _wallet!.getAddress()).toLowerCase();
-    final path = '/closed-only-mode';
+    const path = '/auth/ban-status/closed-only';
     final headers = _buildLevel2Headers(
       method: 'GET',
       path: path,

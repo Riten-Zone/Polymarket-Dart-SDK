@@ -50,7 +50,7 @@ class WebSocketClient {
   Future<void> connectClob() async {
     _clobTransport ??= WebSocketTransport(
       url: PolymarketUrls.clobWs,
-      pingInterval: const Duration(seconds: 30),
+      pingInterval: const Duration(seconds: 10),
     );
     await _clobTransport!.connect();
     _clobSub ??= _clobTransport!.messages.listen(_onClobMessage);
@@ -72,10 +72,11 @@ class WebSocketClient {
       );
     }
 
+    // CLOB WS protocol: {"assets_ids": [<token_id>], "type": "market"}
+    // Both book and trade events come through the same subscription.
     _clobTransport!.send({
-      'action': 'subscribe',
-      'market': tokenId,
-      'channel': 'orderbook',
+      'assets_ids': [tokenId],
+      'type': 'market',
     });
 
     return _orderbookControllers[tokenId]!.stream;
@@ -93,25 +94,26 @@ class WebSocketClient {
       );
     }
 
+    // CLOB WS protocol: same subscription as orderbook — all events per market
     _clobTransport!.send({
-      'action': 'subscribe',
-      'market': tokenId,
-      'channel': 'trade',
+      'assets_ids': [tokenId],
+      'type': 'market',
     });
 
     return _tradeControllers[tokenId]!.stream;
   }
 
   void _onClobMessage(Map<String, dynamic> msg) {
-    final type = msg['event']?.toString() ?? msg['channel']?.toString() ?? '';
-    final market = msg['market']?.toString() ?? '';
+    // CLOB WS messages use event_type + asset_id (TypeScript SDK format)
+    final type = msg['event_type']?.toString() ?? '';
+    final market = msg['asset_id']?.toString() ?? '';
 
-    if (type == 'book' || type == 'orderbook') {
+    if (type == 'book' || type == 'price_change') {
       final ctrl = _orderbookControllers[market];
       if (ctrl != null && !ctrl.isClosed) {
         ctrl.add(OrderbookUpdate.fromJson(msg));
       }
-    } else if (type == 'trade') {
+    } else if (type == 'last_trade_price' || type == 'trade') {
       final ctrl = _tradeControllers[market];
       if (ctrl != null && !ctrl.isClosed) {
         ctrl.add(WsTrade.fromJson(msg));

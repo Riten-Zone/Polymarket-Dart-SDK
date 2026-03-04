@@ -126,11 +126,22 @@ class WebSocketTransport {
   }
 
   void _onMessage(dynamic data) {
+    // CLOB WS sends arrays of events; RTDS sends single objects.
+    // Handle both by emitting each element individually.
     try {
-      final parsed = jsonDecode(data as String) as Map<String, dynamic>;
-      _messageController.add(parsed);
+      final decoded = jsonDecode(data as String);
+      if (decoded is List) {
+        for (final item in decoded) {
+          if (item is Map<String, dynamic>) {
+            _messageController.add(item);
+          }
+        }
+      } else if (decoded is Map<String, dynamic>) {
+        _messageController.add(decoded);
+      }
+      // else: ignore (e.g. plain PONG string)
     } catch (_) {
-      // Ignore non-JSON messages (e.g. pong responses).
+      // Ignore non-JSON messages (e.g. PONG responses).
     }
   }
 
@@ -154,9 +165,8 @@ class WebSocketTransport {
     _pingTimer = Timer.periodic(pingInterval, (_) {
       if (_state == WsConnectionState.connected && _channel != null) {
         try {
-          // RTDS expects plain "PING" string; CLOB expects JSON ping.
-          // We let subclasses or callers override via sendRaw if needed.
-          _channel!.sink.add(jsonEncode({'method': 'ping'}));
+          // Both CLOB and RTDS expect plain "PING" string.
+          _channel!.sink.add('PING');
         } catch (_) {}
       }
     });
