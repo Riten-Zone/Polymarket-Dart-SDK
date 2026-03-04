@@ -14,6 +14,7 @@ import 'dart:typed_data';
 
 import 'package:pointycastle/api.dart';
 import 'package:pointycastle/digests/keccak.dart';
+import 'package:pointycastle/digests/sha256.dart';
 import 'package:pointycastle/ecc/api.dart';
 import 'package:pointycastle/ecc/curves/secp256k1.dart';
 import 'package:pointycastle/macs/hmac.dart';
@@ -194,7 +195,9 @@ class PrivateKeyWalletAdapter implements WalletAdapter {
   String _signHash(Uint8List hash) {
     final privKey = ECPrivateKey(_privateKey, _params);
 
-    final signer = ECDSASigner(null, HMac(KeccakDigest(256), 64));
+    // RFC 6979 deterministic ECDSA: HMAC-DRBG uses SHA-256 (standard for secp256k1).
+    // Using KeccakDigest here produces non-standard nonces that differ from ethers.js.
+    final signer = ECDSASigner(null, HMac(SHA256Digest(), 64));
     signer.init(true, PrivateKeyParameter<ECPrivateKey>(privKey));
 
     final sig = signer.generateSignature(hash) as ECSignature;

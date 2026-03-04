@@ -85,7 +85,7 @@ Map<String, dynamic> buildOrderTypedData({
 
   return {
     'domain': {
-      'name': 'CTF Exchange',
+      'name': 'Polymarket CTF Exchange',
       'version': '1',
       'chainId': PolymarketChain.chainId,
       'verifyingContract': verifyingContract,
@@ -108,8 +108,8 @@ Map<String, dynamic> buildOrderTypedData({
         {'name': 'expiration', 'type': 'uint256'},
         {'name': 'nonce', 'type': 'uint256'},
         {'name': 'feeRateBps', 'type': 'uint256'},
-        {'name': 'side', 'type': 'uint256'},
-        {'name': 'signatureType', 'type': 'uint256'},
+        {'name': 'side', 'type': 'uint8'},
+        {'name': 'signatureType', 'type': 'uint8'},
       ],
     },
     'primaryType': 'Order',
