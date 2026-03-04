@@ -705,13 +705,26 @@ class TradesPage {
 class BalanceAllowanceParams {
   final String? assetType; // 'collateral' or 'conditional'
   final String? tokenId;
+  /// Override the `user` query param (normally the authenticated wallet).
+  /// Use this to query a funder/proxy address balance instead.
+  final String? user;
+  /// Override the `signature_type` query param (default 0 = EOA).
+  /// Use 1 for POLY_PROXY wallets, 2 for POLY_GNOSIS_SAFE.
+  final int? signatureType;
 
-  const BalanceAllowanceParams({this.assetType, this.tokenId});
+  const BalanceAllowanceParams({
+    this.assetType,
+    this.tokenId,
+    this.user,
+    this.signatureType,
+  });
 
   Map<String, String> toQueryParams() {
     final params = <String, String>{};
     if (assetType != null) params['asset_type'] = assetType!;
     if (tokenId != null) params['token_id'] = tokenId!;
+    if (user != null) params['user'] = user!;
+    if (signatureType != null) params['signature_type'] = signatureType!.toString();
     return params;
   }
 }

@@ -37,10 +37,12 @@ library;
 
 // Clients
 export 'src/clients/clob_client.dart';
+export 'src/clients/data_client.dart';
 export 'src/clients/websocket_client.dart';
 
 // Models
 export 'src/models/clob_types.dart';
+export 'src/models/data_types.dart';
 export 'src/models/websocket_types.dart';
 
 // Signing

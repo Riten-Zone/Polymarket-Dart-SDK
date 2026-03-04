@@ -162,7 +162,7 @@ void main() {
         params: const BalanceAllowanceParams(assetType: 'COLLATERAL'),
       );
       expect(balance, isA<BalanceAllowance>());
-      print('balance: ${balance.balance}, allowance: ${balance.allowance}');
+      print('balance: ${balance.balance}, allowance: ${balance.allowance}, assetAddress: ${balance.assetAddress}');
     }, timeout: const Timeout(Duration(seconds: 10)));
 
     test('getNotifications returns a list', () async {
@@ -201,7 +201,7 @@ void main() {
       final bal = await client.getBalanceAllowance(
         params: const BalanceAllowanceParams(assetType: 'COLLATERAL'),
       );
-      print('USDC balance: ${bal.balance}, allowance: ${bal.allowance}');
+      print('USDC balance: ${bal.balance}, allowance: ${bal.allowance}, assetAddress: ${bal.assetAddress}');
       final rawBalance = bal.balance;
       final balance = rawBalance != null ? double.tryParse(rawBalance) ?? 0.0 : 0.0;
       if (balance < 5.0) {
@@ -257,6 +257,73 @@ void main() {
         options: CreateOrderOptions(
           funder: funderAddress,
           signatureType: 2,
+          negRisk: testTokenNegRisk,
+        ),
+      );
+      print('GnosisSafe order json: ${jsonEncode(order.toJson())}');
+
+      try {
+        final response = await client.postOrder(order);
+        print('orderId (GnosisSafe): ${response.orderId}');
+        expect(response.orderId, isNotEmpty);
+        await client.cancelOrder(response.orderId!);
+      } on PolymarketApiException catch (e) {
+        if (e.statusCode == 403) {
+          print('Geo-restricted. Order signing verified OK.');
+          return;
+        }
+        rethrow;
+      }
+    }, timeout: const Timeout(Duration(seconds: 30)));
+
+    test('postOrder with GnosisSafe funder places and cancels a limit buy',
+        () async {
+      if (funderAddress.isEmpty) {
+        print('Skipping: FUNDER_ADDRESS not set in .env');
+        return;
+      }
+      if (testTokenId.isEmpty) {
+        print('Skipping: could not fetch a live market token');
+        return;
+      }
+
+      // Check funder USDC balance using signatureType=2 (POLY_GNOSIS_SAFE).
+      // The balance is tracked per signature-type; sig=2 is required for Gnosis Safe wallets.
+      final funderBal = await client.getBalanceAllowance(
+        params: BalanceAllowanceParams(
+          assetType: 'COLLATERAL',
+          user: funderAddress,
+          signatureType: 2,
+        ),
+      );
+      print(
+        'Funder balance (sig=2): ${funderBal.balance}, '
+        'allowance: ${funderBal.allowance}, '
+        'assetAddress: ${funderBal.assetAddress}',
+      );
+      final rawFunderBalance = funderBal.balance;
+      final funderBalance =
+          rawFunderBalance != null ? double.tryParse(rawFunderBalance) ?? 0.0 : 0.0;
+      if (funderBalance < 5.0) {
+        print(
+          'Skipping funder order: insufficient USDC balance ($rawFunderBalance). '
+          'Deposit USDC through the Polymarket frontend to fund this wallet.',
+        );
+        return;
+      }
+
+      // Submit as GnosisSafe (signatureType=2) — this is where the balance lives.
+      final order = await client.createOrder(
+        OrderArgs(
+          tokenId: testTokenId,
+          price: 0.01,
+          size: 500.0,
+          side: OrderSide.buy,
+          feeRateBps: 0,
+        ),
+        options: CreateOrderOptions(
+          funder: funderAddress,
+          signatureType: 2, // POLY_GNOSIS_SAFE
           negRisk: testTokenNegRisk,
         ),
       );
