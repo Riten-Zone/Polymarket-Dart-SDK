@@ -2,6 +2,73 @@
 
 ---
 
+## v0.2.0 — GammaClient + DataClient Expansion + ClobClient Rewards (2026-03-05)
+
+### New files
+
+| File | Purpose |
+|------|---------|
+| `lib/src/clients/gamma_client.dart` | `GammaClient` — market/event discovery via Gamma API |
+| `lib/src/models/gamma_types.dart` | `GammaMarket`, `GammaEvent`, `Tag` models |
+
+### New models in `data_types.dart`
+
+- `UserTrade` — completed trade as returned by Data API (`transactionHash`, `proxyWallet`, `side`, `price`, `size`, `timestamp`, `outcome`)
+- `Activity` — user activity event (`type`, `conditionId`, `side`, `price`, `size`, `timestamp`)
+- `Holder` — market outcome token holder (`address`, `pseudonym`, `proxyWallet`, `amount`)
+- `LeaderboardEntry` — trader leaderboard entry (`address`, `pseudonym`, `volume`, `pnl`, `rank`)
+
+### New `GammaClient` methods (6)
+
+| Method | Endpoint |
+|--------|---------|
+| `getMarkets({active, closed, order, ascending, limit})` | `GET /markets` |
+| `getMarket(int id)` | `GET /markets/{id}` |
+| `getEvents({active, order, ascending, limit})` | `GET /events` |
+| `getEvent(int id)` | `GET /events/{id}` |
+| `getTags()` | `GET /tags` |
+| `searchMarkets(String query)` | `GET /markets?q=query` |
+
+### New `DataClient` methods (4)
+
+| Method | Endpoint |
+|--------|---------|
+| `getTrades(userAddress, {limit, offset})` | `GET /trades?user=X` |
+| `getActivity(userAddress, {limit})` | `GET /activity?user=X` |
+| `getHolders(conditionId, {limit})` | `GET /holders?market=X` |
+| `getLeaderboard({interval, limit})` | `GET /leaderboard` (path TBD) |
+
+### New `ClobClient` methods (10)
+
+Rewards (Level 0):
+- `getRewardPercentages()`, `getCurrentRewards()`
+- `getEarningsForDay(date)`, `getTotalEarningsForDay(date)`
+- `getUserEarningsAndMarketsConfig(date)`, `getRawRewardsForMarket(conditionId)`
+
+Read-Only API Keys (Level 2):
+- `createReadonlyApiKey()`, `getReadonlyApiKeys()`
+- `deleteReadonlyApiKey(apiKey)`, `validateReadonlyApiKey(address, apiKey)`
+
+### Key API discoveries during testing
+
+- Gamma API `id` field is returned as a **String** (not int) — `_parseInt()` helper added
+- `GammaClient.getMarket` accepts only the **numeric integer id** — conditionId and slug return 422
+- Data API `getHolders` uses query param `market` (not `conditionId`)
+- Data API `getLeaderboard` path `/leaderboard` returns 404 — correct path TBD
+- Reward endpoints return 404/405 — paths not yet confirmed against live API
+
+### New tests
+
+| File | New tests |
+|------|-----------|
+| `test/gamma_client_test.dart` | 10 integration tests (markets, single market, events, tags, search) |
+| `test/data_client_test.dart` | +8 tests (getTrades, getActivity, getLeaderboard) |
+| `test/clob_client_test.dart` | +4 tests (rewards — lenient, catch API exceptions) |
+
+**Running totals: 23 unit + 18 L0 + 8 auth + 14 approvals + 17 new = 80 tests passing**
+
+---
+
 ## On-Chain Approvals — EOA + GnosisSafe (2026-03-05)
 
 ### Bug fixed: `side` field serialization in `clob_types.dart`

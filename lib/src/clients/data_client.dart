@@ -67,6 +67,121 @@ class DataClient {
     return positions.first.proxyWallet;
   }
 
+  // ---------------------------------------------------------------------------
+  // Trades
+  // ---------------------------------------------------------------------------
+
+  /// Returns completed trades for [userAddress].
+  ///
+  /// [limit] — max number of results.
+  /// [offset] — number of results to skip (for pagination).
+  Future<List<UserTrade>> getTrades(
+    String userAddress, {
+    int? limit,
+    int? offset,
+  }) async {
+    final params = <String, String>{'user': userAddress};
+    if (limit != null) params['limit'] = limit.toString();
+    if (offset != null) params['offset'] = offset.toString();
+
+    final response = await _transport.get(
+      PolymarketUrls.data,
+      '/trades',
+      queryParams: params,
+    );
+
+    if (response == null) return [];
+    final list = response as List<dynamic>;
+    return list
+        .map((j) => UserTrade.fromJson(j as Map<String, dynamic>))
+        .toList();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Activity
+  // ---------------------------------------------------------------------------
+
+  /// Returns activity events for [userAddress] (trades, redemptions, etc.).
+  ///
+  /// [limit] — max number of results.
+  Future<List<Activity>> getActivity(
+    String userAddress, {
+    int? limit,
+  }) async {
+    final params = <String, String>{'user': userAddress};
+    if (limit != null) params['limit'] = limit.toString();
+
+    final response = await _transport.get(
+      PolymarketUrls.data,
+      '/activity',
+      queryParams: params,
+    );
+
+    if (response == null) return [];
+    final list = response as List<dynamic>;
+    return list
+        .map((j) => Activity.fromJson(j as Map<String, dynamic>))
+        .toList();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Holders
+  // ---------------------------------------------------------------------------
+
+  /// Returns holders of the outcome token for the market identified by [conditionId].
+  ///
+  /// [conditionId] — the CTF condition ID (0x-prefixed hex). Passed to the API
+  /// as the `market` query parameter.
+  /// [limit] — max number of results.
+  Future<List<Holder>> getHolders(
+    String conditionId, {
+    int? limit,
+  }) async {
+    final params = <String, String>{'market': conditionId};
+    if (limit != null) params['limit'] = limit.toString();
+
+    final response = await _transport.get(
+      PolymarketUrls.data,
+      '/holders',
+      queryParams: params,
+    );
+
+    if (response == null) return [];
+    final list = response as List<dynamic>;
+    return list
+        .map((j) => Holder.fromJson(j as Map<String, dynamic>))
+        .toList();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Leaderboard
+  // ---------------------------------------------------------------------------
+
+  /// Returns the Polymarket trader leaderboard.
+  ///
+  /// [interval] — time window: `"1d"`, `"1w"`, `"1m"`, or `"all"`.
+  /// [limit] — max number of results.
+  Future<List<LeaderboardEntry>> getLeaderboard({
+    String? interval,
+    int? limit,
+  }) async {
+    final params = <String, String>{};
+    if (interval != null) params['interval'] = interval;
+    if (limit != null) params['limit'] = limit.toString();
+
+    final response = await _transport.get(
+      PolymarketUrls.data,
+      '/leaderboard',
+      queryParams: params.isEmpty ? null : params,
+    );
+
+    if (response == null) return [];
+    final list = response as List<dynamic>;
+    return list
+        .map((j) => LeaderboardEntry.fromJson(j as Map<String, dynamic>))
+        .toList();
+  }
+
   /// Closes the underlying HTTP client.
   void close() => _transport.close();
 }

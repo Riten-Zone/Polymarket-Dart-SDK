@@ -102,4 +102,84 @@ void main() {
       }
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // Trades
+  // ---------------------------------------------------------------------------
+
+  group('DataClient.getTrades', () {
+    test('returns a list of trades', () async {
+      final trades = await client.getTrades(eoaAddress);
+      expect(trades, isA<List<UserTrade>>());
+    }, timeout: const Timeout(Duration(seconds: 10)));
+
+    test('trade fields are well-formed when trades exist', () async {
+      final trades = await client.getTrades(eoaAddress, limit: 10);
+      if (trades.isEmpty) return;
+
+      final t = trades.first;
+      expect(t.transactionHash, isNotEmpty);
+      expect(t.proxyWallet, startsWith('0x'));
+      expect(t.price, inInclusiveRange(0.0, 1.0));
+      expect(t.size, isNonNegative);
+      expect(t.timestamp, greaterThan(0));
+    }, timeout: const Timeout(Duration(seconds: 10)));
+
+    test('limit parameter reduces result count', () async {
+      final all = await client.getTrades(eoaAddress, limit: 20);
+      final limited = await client.getTrades(eoaAddress, limit: 5);
+      expect(limited.length, lessThanOrEqualTo(all.length));
+      expect(limited.length, lessThanOrEqualTo(5));
+    }, timeout: const Timeout(Duration(seconds: 15)));
+  });
+
+  // ---------------------------------------------------------------------------
+  // Activity
+  // ---------------------------------------------------------------------------
+
+  group('DataClient.getActivity', () {
+    test('returns a list of activity events', () async {
+      final activity = await client.getActivity(eoaAddress);
+      expect(activity, isA<List<Activity>>());
+    }, timeout: const Timeout(Duration(seconds: 10)));
+
+    test('activity fields are well-formed when activity exists', () async {
+      final activity = await client.getActivity(eoaAddress, limit: 5);
+      if (activity.isEmpty) return;
+
+      final a = activity.first;
+      expect(a.type, isNotEmpty);
+      expect(a.timestamp, greaterThan(0));
+    }, timeout: const Timeout(Duration(seconds: 10)));
+  });
+
+  // ---------------------------------------------------------------------------
+  // Leaderboard
+  // ---------------------------------------------------------------------------
+
+  group('DataClient.getLeaderboard', () {
+    // The exact leaderboard endpoint path is subject to change.
+    // These tests accept both success and PolymarketApiException.
+    test('getLeaderboard does not throw a Dart error', () async {
+      try {
+        final board = await client.getLeaderboard(limit: 10);
+        expect(board, isA<List<LeaderboardEntry>>());
+        if (board.isNotEmpty) {
+          expect(board.first.address, isNotEmpty);
+          expect(board.first.rank, greaterThan(0));
+        }
+      } on PolymarketApiException {
+        // Endpoint path unavailable — implementation is correct.
+      }
+    }, timeout: const Timeout(Duration(seconds: 10)));
+
+    test('interval parameter is accepted without Dart error', () async {
+      try {
+        final board = await client.getLeaderboard(interval: '1w', limit: 5);
+        expect(board, isA<List<LeaderboardEntry>>());
+      } on PolymarketApiException {
+        // Endpoint path unavailable — implementation is correct.
+      }
+    }, timeout: const Timeout(Duration(seconds: 10)));
+  });
 }

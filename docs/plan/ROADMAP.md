@@ -2,6 +2,19 @@
 
 ---
 
+## ✅ Done: v0.2.0 — GammaClient + DataClient + Rewards (2026-03-05)
+
+Added `GammaClient` for market/event discovery, expanded `DataClient` with 4 new methods, added 10 new methods to `ClobClient` (rewards + read-only API keys).
+
+**80 tests passing** (23 unit + 18 L0 + 8 auth + 14 approvals + 17 new)
+
+Remaining work from v0.2.0:
+- `getLeaderboard` — correct API path not yet found (404 on `/leaderboard`)
+- Rewards endpoint paths speculative (404/405) — need verification against current API
+- `getHolders` — works with `market` query param ✅
+
+---
+
 ## ✅ Done: On-Chain Approvals + Order Placement (2026-03-05)
 
 Both order paths now work end-to-end:

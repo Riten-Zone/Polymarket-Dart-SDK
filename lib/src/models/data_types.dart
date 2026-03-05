@@ -140,5 +140,220 @@ class Position {
 double _toDouble(dynamic value) {
   if (value is double) return value;
   if (value is int) return value.toDouble();
-  return double.parse(value.toString());
+  return double.tryParse(value.toString()) ?? 0.0;
+}
+
+// ---------------------------------------------------------------------------
+// UserTrade
+// ---------------------------------------------------------------------------
+
+/// A completed trade on Polymarket as returned by the Data API.
+///
+/// Returned by [DataClient.getTrades]. Note: the CLOB API has its own [Trade]
+/// type in [clob_types.dart] — this type is specific to the Data API response.
+class UserTrade {
+  /// The Polygon transaction hash for this trade.
+  final String transactionHash;
+
+  /// The Polymarket Safe proxy wallet that executed the trade.
+  final String proxyWallet;
+
+  /// The CLOB token ID (outcome token address on Polygon).
+  final String asset;
+
+  /// The CTF condition ID of the market.
+  final String conditionId;
+
+  /// Trade side (`"BUY"` or `"SELL"`).
+  final String side;
+
+  /// Execution price (0–1 range, where 1 = $1 USDC).
+  final double price;
+
+  /// Size of the trade in outcome tokens.
+  final double size;
+
+  /// Unix timestamp of the trade in seconds.
+  final int timestamp;
+
+  /// Market question / title.
+  final String? title;
+
+  /// Market URL slug.
+  final String? slug;
+
+  /// The outcome label (e.g. `"Yes"`, `"No"`).
+  final String outcome;
+
+  const UserTrade({
+    required this.transactionHash,
+    required this.proxyWallet,
+    required this.asset,
+    required this.conditionId,
+    required this.side,
+    required this.price,
+    required this.size,
+    required this.timestamp,
+    required this.outcome,
+    this.title,
+    this.slug,
+  });
+
+  factory UserTrade.fromJson(Map<String, dynamic> json) {
+    return UserTrade(
+      transactionHash: json['transactionHash'] as String? ?? '',
+      proxyWallet: json['proxyWallet'] as String? ?? '',
+      asset: json['asset'] as String? ?? '',
+      conditionId: json['conditionId'] as String? ?? '',
+      side: json['side'] as String? ?? '',
+      price: _toDouble(json['price']),
+      size: _toDouble(json['size']),
+      timestamp: json['timestamp'] as int? ?? 0,
+      outcome: json['outcome'] as String? ?? '',
+      title: json['title'] as String?,
+      slug: json['slug'] as String?,
+    );
+  }
+
+  @override
+  String toString() =>
+      'UserTrade(txHash: $transactionHash, side: $side, price: $price, size: $size)';
+}
+
+// ---------------------------------------------------------------------------
+// Activity
+// ---------------------------------------------------------------------------
+
+/// A user activity event on Polymarket (trade, redemption, deposit, etc.).
+///
+/// Returned by [DataClient.getActivity].
+class Activity {
+  /// Activity type (e.g. `"TRADE"`, `"REDEEM"`, `"TRANSFER"`).
+  final String type;
+
+  /// The CTF condition ID of the related market.
+  final String conditionId;
+
+  /// Trade side if applicable (`"BUY"`, `"SELL"`, or `""`).
+  final String side;
+
+  /// Execution price if applicable.
+  final double price;
+
+  /// Size of the transaction in tokens.
+  final double size;
+
+  /// Unix timestamp in seconds.
+  final int timestamp;
+
+  const Activity({
+    required this.type,
+    required this.conditionId,
+    required this.side,
+    required this.price,
+    required this.size,
+    required this.timestamp,
+  });
+
+  factory Activity.fromJson(Map<String, dynamic> json) {
+    return Activity(
+      type: json['type'] as String? ?? '',
+      conditionId: json['conditionId'] as String? ?? '',
+      side: json['side'] as String? ?? '',
+      price: _toDouble(json['price']),
+      size: _toDouble(json['size']),
+      timestamp: json['timestamp'] as int? ?? 0,
+    );
+  }
+
+  @override
+  String toString() =>
+      'Activity(type: $type, conditionId: $conditionId, size: $size)';
+}
+
+// ---------------------------------------------------------------------------
+// Holder
+// ---------------------------------------------------------------------------
+
+/// A holder of a specific prediction market outcome token.
+///
+/// Returned by [DataClient.getHolders].
+class Holder {
+  /// The holder's wallet address (proxy wallet or EOA).
+  final String address;
+
+  /// Polymarket display name or pseudonym.
+  final String pseudonym;
+
+  /// The Polymarket Safe proxy wallet address.
+  final String proxyWallet;
+
+  /// Amount of outcome tokens held.
+  final double amount;
+
+  const Holder({
+    required this.address,
+    required this.pseudonym,
+    required this.proxyWallet,
+    required this.amount,
+  });
+
+  factory Holder.fromJson(Map<String, dynamic> json) {
+    return Holder(
+      address: json['address'] as String? ?? '',
+      pseudonym: json['pseudonym'] as String? ?? '',
+      proxyWallet: json['proxyWallet'] as String? ?? '',
+      amount: _toDouble(json['amount']),
+    );
+  }
+
+  @override
+  String toString() =>
+      'Holder(address: $address, pseudonym: $pseudonym, amount: $amount)';
+}
+
+// ---------------------------------------------------------------------------
+// LeaderboardEntry
+// ---------------------------------------------------------------------------
+
+/// A leaderboard entry showing top Polymarket traders.
+///
+/// Returned by [DataClient.getLeaderboard].
+class LeaderboardEntry {
+  /// Wallet address (proxy wallet).
+  final String address;
+
+  /// Polymarket display name or pseudonym.
+  final String pseudonym;
+
+  /// Total trading volume (USDC).
+  final double volume;
+
+  /// Realized profit and loss (USDC).
+  final double pnl;
+
+  /// Leaderboard rank (1-indexed).
+  final int rank;
+
+  const LeaderboardEntry({
+    required this.address,
+    required this.pseudonym,
+    required this.volume,
+    required this.pnl,
+    required this.rank,
+  });
+
+  factory LeaderboardEntry.fromJson(Map<String, dynamic> json) {
+    return LeaderboardEntry(
+      address: json['address'] as String? ?? '',
+      pseudonym: json['pseudonym'] as String? ?? '',
+      volume: _toDouble(json['volume']),
+      pnl: _toDouble(json['pnl']),
+      rank: json['rank'] as int? ?? 0,
+    );
+  }
+
+  @override
+  String toString() =>
+      'LeaderboardEntry(rank: $rank, address: $address, pnl: $pnl)';
 }

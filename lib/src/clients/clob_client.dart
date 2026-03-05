@@ -934,6 +934,155 @@ class ClobClient {
   }
 
   // ---------------------------------------------------------------------------
+  // Rewards (Level 0 — public)
+  // ---------------------------------------------------------------------------
+
+  /// Returns LP reward earnings breakdown for a specific [date] (YYYY-MM-DD).
+  Future<Map<String, dynamic>> getEarningsForDay(String date) async {
+    final res = await _transport.get(
+      PolymarketUrls.clob,
+      '/rewards/earnings/day',
+      queryParams: {'date': date},
+    );
+    return res as Map<String, dynamic>;
+  }
+
+  /// Returns total LP reward earnings across all markets for [date] (YYYY-MM-DD).
+  Future<Map<String, dynamic>> getTotalEarningsForDay(String date) async {
+    final res = await _transport.get(
+      PolymarketUrls.clob,
+      '/rewards/earnings/total',
+      queryParams: {'date': date},
+    );
+    return res as Map<String, dynamic>;
+  }
+
+  /// Returns per-user earnings and per-market reward config for [date] (YYYY-MM-DD).
+  Future<Map<String, dynamic>> getUserEarningsAndMarketsConfig(
+      String date) async {
+    final res = await _transport.get(
+      PolymarketUrls.clob,
+      '/rewards/earnings/markets-config',
+      queryParams: {'date': date},
+    );
+    return res as Map<String, dynamic>;
+  }
+
+  /// Returns the current reward percentage allocations across markets.
+  Future<Map<String, dynamic>> getRewardPercentages() async {
+    final res = await _transport.get(
+      PolymarketUrls.clob,
+      '/rewards/percentages',
+    );
+    return res as Map<String, dynamic>;
+  }
+
+  /// Returns the current active rewards configuration.
+  Future<Map<String, dynamic>> getCurrentRewards() async {
+    final res = await _transport.get(
+      PolymarketUrls.clob,
+      '/rewards/current',
+    );
+    return res as Map<String, dynamic>;
+  }
+
+  /// Returns raw reward data for a market identified by [conditionId].
+  Future<Map<String, dynamic>> getRawRewardsForMarket(
+      String conditionId) async {
+    final res = await _transport.get(
+      PolymarketUrls.clob,
+      '/rewards/raw',
+      queryParams: {'conditionId': conditionId},
+    );
+    return res as Map<String, dynamic>;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Read-Only API Keys (Level 2 — HMAC required)
+  // ---------------------------------------------------------------------------
+
+  /// Creates a new read-only API key for third-party integrations.
+  ///
+  /// Read-only keys can query account data but cannot place or cancel orders.
+  /// Requires [setCredentials] to have been called first.
+  Future<ApiCredentials> createReadonlyApiKey() async {
+    _requireCredentials();
+    final address = await _wallet!.getAddress();
+    final headers = _buildLevel2Headers(
+      method: 'POST',
+      path: '/auth/readonly-api-key',
+      walletAddress: address,
+    );
+    final res = await _transport.post(
+      PolymarketUrls.clob,
+      '/auth/readonly-api-key',
+      headers: headers,
+    ) as Map<String, dynamic>;
+    return ApiCredentials.fromJson(res);
+  }
+
+  /// Returns all read-only API keys associated with the current wallet.
+  ///
+  /// Requires [setCredentials] to have been called first.
+  Future<List<ApiCredentials>> getReadonlyApiKeys() async {
+    _requireCredentials();
+    final address = await _wallet!.getAddress();
+    final headers = _buildLevel2Headers(
+      method: 'GET',
+      path: '/auth/readonly-api-keys',
+      walletAddress: address,
+    );
+    final res = await _transport.get(
+      PolymarketUrls.clob,
+      '/auth/readonly-api-keys',
+      headers: headers,
+    );
+    if (res == null) return [];
+    final list = res as List<dynamic>;
+    return list
+        .map((j) => ApiCredentials.fromJson(j as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Revokes the read-only API key [apiKey].
+  ///
+  /// Requires [setCredentials] to have been called first.
+  Future<void> deleteReadonlyApiKey(String apiKey) async {
+    _requireCredentials();
+    final address = await _wallet!.getAddress();
+    final bodyMap = {'apiKey': apiKey};
+    final headers = _buildLevel2Headers(
+      method: 'DELETE',
+      path: '/auth/readonly-api-key',
+      body: jsonEncode(bodyMap),
+      walletAddress: address,
+    );
+    await _transport.delete(
+      PolymarketUrls.clob,
+      '/auth/readonly-api-key',
+      body: bodyMap,
+      headers: headers,
+    );
+  }
+
+  /// Verifies that [apiKey] is a valid read-only key owned by [address].
+  ///
+  /// Returns `true` if the key is valid, `false` otherwise.
+  Future<bool> validateReadonlyApiKey(String address, String apiKey) async {
+    final res = await _transport.get(
+      PolymarketUrls.clob,
+      '/auth/validate-readonly-api-key',
+      queryParams: {
+        'address': _checksumAddress(address),
+        'apiKey': apiKey,
+      },
+    );
+    if (res == null) return false;
+    final map = res as Map<String, dynamic>;
+    return map['valid'] as bool? ?? false;
+  }
+
+  // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------
 
