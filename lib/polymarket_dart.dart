@@ -39,6 +39,7 @@ library;
 export 'src/clients/clob_client.dart';
 export 'src/clients/data_client.dart';
 export 'src/clients/websocket_client.dart';
+export 'src/clients/relayer_client.dart';
 
 // Models
 export 'src/models/clob_types.dart';
@@ -50,10 +51,17 @@ export 'src/signing/wallet_adapter.dart';
 export 'src/signing/private_key_wallet_adapter.dart';
 export 'src/signing/eip712.dart';
 export 'src/signing/hmac_auth.dart';
+export 'src/signing/safe_tx.dart' show encodeApprovalMultisend, hashSafeTx;
 
 // Transport
 export 'src/transport/http_transport.dart';
 export 'src/transport/websocket_transport.dart';
 
+// Blockchain
+export 'src/blockchain/polygon_rpc.dart';
+export 'src/blockchain/eoa_approvals.dart';
+export 'src/blockchain/rlp.dart' show rlpEncode;
+
 // Utils
 export 'src/utils/constants.dart';
+export 'src/utils/contracts.dart';

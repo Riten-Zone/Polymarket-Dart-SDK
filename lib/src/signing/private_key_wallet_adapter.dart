@@ -21,6 +21,7 @@ import 'package:pointycastle/macs/hmac.dart';
 import 'package:pointycastle/signers/ecdsa_signer.dart';
 
 import 'wallet_adapter.dart';
+import '../blockchain/rlp.dart';
 
 /// Signs EIP-712 typed data using a raw secp256k1 private key.
 ///
@@ -284,6 +285,95 @@ class PrivateKeyWalletAdapter implements WalletAdapter {
 
   ECPoint? _sumOfTwoMultiplies(ECPoint p, BigInt a, ECPoint q, BigInt b) {
     return (p * a)! + (q * b);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Raw transaction signing (EIP-155)
+  // ---------------------------------------------------------------------------
+
+  /// Sign an EIP-155 raw transaction and return the RLP-encoded hex string
+  /// ready for `eth_sendRawTransaction`.
+  ///
+  /// [to] — destination address (checksummed or lowercase, with or without 0x).
+  /// [data] — ABI-encoded calldata hex string (with 0x prefix).
+  /// [nonce] — account nonce.
+  /// [gasPrice] — gas price in wei.
+  /// [gasLimit] — gas limit (default 100 000).
+  /// [chainId] — EVM chain ID (default 137 = Polygon).
+  Future<String> signRawTransaction({
+    required String to,
+    required String data,
+    required int nonce,
+    required BigInt gasPrice,
+    int gasLimit = 100000,
+    int chainId = 137,
+  }) async {
+    final toBytes = _hexToBytes(to.startsWith('0x') ? to.substring(2) : to);
+    final dataBytes =
+        _hexToBytes(data.startsWith('0x') ? data.substring(2) : data);
+
+    // EIP-155 unsigned transaction: [nonce, gasPrice, gasLimit, to, value, data, chainId, 0, 0]
+    final unsigned = [
+      nonce,
+      gasPrice,
+      gasLimit,
+      toBytes,
+      0, // value = 0
+      dataBytes,
+      chainId,
+      0,
+      0,
+    ];
+    final rlpUnsigned = rlpEncode(unsigned);
+    final hash = _keccak256(rlpUnsigned);
+    final sigHex = _signHash(hash);
+
+    // Parse r, s, v from signature
+    final sigBytes = _hexToBytes(sigHex.substring(2));
+    final r = _bytesToBigInt(Uint8List.sublistView(sigBytes, 0, 32));
+    final s = _bytesToBigInt(Uint8List.sublistView(sigBytes, 32, 64));
+    final vRaw = sigBytes[64]; // 27 or 28
+
+    // EIP-155 v = recovery_id + 35 + 2*chainId
+    final v = BigInt.from(vRaw - 27 + 35 + 2 * chainId);
+
+    // Signed transaction: [nonce, gasPrice, gasLimit, to, value, data, v, r, s]
+    final signed = [
+      nonce,
+      gasPrice,
+      gasLimit,
+      toBytes,
+      0,
+      dataBytes,
+      v,
+      r,
+      s,
+    ];
+    final rlpSigned = rlpEncode(signed);
+    return '0x${_bytesToHex(rlpSigned)}';
+  }
+
+  /// Sign a message hash using EIP-191 (`eth_sign` / personal_sign) format.
+  ///
+  /// Prepends `"\x19Ethereum Signed Message:\n32"` before hashing and signing.
+  /// This matches Python's `encode_defunct(HexBytes(hash))` + `sign_message()`.
+  ///
+  /// Returns a 65-byte hex signature with v adjusted to (31 or 32) for
+  /// Gnosis Safe compatibility (Safe uses v=31/32 to denote eth_sign sigs).
+  Future<String> signEthMessage(Uint8List messageHash) async {
+    const prefix = '\x19Ethereum Signed Message:\n32';
+    final prefixBytes = Uint8List.fromList(prefix.codeUnits);
+    final payload = Uint8List(prefixBytes.length + 32);
+    payload.setRange(0, prefixBytes.length, prefixBytes);
+    payload.setRange(prefixBytes.length, payload.length, messageHash);
+    final digest = _keccak256(payload);
+    final sig = _signHash(digest);
+
+    // Adjust v from 27/28 → 31/32 for Gnosis Safe eth_sign signature type
+    final sigBytes = _hexToBytes(sig.substring(2));
+    final vRaw = sigBytes[64]; // 27 or 28
+    sigBytes[64] = vRaw + 4;   // 31 or 32
+    return '0x${_bytesToHex(sigBytes)}';
   }
 
   // ---------------------------------------------------------------------------
