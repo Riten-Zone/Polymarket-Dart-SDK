@@ -2,6 +2,22 @@
 
 ---
 
+## ✅ Done: On-Chain Approvals + Order Placement (2026-03-05)
+
+Both order paths now work end-to-end:
+- **EOA**: `ensureEoaApprovals(wallet)` — direct Polygon JSON-RPC, 7 transactions, EOA pays MATIC gas
+- **GnosisSafe**: `RelayerClient(wallet, creds).runApprovals(safeAddress)` — gasless via Polymarket relayer
+
+Orders confirmed working:
+- EOA `postOrder()` returns `orderId` directly after approvals set
+- GnosisSafe `postOrder()` uses `signatureType: 2` (GnosisSafe)
+
+Bug fixed: `SignedOrder.toJson()` serialized `side` as int (0/1) — API requires string ("BUY"/"SELL").
+
+**63 tests passing** (23 unit + 18 L0 + 8 auth + 14 approvals)
+
+---
+
 ## ✅ Done: Live Testing & Bug Fixes
 
 All 18 integration tests pass against the live API. Fixes applied:
@@ -27,7 +43,7 @@ All CLOB endpoint paths have been audited against `py_clob_client/endpoints.py`.
 |------|-------|
 | CLOB WS subscription message format | `action`/`channel` field names need live verification |
 | RTDS ping format | May expect plain `"PING"` string |
-| `postOrder` / `cancelOrder` end-to-end | Needs USDC on Polygon |
+| `postOrder` / `cancelOrder` end-to-end | ✅ Done — both EOA and GnosisSafe place orders successfully |
 
 ---
 
@@ -168,6 +184,7 @@ This is the key integration between `polymarket_dart` and the Riten Flutter app.
 |---------|-------|--------|
 | v0.1.0 | Core CLOB — 42 methods, full auth, WebSocket, 23 tests | ✅ Done |
 | post v0.1 | Live testing — 49 tests passing, full path audit, all known bugs fixed | ✅ Done |
+| post v0.1 | On-chain approvals (EOA + GnosisSafe), side bug fix, 63 tests passing | ✅ Done |
 | v0.2.0 | GammaClient, DataClient, Rewards, Readonly keys | Planned |
 | v0.3.0 | Pub.dev publish, dartdoc, README, example | Planned |
 | Future | RFQ, Builder features, Privy wallet adapter | Backlog |

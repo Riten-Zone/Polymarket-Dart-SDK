@@ -2,6 +2,54 @@
 
 ---
 
+## On-Chain Approvals — EOA + GnosisSafe (2026-03-05)
+
+### Bug fixed: `side` field serialization in `clob_types.dart`
+
+`SignedOrder.toJson()` was sending `"side": 0` or `"side": 1` (int) — the CLOB API requires `"side": "BUY"` or `"side": "SELL"` (string). Fixed:
+```dart
+'side': side == 0 ? 'BUY' : 'SELL',
+```
+This was causing all order placement to return 400 "Invalid order payload" despite correct EIP-712 signing.
+
+### New files added
+
+| File | Purpose |
+|------|---------|
+| `lib/src/utils/contracts.dart` | All Polygon contract addresses + URLs (USDC, CTF, exchanges, multisend, relayer) |
+| `lib/src/blockchain/rlp.dart` | Minimal RLP encoder for EIP-155 raw tx encoding (handles int, BigInt, Uint8List, List) |
+| `lib/src/blockchain/polygon_rpc.dart` | `PolygonRpc` (eth_call, getTransactionCount, getGasPrice, sendRawTransaction, waitForReceipt) + `AbiEncoder` (encodeApprove, encodeSetApprovalForAll, encodeIsApprovedForAll, encodeAllowance) |
+| `lib/src/blockchain/eoa_approvals.dart` | `ensureEoaApprovals()` — idempotent, checks and sets 7 on-chain approvals for EOA |
+| `lib/src/signing/safe_tx.dart` | `hashSafeTx()` (EIP-712 SafeTx digest) + `encodeApprovalMultisend()` (6-approval multisend calldata) |
+| `lib/src/clients/relayer_client.dart` | `BuilderCredentials` + `RelayerClient.runApprovals()` — gasless GnosisSafe approvals via Polymarket relayer |
+
+### Extended `PrivateKeyWalletAdapter`
+
+- `signRawTransaction()` — EIP-155 raw tx signing: `v = recovery_id + 35 + 2*chainId`
+- `signEthMessage()` — EIP-191 prefix + sign, v adjusted 27/28 → 31/32 for Gnosis Safe
+
+### EOA approvals confirmed on Polygon mainnet
+
+`ensureEoaApprovals()` submitted 7 transactions:
+1. CTF → `setApprovalForAll(CTF_EXCHANGE, true)`
+2. CTF → `setApprovalForAll(NEG_RISK_ADAPTER, true)`
+3. CTF → `setApprovalForAll(NEG_RISK_EXCHANGE, true)`
+4. USDC → `approve(CTF, MAX_UINT256)`
+5. USDC → `approve(CTF_EXCHANGE, MAX_UINT256)`
+6. USDC → `approve(NEG_RISK_ADAPTER, MAX_UINT256)`
+7. USDC → `approve(NEG_RISK_EXCHANGE, MAX_UINT256)`
+
+### New tests
+
+| Test file | Coverage |
+|-----------|---------|
+| `test/approvals_test.dart` | ABI encoding unit tests (selectors, lengths, MAX_UINT256, bool), RLP encoder unit tests, integration: reads `isApprovedForAll` + `allowance` from Polygon mainnet |
+| `test/relayer_test.dart` | Integration: `RelayerClient.runApprovals()` with BUILDER_* creds from `.env` |
+
+**Running totals: 23 unit + 18 L0 + 8 auth + 14 approvals = 63 tests passing**
+
+---
+
 ## Live Testing & Bug Fixes (post v0.1.0)
 
 ### Path audit — 5 more wrong paths fixed — 2026-03-03
