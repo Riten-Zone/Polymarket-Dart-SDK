@@ -446,7 +446,7 @@ class SignedOrder {
         'expiration': expiration,
         'nonce': nonce,
         'feeRateBps': feeRateBps,
-        'side': side,
+        'side': side == 0 ? 'BUY' : 'SELL', // API expects string, EIP-712 uses int
         'signatureType': signatureType,
         'signature': signature,
       };
