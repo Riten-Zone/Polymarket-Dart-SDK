@@ -4,7 +4,9 @@ A Dart SDK for the [Polymarket](https://polymarket.com) CLOB API — REST, WebSo
 
 ## Features
 
-- **42 CLOB API methods** — markets, orderbook, pricing, order management, auth
+- **52 CLOB API methods** — markets, orderbook, pricing, order management, rewards, auth
+- **GammaClient** — 6 methods for market/event discovery, tags, and search (no auth required)
+- **DataClient** — 6 methods for user positions, trades, activity, and holders
 - **EIP-712 signing** — order signing for both EOA and GnosisSafe wallets
 - **HMAC Level 2 auth** — API key management and authenticated requests
 - **On-chain approvals** — EOA (direct Polygon RPC) and GnosisSafe (gasless relayer)
@@ -34,22 +36,28 @@ dart pub get
 import 'package:polymarket_dart/polymarket_dart.dart';
 
 void main() async {
-  // Public API — no auth needed
+  // CLOB public API — no auth needed
   final client = ClobClient();
   final markets = await client.getMarkets();
   print(markets.data.first.question);
   client.close();
+
+  // Market discovery via Gamma API — no auth needed
+  final gamma = GammaClient();
+  final topMarkets = await gamma.getMarkets(
+    active: true,
+    order: 'volume24hr',
+    ascending: false,
+    limit: 5,
+  );
+  print(topMarkets.first.question);
+  gamma.close();
 }
 ```
 
 ## Usage
 
-See [docs/plan/GUIDES.md](docs/plan/GUIDES.md) for detailed examples covering:
-- Public market data
-- EIP-712 API key creation
-- Placing orders (EOA and GnosisSafe)
-- Setting on-chain approvals
-- WebSocket subscriptions
+See [docs/plan/GUIDES.md](docs/plan/GUIDES.md) for detailed examples covering public market data, GammaClient discovery, DataClient analytics, EIP-712 API key creation, placing orders (EOA and GnosisSafe), on-chain approvals, and WebSocket subscriptions.
 
 ## Prerequisites
 
@@ -100,8 +108,14 @@ await relayer.runApprovals(safeAddress);
 # Unit tests (no network)
 dart test test/hmac_auth_test.dart test/eip712_test.dart
 
-# L0 integration (public API)
+# CLOB public API
 dart test test/clob_client_test.dart --tags integration
+
+# Gamma API (market discovery)
+dart test test/gamma_client_test.dart --tags gamma
+
+# Data API (user analytics)
+dart test test/data_client_test.dart --tags data
 
 # L2 auth (requires PRIVATE_KEY in .env)
 dart test test/auth_test.dart --tags auth
@@ -111,6 +125,9 @@ dart test test/approvals_test.dart --tags approvals
 
 # GnosisSafe relayer (requires BUILDER_* creds in .env)
 dart test test/relayer_test.dart --tags relayer
+
+# Full suite (80 tests)
+dart test --tags integration
 ```
 
 Create a `.env` file in the project root:
