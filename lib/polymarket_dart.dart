@@ -36,19 +36,24 @@
 library;
 
 // Clients
+export 'src/clients/bridge_client.dart';
 export 'src/clients/clob_client.dart';
 export 'src/clients/data_client.dart';
 export 'src/clients/gamma_client.dart';
-export 'src/clients/websocket_client.dart';
 export 'src/clients/relayer_client.dart';
+export 'src/clients/rfq_client.dart';
+export 'src/clients/websocket_client.dart';
 
 // Models
+export 'src/models/bridge_types.dart';
 export 'src/models/clob_types.dart';
 export 'src/models/data_types.dart';
 export 'src/models/gamma_types.dart';
+export 'src/models/rfq_types.dart';
 export 'src/models/websocket_types.dart';
 
 // Signing
+export 'src/signing/builder_auth.dart';
 export 'src/signing/wallet_adapter.dart';
 export 'src/signing/private_key_wallet_adapter.dart';
 export 'src/signing/eip712.dart';

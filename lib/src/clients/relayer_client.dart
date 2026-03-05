@@ -9,26 +9,13 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
-import 'package:crypto/crypto.dart';
 
+import '../signing/builder_auth.dart';
 import '../signing/private_key_wallet_adapter.dart';
 import '../signing/safe_tx.dart';
 import '../utils/contracts.dart';
 
-/// Builder Program API credentials.
-///
-/// Obtain from https://polymarket.com/settings?tab=builder
-class BuilderCredentials {
-  final String apiKey;
-  final String secret;
-  final String passphrase;
-
-  const BuilderCredentials({
-    required this.apiKey,
-    required this.secret,
-    required this.passphrase,
-  });
-}
+export '../signing/builder_auth.dart' show BuilderCredentials;
 
 /// Polymarket relayer client for gasless Gnosis Safe transactions.
 ///
@@ -131,7 +118,7 @@ class RelayerClient {
   Future<int> _getNonce(String fromAddress) async {
     final uri = Uri.parse(
         '$_relayerUrl/nonce?address=$fromAddress&type=safe');
-    final response = await _http.get(uri, headers: _builderHeaders('GET', '/nonce?address=$fromAddress&type=safe'));
+    final response = await _http.get(uri, headers: generateBuilderHeaders(creds: _creds, method: 'GET', path: '/nonce?address=$fromAddress&type=safe'));
     _checkStatus(response, '/nonce');
     final json = jsonDecode(response.body) as Map<String, dynamic>;
     return (json['nonce'] as num).toInt();
@@ -142,7 +129,7 @@ class RelayerClient {
     final bodyStr = jsonEncode(body);
     final headers = {
       'Content-Type': 'application/json',
-      ..._builderHeaders('POST', path, body: bodyStr),
+      ...generateBuilderHeaders(creds: _creds, method: 'POST', path: path, body: bodyStr),
     };
     final response = await _http.post(
       Uri.parse('$_relayerUrl$path'),
@@ -180,31 +167,6 @@ class RelayerClient {
     }
     throw RelayerException(
         'Transaction $transactionId did not confirm within polling window');
-  }
-
-  /// Generate Builder HMAC headers.
-  ///
-  /// Same algorithm as CLOB HMAC but different header names:
-  /// `POLY_BUILDER_API_KEY`, `POLY_BUILDER_TIMESTAMP`, etc.
-  Map<String, String> _builderHeaders(String method, String path,
-      {String? body}) {
-    final ts =
-        (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString();
-
-    final normalizedBody = body?.replaceAll("'", '"') ?? '';
-    final message = ts + method.toUpperCase() + path + normalizedBody;
-
-    final keyBytes = base64Url.decode(base64Url.normalize(_creds.secret));
-    final msgBytes = utf8.encode(message);
-    final sig = Hmac(sha256, keyBytes).convert(msgBytes).bytes;
-    final sigBase64 = base64Url.encode(sig);
-
-    return {
-      'POLY_BUILDER_API_KEY': _creds.apiKey,
-      'POLY_BUILDER_SIGNATURE': sigBase64,
-      'POLY_BUILDER_TIMESTAMP': ts,
-      'POLY_BUILDER_PASSPHRASE': _creds.passphrase,
-    };
   }
 
   void _checkStatus(http.Response response, String path) {

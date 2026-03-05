@@ -13,6 +13,7 @@ import 'dart:typed_data';
 import 'package:pointycastle/digests/keccak.dart';
 
 import '../models/clob_types.dart';
+import '../signing/builder_auth.dart';
 import '../signing/eip712.dart';
 import '../signing/hmac_auth.dart';
 import '../signing/wallet_adapter.dart';
@@ -40,12 +41,15 @@ class ClobClient {
   final WalletAdapter? _wallet;
   ApiCredentials? _credentials;
   HmacAuth? _hmac;
+  final BuilderCredentials? _builderCredentials;
 
   ClobClient({
     WalletAdapter? wallet,
     ApiCredentials? credentials,
+    BuilderCredentials? builderCredentials,
     HttpTransport? transport,
   })  : _wallet = wallet,
+        _builderCredentials = builderCredentials,
         _transport = transport ?? HttpTransport() {
     if (credentials != null) {
       setCredentials(credentials);
@@ -1083,6 +1087,121 @@ class ClobClient {
   }
 
   // ---------------------------------------------------------------------------
+  // Builder API (Level 2 + Builder HMAC headers)
+  // ---------------------------------------------------------------------------
+
+  /// Returns orders attributed to this builder account.
+  ///
+  /// Requires [builderCredentials] to have been passed to the constructor.
+  Future<List<OpenOrder>> getBuilderOrders({String? market}) async {
+    _requireBuilderCredentials();
+    final address = (await _wallet!.getAddress()).toLowerCase();
+    const hmacPath = '/orders';
+    final query = <String, String>{};
+    if (market != null) query['market'] = market;
+    final headers = {
+      ..._buildLevel2Headers(method: 'GET', path: hmacPath, walletAddress: address),
+      ...generateBuilderHeaders(creds: _builderCredentials!, method: 'GET', path: hmacPath),
+    };
+    final res = await _transport.get(
+      PolymarketUrls.clob,
+      hmacPath,
+      queryParams: query.isEmpty ? null : query,
+      headers: headers,
+    ) as List;
+    return res.map((e) => OpenOrder.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  /// Returns open orders attributed to this builder account.
+  ///
+  /// Requires [builderCredentials] to have been passed to the constructor.
+  Future<OpenOrdersPage> getBuilderOpenOrders({
+    String? market,
+    String? assetId,
+  }) async {
+    _requireBuilderCredentials();
+    final address = (await _wallet!.getAddress()).toLowerCase();
+    const hmacPath = '/open-orders';
+    final query = <String, String>{};
+    if (market != null) query['market'] = market;
+    if (assetId != null) query['asset_id'] = assetId;
+    final headers = {
+      ..._buildLevel2Headers(method: 'GET', path: hmacPath, walletAddress: address),
+      ...generateBuilderHeaders(creds: _builderCredentials!, method: 'GET', path: hmacPath),
+    };
+    final res = await _transport.get(
+      PolymarketUrls.clob,
+      hmacPath,
+      queryParams: query.isEmpty ? null : query,
+      headers: headers,
+    ) as Map<String, dynamic>;
+    return OpenOrdersPage.fromJson(res);
+  }
+
+  /// Returns trades routed through this builder account.
+  ///
+  /// Requires [builderCredentials] to have been passed to the constructor.
+  Future<TradesPage> getBuilderTrades({String? market, int? limit}) async {
+    _requireBuilderCredentials();
+    final address = (await _wallet!.getAddress()).toLowerCase();
+    const hmacPath = '/data/trades';
+    final query = <String, String>{};
+    if (market != null) query['market'] = market;
+    if (limit != null) query['limit'] = limit.toString();
+    final headers = {
+      ..._buildLevel2Headers(method: 'GET', path: hmacPath, walletAddress: address),
+      ...generateBuilderHeaders(creds: _builderCredentials!, method: 'GET', path: hmacPath),
+    };
+    final res = await _transport.get(
+      PolymarketUrls.clob,
+      hmacPath,
+      queryParams: query.isEmpty ? null : query,
+      headers: headers,
+    ) as Map<String, dynamic>;
+    return TradesPage.fromJson(res);
+  }
+
+  /// Revoke the builder API key.
+  ///
+  /// Requires [builderCredentials] to have been passed to the constructor.
+  Future<void> revokeBuilderApiKey() async {
+    _requireBuilderCredentials();
+    final address = (await _wallet!.getAddress()).toLowerCase();
+    const path = '/auth/builder-api-key';
+    final headers = {
+      ..._buildLevel2Headers(method: 'DELETE', path: path, walletAddress: address),
+      ...generateBuilderHeaders(creds: _builderCredentials!, method: 'DELETE', path: path),
+    };
+    await _transport.delete(PolymarketUrls.clob, path, headers: headers);
+  }
+
+  /// Returns the Polymarket builders leaderboard.
+  ///
+  /// [timePeriod] — one of `'DAY'`, `'WEEK'`, `'MONTH'`, `'ALL'` (default: `'DAY'`).
+  /// [limit] — number of results, 1–50 (default: 25).
+  /// [offset] — pagination offset, 0–1000 (default: 0).
+  Future<List<BuilderLeaderboardEntry>> getBuilderLeaderboard({
+    String timePeriod = 'DAY',
+    int limit = 25,
+    int offset = 0,
+  }) async {
+    final res = await _transport.get(
+      PolymarketUrls.clob,
+      '/v1/builders/leaderboard',
+      queryParams: {
+        'timePeriod': timePeriod,
+        'limit': limit.toString(),
+        'offset': offset.toString(),
+      },
+    );
+    if (res == null) return [];
+    final list = res as List<dynamic>;
+    return list
+        .map((e) => BuilderLeaderboardEntry.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------
 
@@ -1100,6 +1219,15 @@ class ClobClient {
       throw StateError(
           'ClobClient: API credentials required for this operation. '
           'Call createOrDeriveApiKey() and then setCredentials().');
+    }
+  }
+
+  void _requireBuilderCredentials() {
+    _requireCredentials();
+    if (_builderCredentials == null) {
+      throw StateError(
+          'ClobClient: builderCredentials required for builder methods. '
+          'Pass BuilderCredentials when constructing ClobClient.');
     }
   }
 

@@ -5,6 +5,7 @@ class PolymarketUrls {
   static const String clob = 'https://clob.polymarket.com';
   static const String gamma = 'https://gamma-api.polymarket.com';
   static const String data = 'https://data-api.polymarket.com';
+  static const String bridge = 'https://bridge.polymarket.com';
   static const String clobWs =
       'wss://ws-subscriptions-clob.polymarket.com/ws/market';
   static const String rtdsWs = 'wss://ws-live-data.polymarket.com/ws';

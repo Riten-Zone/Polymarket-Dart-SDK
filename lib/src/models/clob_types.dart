@@ -823,6 +823,46 @@ class OrdersScoring {
 }
 
 // ---------------------------------------------------------------------------
+// Builder leaderboard
+// ---------------------------------------------------------------------------
+
+/// An entry on the Polymarket builders leaderboard.
+class BuilderLeaderboardEntry {
+  final int rank;
+  final String builder;
+  final double volume;
+  final int activeUsers;
+  final bool verified;
+  final String? builderLogo;
+
+  const BuilderLeaderboardEntry({
+    required this.rank,
+    required this.builder,
+    required this.volume,
+    required this.activeUsers,
+    required this.verified,
+    this.builderLogo,
+  });
+
+  factory BuilderLeaderboardEntry.fromJson(Map<String, dynamic> json) =>
+      BuilderLeaderboardEntry(
+        rank: json['rank'] as int? ?? 0,
+        builder: json['builder'] as String? ?? '',
+        volume: _leaderboardDouble(json['volume']),
+        activeUsers: json['activeUsers'] as int? ?? 0,
+        verified: json['verified'] as bool? ?? false,
+        builderLogo: json['builderLogo'] as String?,
+      );
+}
+
+double _leaderboardDouble(dynamic v) {
+  if (v == null) return 0.0;
+  if (v is double) return v;
+  if (v is int) return v.toDouble();
+  return double.tryParse(v.toString()) ?? 0.0;
+}
+
+// ---------------------------------------------------------------------------
 // Heartbeat
 // ---------------------------------------------------------------------------
 

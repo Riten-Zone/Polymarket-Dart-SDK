@@ -300,6 +300,42 @@ BUILDER_API_PASSPHRASE=...
 
 ---
 
+## 13. Neg-Risk Markets
+
+Neg-risk markets (multi-outcome markets) use a different exchange contract. Detection and order placement is automatic:
+
+```dart
+final wallet = PrivateKeyWalletAdapter('0x...');
+final client = ClobClient(
+  wallet: wallet,
+  credentials: ApiCredentials(apiKey: '...', secret: '...', passphrase: '...'),
+);
+
+// Check if a market is neg-risk
+final tokenId = '0x<outcome_token_id>';
+final isNegRisk = await client.getNegRisk(tokenId);
+print('Neg-risk: $isNegRisk');
+
+// Place an order — pass negRisk: true to use the correct exchange contract.
+// When negRisk: true, EIP-712 signing uses 0xC5d563A... instead of 0x4bFb41d...
+final order = await client.createOrder(
+  OrderArgs(
+    tokenId: tokenId,
+    price: 0.40,
+    size: 20.0,
+    side: OrderSide.buy,
+  ),
+  options: CreateOrderOptions(negRisk: true),
+);
+
+final response = await client.postOrder(order);
+print('Order ID: ${response.orderId}');
+```
+
+On-chain approvals (`ensureEoaApprovals`) already include the neg-risk adapter and exchange — no extra setup needed.
+
+---
+
 ## Contract Address Reference
 
 ```dart

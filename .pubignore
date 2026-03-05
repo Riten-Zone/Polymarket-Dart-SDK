@@ -1,0 +1,11 @@
+# Internal planning docs — not part of the published package
+docs/
+
+# Dev tools
+tool/
+
+# Environment
+.env
+
+# Claude/editor config
+CLAUDE.md
