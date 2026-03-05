@@ -47,6 +47,7 @@ class DataClient {
       queryParams: params,
     );
 
+    if (response == null) return [];
     final list = response as List<dynamic>;
     return list
         .map((j) => Position.fromJson(j as Map<String, dynamic>))

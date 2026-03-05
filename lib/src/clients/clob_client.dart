@@ -768,22 +768,34 @@ class ClobClient {
   }
 
   /// Update USDC or conditional token allowance.
+  ///
+  /// Triggers a Polymarket backend meta-transaction that sets the on-chain
+  /// approval (USDC `approve` or CTF `setApprovalForAll`) on behalf of the
+  /// user — no on-chain transaction needed from the caller.
+  ///
+  /// Pass `assetType: 'COLLATERAL'` to approve USDC spending.
+  /// Pass `assetType: 'CONDITIONAL'` with a `tokenId` to approve CTF token transfers.
+  /// Pass `signatureType: 2` in [params] to update allowances for a Gnosis Safe funder.
   Future<void> updateBalanceAllowance({
-    required BalanceAllowanceParams params,
+    BalanceAllowanceParams? params,
   }) async {
     _requireCredentials();
     final address = (await _wallet!.getAddress()).toLowerCase();
-    final body = jsonEncode(params.toQueryParams());
+    final query = <String, String>{
+      'signature_type': '0',
+      ...?params?.toQueryParams(),
+    };
+    // HMAC signs the bare path only — query params go to URL, same as getBalanceAllowance.
+    const hmacPath = '/balance-allowance/update';
     final headers = _buildLevel2Headers(
-      method: 'POST',
-      path: '/balance-allowance/update',
-      body: body,
+      method: 'GET',
+      path: hmacPath,
       walletAddress: address,
     );
-    await _transport.post(
+    await _transport.get(
       PolymarketUrls.clob,
-      '/balance-allowance/update',
-      body: jsonDecode(body),
+      hmacPath,
+      queryParams: query,
       headers: headers,
     );
   }

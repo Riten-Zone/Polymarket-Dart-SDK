@@ -186,6 +186,80 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
+  // Level 2 — Allowance setup (must run before order placement)
+  // ---------------------------------------------------------------------------
+
+  group('L2 — Allowance setup', () {
+    test('updateBalanceAllowance COLLATERAL (EOA) does not throw', () async {
+      await client.updateBalanceAllowance(
+        params: const BalanceAllowanceParams(assetType: 'COLLATERAL'),
+      );
+      final bal = await client.getBalanceAllowance(
+        params: const BalanceAllowanceParams(assetType: 'COLLATERAL'),
+      );
+      print('EOA allowance after update: ${bal.allowance}');
+    }, timeout: const Timeout(Duration(seconds: 15)));
+
+    test('updateBalanceAllowance CONDITIONAL (EOA) does not throw', () async {
+      if (testTokenId.isEmpty) return;
+      await client.updateBalanceAllowance(
+        params: BalanceAllowanceParams(
+          assetType: 'CONDITIONAL',
+          tokenId: testTokenId,
+        ),
+      );
+      final bal = await client.getBalanceAllowance(
+        params: BalanceAllowanceParams(
+          assetType: 'CONDITIONAL',
+          tokenId: testTokenId,
+        ),
+      );
+      print('EOA conditional allowance after update: ${bal.allowance}');
+    }, timeout: const Timeout(Duration(seconds: 15)));
+
+    test('updateBalanceAllowance COLLATERAL (GnosisSafe funder) does not throw', () async {
+      if (funderAddress.isEmpty) {
+        print('Skipping: FUNDER_ADDRESS not set in .env');
+        return;
+      }
+      await client.updateBalanceAllowance(
+        params: BalanceAllowanceParams(
+          assetType: 'COLLATERAL',
+          signatureType: 2,
+        ),
+      );
+      final bal = await client.getBalanceAllowance(
+        params: BalanceAllowanceParams(
+          assetType: 'COLLATERAL',
+          user: funderAddress,
+          signatureType: 2,
+        ),
+      );
+      print('Safe allowance after update: ${bal.allowance}');
+    }, timeout: const Timeout(Duration(seconds: 15)));
+
+    test('updateBalanceAllowance CONDITIONAL (GnosisSafe funder) does not throw', () async {
+      if (funderAddress.isEmpty || testTokenId.isEmpty) return;
+      await client.updateBalanceAllowance(
+        params: BalanceAllowanceParams(
+          assetType: 'CONDITIONAL',
+          tokenId: testTokenId,
+          signatureType: 2,
+        ),
+      );
+      final bal = await client.getBalanceAllowance(
+        params: BalanceAllowanceParams(
+          assetType: 'CONDITIONAL',
+          tokenId: testTokenId,
+          user: funderAddress,
+          signatureType: 2,
+        ),
+      );
+      print('Safe conditional allowance after update: ${bal.allowance}');
+    }, timeout: const Timeout(Duration(seconds: 15)));
+  });
+
+  // ---------------------------------------------------------------------------
   // Level 2 — Order placement & cancellation (requires USDC on Gnosis Safe)
   // ---------------------------------------------------------------------------
 
@@ -204,7 +278,8 @@ void main() {
       print('USDC balance: ${bal.balance}, allowance: ${bal.allowance}, assetAddress: ${bal.assetAddress}');
       final rawBalance = bal.balance;
       final balance = rawBalance != null ? double.tryParse(rawBalance) ?? 0.0 : 0.0;
-      if (balance < 5.0) {
+      // Balance is in micro-USDC (6 decimals): 5_000_000 = $5.00 USDC.
+      if (balance < 5_000_000) {
         print(
           'Skipping order placement: insufficient USDC balance ($rawBalance). '
           'Fund the wallet and approve the exchange contract to enable this test. '
@@ -304,7 +379,8 @@ void main() {
       final rawFunderBalance = funderBal.balance;
       final funderBalance =
           rawFunderBalance != null ? double.tryParse(rawFunderBalance) ?? 0.0 : 0.0;
-      if (funderBalance < 5.0) {
+      // Balance is in micro-USDC (6 decimals): 5_000_000 = $5.00 USDC.
+      if (funderBalance < 5_000_000) {
         print(
           'Skipping funder order: insufficient USDC balance ($rawFunderBalance). '
           'Deposit USDC through the Polymarket frontend to fund this wallet.',
