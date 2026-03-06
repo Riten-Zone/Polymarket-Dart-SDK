@@ -10,6 +10,8 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart' as crypto;
+
 import 'package:pointycastle/digests/keccak.dart';
 
 import '../models/clob_types.dart';
@@ -136,12 +138,24 @@ class ClobClient {
     return MarketsPage.fromJson(res);
   }
 
+  /// Get sampling simplified markets (lighter payload, subset for rewards).
+  Future<MarketsPage> getSamplingSimplifiedMarkets({String? nextCursor}) async {
+    final params = <String, String>{};
+    if (nextCursor != null) params['next_cursor'] = nextCursor;
+    final res = await _transport.get(
+      PolymarketUrls.clob,
+      '/sampling-simplified-markets',
+      queryParams: params.isEmpty ? null : params,
+    ) as Map<String, dynamic>;
+    return MarketsPage.fromJson(res);
+  }
+
   /// Get recent trade events for a market.
   Future<List<MarketTradeEvent>> getMarketTradesEvents(
       String conditionId) async {
     final res = await _transport.get(
       PolymarketUrls.clob,
-      '/markets/$conditionId/trades',
+      '/live-activity/events/$conditionId',
     );
     final list = res as List;
     return list
@@ -174,6 +188,29 @@ class ClobClient {
     return res
         .map((e) => OrderBookSummary.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  /// Calculates the server-compatible SHA-1 hash for an orderbook snapshot.
+  ///
+  /// The hash is computed over a compact JSON payload with a specific key order,
+  /// matching the Go server implementation. The `hash` field is set to empty
+  /// while hashing.
+  String getOrderBookHash(OrderBookSummary orderbook) {
+    final payload = {
+      'market': orderbook.market,
+      'asset_id': orderbook.asset,
+      'timestamp': orderbook.timestamp?.toString() ?? '',
+      'hash': '',
+      'bids': orderbook.bids
+          .map((o) => {'price': o.price, 'size': o.size})
+          .toList(),
+      'asks': orderbook.asks
+          .map((o) => {'price': o.price, 'size': o.size})
+          .toList(),
+    };
+    final serialized = jsonEncode(payload);
+    final bytes = utf8.encode(serialized);
+    return crypto.sha1.convert(bytes).toString();
   }
 
   // ---------------------------------------------------------------------------
@@ -312,6 +349,66 @@ class ClobClient {
     return history
         .map((e) => PricePoint.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Level 0: Market price calculation
+  // ---------------------------------------------------------------------------
+
+  /// Calculates the matching price for a market order given the current
+  /// orderbook, matching the Python SDK's `calculate_market_price`.
+  ///
+  /// [tokenId] — the token to trade.
+  /// [side] — `'BUY'` or `'SELL'`.
+  /// [amount] — the USDC amount (for BUY) or share quantity (for SELL).
+  /// [orderType] — the order type; if [OrderType.fok] and the book cannot
+  ///   fill the full amount, an exception is thrown.
+  ///
+  /// Returns the worst price level needed to fill the order.
+  Future<double> calculateMarketPrice(
+    String tokenId,
+    String side,
+    double amount,
+    OrderType orderType,
+  ) async {
+    final book = await getOrderBook(tokenId);
+    if (side.toUpperCase() == 'BUY') {
+      if (book.asks.isEmpty) throw StateError('No asks available for matching');
+      return _calculateBuyMarketPrice(book.asks, amount, orderType);
+    } else {
+      if (book.bids.isEmpty) throw StateError('No bids available for matching');
+      return _calculateSellMarketPrice(book.bids, amount, orderType);
+    }
+  }
+
+  /// Walk asks in reverse to find the price that fills [amountToMatch] USDC.
+  double _calculateBuyMarketPrice(
+    List<OrderLevel> asks,
+    double amountToMatch,
+    OrderType orderType,
+  ) {
+    var sum = 0.0;
+    for (final p in asks.reversed) {
+      sum += double.parse(p.size) * double.parse(p.price);
+      if (sum >= amountToMatch) return double.parse(p.price);
+    }
+    if (orderType == OrderType.fok) throw StateError('No match for FOK order');
+    return double.parse(asks.first.price);
+  }
+
+  /// Walk bids in reverse to find the price that fills [amountToMatch] shares.
+  double _calculateSellMarketPrice(
+    List<OrderLevel> bids,
+    double amountToMatch,
+    OrderType orderType,
+  ) {
+    var sum = 0.0;
+    for (final p in bids.reversed) {
+      sum += double.parse(p.size);
+      if (sum >= amountToMatch) return double.parse(p.price);
+    }
+    if (orderType == OrderType.fok) throw StateError('No match for FOK order');
+    return double.parse(bids.first.price);
   }
 
   // ---------------------------------------------------------------------------
@@ -573,6 +670,19 @@ class ClobClient {
     return res
         .map((e) => PostOrderResponse.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  /// Convenience method: creates, signs, and posts an order in one call.
+  ///
+  /// Equivalent to calling [createOrder] followed by [postOrder].
+  Future<PostOrderResponse> createAndPostOrder(
+    OrderArgs args, {
+    CreateOrderOptions? options,
+    String orderType = 'GTC',
+    bool postOnly = false,
+  }) async {
+    final order = await createOrder(args, options: options);
+    return postOrder(order, orderType: orderType, postOnly: postOnly);
   }
 
   // ---------------------------------------------------------------------------
@@ -1144,7 +1254,7 @@ class ClobClient {
   Future<TradesPage> getBuilderTrades({String? market, int? limit}) async {
     _requireBuilderCredentials();
     final address = (await _wallet!.getAddress()).toLowerCase();
-    const hmacPath = '/data/trades';
+    const hmacPath = '/builder/trades';
     final query = <String, String>{};
     if (market != null) query['market'] = market;
     if (limit != null) query['limit'] = limit.toString();

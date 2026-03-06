@@ -4,9 +4,9 @@ Future<void> main() async {
   // ── Public CLOB API ───────────────────────────────────────────────────────
   final clob = ClobClient();
 
-  final markets = await clob.getMarkets(limit: 3);
-  print('CLOB markets (first 3):');
-  for (final m in markets.data) {
+  final markets = await clob.getMarkets();
+  print('CLOB markets (first page):');
+  for (final m in markets.data.take(3)) {
     print('  ${m.question}');
   }
 
