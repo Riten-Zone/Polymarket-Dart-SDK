@@ -5,11 +5,41 @@ library;
 // Enums
 // ---------------------------------------------------------------------------
 
-enum OrderSide { buy, sell }
+/// The side of a prediction market order.
+enum OrderSide {
+  /// Buy outcome tokens (spend USDC).
+  buy,
 
-enum OrderType { gtc, gtd, fok, fak }
+  /// Sell outcome tokens (receive USDC).
+  sell,
+}
 
-enum SignatureType { eoa, polyProxy, gnosisSafe }
+/// Order validity type, controlling when the order expires.
+enum OrderType {
+  /// Good-Till-Cancelled — remains open until explicitly cancelled.
+  gtc,
+
+  /// Good-Till-Date — expires at a specified unix timestamp.
+  gtd,
+
+  /// Fill-Or-Kill — must be fully filled immediately or rejected entirely.
+  fok,
+
+  /// Fill-And-Kill — fills whatever is available immediately; remainder cancelled.
+  fak,
+}
+
+/// EIP-712 signature type for order signing.
+enum SignatureType {
+  /// Direct EOA signature.
+  eoa,
+
+  /// Polymarket proxy wallet signature.
+  polyProxy,
+
+  /// Gnosis Safe signature.
+  gnosisSafe,
+}
 
 // ---------------------------------------------------------------------------
 // Auth
@@ -252,6 +282,7 @@ class OrderBookSummary {
 // Pricing
 // ---------------------------------------------------------------------------
 
+/// The most recent trade price for a token.
 class LastTradePrice {
   final String price;
   const LastTradePrice({required this.price});
@@ -261,6 +292,7 @@ class LastTradePrice {
   }
 }
 
+/// The bid-ask spread for a token.
 class Spread {
   final String spread;
   const Spread({required this.spread});
@@ -555,6 +587,7 @@ class OpenOrder {
   }
 }
 
+/// Filter parameters for querying open orders.
 class OpenOrderParams {
   final String? market;
   final String? owner;
@@ -602,6 +635,7 @@ class OpenOrdersPage {
 // Trades
 // ---------------------------------------------------------------------------
 
+/// Filter parameters for querying CLOB trade history.
 class TradeParams {
   final String? marketId;
   final String? assetId;
@@ -634,6 +668,7 @@ class TradeParams {
   }
 }
 
+/// A matched trade on the Polymarket CLOB.
 class Trade {
   final String tradeId;
   final String orderId;
@@ -672,6 +707,7 @@ class Trade {
   }
 }
 
+/// Paginated trade history response from the CLOB API.
 class TradesPage {
   final List<Trade> data;
   final String? nextCursor;
@@ -729,6 +765,7 @@ class BalanceAllowanceParams {
   }
 }
 
+/// USDC or conditional token balance and allowance for a wallet.
 class BalanceAllowance {
   final String? balance;
   final String? allowance;
@@ -745,6 +782,7 @@ class BalanceAllowance {
   }
 }
 
+/// Account ban status — whether the wallet is in closed-only mode.
 class BanStatus {
   final bool isBanned;
   final String? reason;
@@ -763,6 +801,7 @@ class BanStatus {
 // Notifications
 // ---------------------------------------------------------------------------
 
+/// A CLOB account notification (e.g. order filled, cancelled).
 class Notification {
   final String id;
   final String type;
@@ -786,6 +825,8 @@ class Notification {
   }
 }
 
+/// Parameters for dismissing notifications. Pass [ids] to drop specific ones,
+/// or omit to drop all.
 class DropNotificationParams {
   final List<String>? ids;
 
@@ -800,6 +841,7 @@ class DropNotificationParams {
 // Order scoring
 // ---------------------------------------------------------------------------
 
+/// Whether a single order is currently earning LP rewards.
 class OrderScoring {
   final bool scoring;
   const OrderScoring({required this.scoring});
@@ -809,6 +851,9 @@ class OrderScoring {
   }
 }
 
+/// Whether each of a set of orders is currently earning LP rewards.
+///
+/// Keys are order IDs; values are `true` if the order is scoring.
 class OrdersScoring {
   final Map<String, bool> ordersScoring;
 
@@ -866,6 +911,7 @@ double _leaderboardDouble(dynamic v) {
 // Heartbeat
 // ---------------------------------------------------------------------------
 
+/// Response from `POST /v1/heartbeats`.
 class HeartbeatResponse {
   final String? id;
   const HeartbeatResponse({this.id});

@@ -112,54 +112,25 @@ Currently skipped in v0.1:
 
 ---
 
-## v0.3 — Pub.dev Publishing Prep
+## ✅ Done: v0.3.0 — RFQ + Builder API + Bridge + Pub.dev Prep (2026-03-07)
 
-Before publishing to `pub.dev`:
-
-1. **`README.md`** — usage examples, feature table, installation
-2. **`CHANGELOG.md`** — version history
-3. **`LICENSE`** — MIT (match `hyperliquid_dart`)
-4. **`example/`** — runnable example file
-   ```dart
-   // example/example.dart
-   import 'package:polymarket_dart/polymarket_dart.dart';
-   void main() async {
-     final client = ClobClient();
-     final markets = await client.getMarkets();
-     print(markets.data.first.question);
-   }
-   ```
-5. **`dartdoc` comments** — add `///` docs to all public methods (like `hyperliquid_dart`)
-6. **`analysis_options.yaml`** — match linting rules from `hyperliquid_dart`
-7. Run `dart pub publish --dry-run` to check score
+- **RfqClient** — full Request-for-Quote system (requester + quoter side, all data queries)
+- **BridgeClient** — cross-chain deposit API (EVM, Solana, Bitcoin → USDC.e on Polygon)
+- **Builder API** extension to `ClobClient` — attributed orders/trades, builder leaderboard, `revokeBuilderApiKey`
+- `ClobClient.createAndPostOrder()` — convenience one-call order wrapper
+- `ClobClient.calculateMarketPrice()` — live orderbook price estimator
+- `ClobClient.getSamplingSimplifiedMarkets()` + `getOrderBookHash()`
+- Full `dartdoc` on all public classes, methods, and enums
+- `dart pub publish --dry-run` passes with **0 warnings**
+- **88+ tests passing**
 
 ---
 
-## v0.3 — Builder Features
+## Next: Publish to pub.dev
 
-For market makers building on Polymarket:
-```dart
-Future<BuilderApiKey> createBuilderApiKey();
-Future<List<BuilderApiKey>> getBuilderApiKeys();
-Future<void> revokeBuilderApiKey();
-Future<TradesPage> getBuilderTrades({TradeParams? params});
-```
-
----
-
-## Future — RFQ (Request for Quote)
-
-Only available in the Rust SDK currently. Adds institutional-grade liquidity features:
-```dart
-Future<RfqRequest> createRfqRequest(CreateRfqRequestArgs args);
-Future<void> cancelRfqRequest(String requestId);
-Future<RfqPage> getRfqRequests({RfqRequestsParams? params});
-Future<RfqQuote> createRfqQuote(CreateRfqQuoteArgs args);
-Future<void> cancelRfqQuote(String quoteId);
-Future<RfqQuotePage> getRfqQuotes({RfqQuotesParams? params});
-Future<RfqAcceptResponse> acceptRfqQuote(String quoteId);
-Future<void> approveRfqOrder(String orderId);
-```
+The package is ready. Steps:
+1. Run `dart pub publish` (requires pub.dev login)
+2. Verify the pub.dev score after publishing
 
 ---
 
@@ -198,6 +169,7 @@ This is the key integration between `polymarket_dart` and the Riten Flutter app.
 | v0.1.0 | Core CLOB — 42 methods, full auth, WebSocket, 23 tests | ✅ Done |
 | post v0.1 | Live testing — 49 tests passing, full path audit, all known bugs fixed | ✅ Done |
 | post v0.1 | On-chain approvals (EOA + GnosisSafe), side bug fix, 63 tests passing | ✅ Done |
-| v0.2.0 | GammaClient, DataClient, Rewards, Readonly keys | Planned |
-| v0.3.0 | Pub.dev publish, dartdoc, README, example | Planned |
-| Future | RFQ, Builder features, Privy wallet adapter | Backlog |
+| v0.2.0 | GammaClient, DataClient, Rewards, Readonly keys | ✅ Done |
+| v0.3.0 | RFQ, Builder API, Bridge, dartdoc, pub.dev prep | ✅ Done |
+| Next | Publish to pub.dev | Ready |
+| Future | Privy wallet adapter, fix leaderboard/rewards paths | Backlog |

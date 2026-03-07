@@ -2,6 +2,39 @@
 
 ---
 
+## Dartdoc + ROADMAP update (2026-03-07)
+
+### What changed
+
+Added `///` dartdoc comments to all previously undocumented public types in `lib/src/models/clob_types.dart`:
+
+| Symbol | Doc added |
+|--------|-----------|
+| `OrderSide` enum | Values: `buy`, `sell` |
+| `OrderType` enum | Values: `gtc`, `gtd`, `fok`, `fak` |
+| `SignatureType` enum | Values: `eoa`, `polyProxy`, `gnosisSafe` |
+| `LastTradePrice` | Class-level doc |
+| `Spread` | Class-level doc |
+| `TradeParams` | Class-level doc |
+| `Trade` | Class-level doc |
+| `TradesPage` | Class-level doc |
+| `OpenOrderParams` | Class-level doc |
+| `BalanceAllowance` | Class-level doc |
+| `BanStatus` | Class-level doc |
+| `Notification` | Class-level doc |
+| `DropNotificationParams` | Class-level doc |
+| `OrderScoring` | Class-level doc |
+| `OrdersScoring` | Class-level doc |
+| `HeartbeatResponse` | Class-level doc |
+
+All other public files were already fully documented.
+
+Updated `ROADMAP.md` to reflect v0.3.0 complete and `pub.dev publish` as the next step.
+
+`dart pub publish --dry-run` — **0 warnings**.
+
+---
+
 ## v0.2.0 — GammaClient + DataClient Expansion + ClobClient Rewards (2026-03-05)
 
 ### New files
