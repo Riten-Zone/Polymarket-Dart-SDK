@@ -39,6 +39,36 @@ Future<String?> _fetchLiveTokenId() async {
   return null;
 }
 
+/// Fetch a live token ID whose orderbook has both asks and bids (needed for SELL tests).
+Future<String?> _fetchLiveTokenIdWithBids() async {
+  final uri = Uri.parse(
+    'https://gamma-api.polymarket.com/markets'
+    '?active=true&closed=false&order=volume24hr&ascending=false&limit=20',
+  );
+  final response = await http.get(uri);
+  if (response.statusCode != 200) return null;
+  final markets = jsonDecode(response.body) as List;
+  final client = ClobClient();
+  try {
+    for (final m in markets) {
+      final raw = m['clobTokenIds'];
+      final ids = raw is String ? (jsonDecode(raw) as List?) : raw as List?;
+      if (ids == null || ids.isEmpty) continue;
+      for (final id in ids) {
+        try {
+          final book = await client.getOrderBook(id as String);
+          if (book.bids.isNotEmpty && book.asks.isNotEmpty) return id;
+        } catch (_) {
+          continue;
+        }
+      }
+    }
+  } finally {
+    client.close();
+  }
+  return null;
+}
+
 void main() {
   // ---------------------------------------------------------------------------
   // Unit: getOrderBookHash
@@ -219,9 +249,11 @@ void main() {
   group('calculateMarketPrice', tags: ['integration'], () {
     late ClobClient client;
     String? liveTokenId;
+    String? liveTokenIdWithBids;
 
     setUpAll(() async {
       liveTokenId = await _fetchLiveTokenId();
+      liveTokenIdWithBids = await _fetchLiveTokenIdWithBids();
     });
 
     setUp(() => client = ClobClient());
@@ -243,12 +275,12 @@ void main() {
     }, timeout: const Timeout(Duration(seconds: 15)));
 
     test('returns a positive price for SELL', () async {
-      if (liveTokenId == null) {
-        markTestSkipped('No active market token available');
+      if (liveTokenIdWithBids == null) {
+        markTestSkipped('No active market token with bids available');
         return;
       }
       final price = await client.calculateMarketPrice(
-        liveTokenId!,
+        liveTokenIdWithBids!,
         'SELL',
         10.0,
         OrderType.gtc,
