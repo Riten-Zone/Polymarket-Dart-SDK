@@ -94,6 +94,12 @@ class GammaMarket {
   /// this field is already decoded to a list.
   final List<String> clobTokenIds;
 
+  /// Current outcome prices (e.g. [0.72, 0.28] for YES/NO).
+  ///
+  /// The Gamma API returns this as a JSON-encoded string —
+  /// this field is already decoded to a list of doubles.
+  final List<double> outcomePrices;
+
   /// Tags attached to this market.
   final List<Tag> tags;
 
@@ -117,6 +123,7 @@ class GammaMarket {
     required this.volume24hr,
     required this.liquidity,
     required this.clobTokenIds,
+    required this.outcomePrices,
     required this.tags,
     this.image,
     this.icon,
@@ -135,6 +142,21 @@ class GammaMarket {
       }
     } else if (rawTokenIds is List) {
       tokenIds = rawTokenIds.map((e) => e.toString()).toList();
+    }
+
+    // outcomePrices is a JSON-encoded string: "[\"0.72\", \"0.28\"]"
+    final rawPrices = json['outcomePrices'];
+    List<double> outcomePrices = [];
+    if (rawPrices is String && rawPrices.isNotEmpty) {
+      final decoded = jsonDecode(rawPrices);
+      if (decoded is List) {
+        outcomePrices = decoded
+            .map((e) => double.tryParse(e.toString()) ?? 0.0)
+            .toList();
+      }
+    } else if (rawPrices is List) {
+      outcomePrices =
+          rawPrices.map((e) => double.tryParse(e.toString()) ?? 0.0).toList();
     }
 
     final rawTags = json['tags'] as List?;
@@ -159,6 +181,7 @@ class GammaMarket {
       volume24hr: _toDouble(json['volume24hr']),
       liquidity: _toDouble(json['liquidity']),
       clobTokenIds: tokenIds,
+      outcomePrices: outcomePrices,
       tags: tags,
       startDate: json['startDate'] as String?,
       endDate: json['endDate'] as String?,

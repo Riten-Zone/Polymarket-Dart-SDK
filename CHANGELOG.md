@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-03-08
+
+### Added
+
+- **`GammaMarket.outcomePrices`** — parsed from the API's JSON-encoded `outcomePrices` string, giving ready-to-use `List<double>` YES/NO prices (e.g. `[0.72, 0.28]`) without extra CLOB calls
+
 ## [0.3.1] - 2026-03-08
 
 ### Fixed
