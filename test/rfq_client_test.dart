@@ -80,10 +80,11 @@ void main() {
       }
       try {
         final resp = await rfq.getRequests(GetRfqRequestsParams(limit: 5));
+        print('getRequests → count: ${resp.count}, totalCount: ${resp.totalCount}, data: ${resp.data}');
         expect(resp, isA<RfqPaginatedResponse<RfqRequest>>());
         expect(resp.data, isA<List<RfqRequest>>());
-      } on PolymarketApiException catch (_) {
-        // 404 / 403 expected if wallet is not RFQ-eligible
+      } on PolymarketApiException catch (e) {
+        print('getRequests → ERROR: $e');
       }
     }, timeout: const Timeout(Duration(seconds: 15)));
 
@@ -94,9 +95,10 @@ void main() {
       }
       try {
         final cfg = await rfq.getConfig();
+        print('getConfig → $cfg');
         expect(cfg, isA<Map<String, dynamic>>());
-      } on PolymarketApiException catch (_) {
-        // Acceptable if not available
+      } on PolymarketApiException catch (e) {
+        print('getConfig → ERROR: $e');
       }
     }, timeout: const Timeout(Duration(seconds: 15)));
   });
