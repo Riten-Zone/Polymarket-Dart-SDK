@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-03-08
+
+### Fixed
+
+- **Reward endpoints** — all 6 methods now use correct paths and require Level 2 HMAC auth (previously miscoded as Level 0 public)
+  - `getEarningsForDay` → `GET /rewards/user` (added required `address` param)
+  - `getTotalEarningsForDay` → `GET /rewards/user/total`
+  - `getUserEarningsAndMarketsConfig` → `GET /rewards/user/markets`
+  - `getRewardPercentages` → `GET /rewards/user/percentages` (added `signature_type: 0` param)
+  - `getCurrentRewards` → `GET /rewards/markets/current`
+  - `getRawRewardsForMarket` → `GET /rewards/markets/{conditionId}` (path param, not query string)
+- **`DataClient.getLeaderboard` removed** — no public leaderboard endpoint exists on Polymarket's Data API
+- Reward integration tests updated to use Level 2 credentials from `.env`
+
+---
+
 ## [0.3.0] - 2026-03-07
 
 ### Added
