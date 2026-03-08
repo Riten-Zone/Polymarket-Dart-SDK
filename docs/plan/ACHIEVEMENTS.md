@@ -2,6 +2,31 @@
 
 ---
 
+## v0.3.1 — Reward Endpoint Fixes (2026-03-08)
+
+### What changed
+
+Fixed 6 reward methods in `lib/src/clients/clob_client.dart` — all had wrong paths and wrong auth level (L0 → L2 HMAC). Cross-referenced against the official JS CLOB client `endpoints.ts`.
+
+| Method | Old path (wrong) | Correct path | Auth |
+|--------|-----------------|--------------|------|
+| `getEarningsForDay` | `/rewards/earnings/day` | `/rewards/user` | L2 |
+| `getTotalEarningsForDay` | `/rewards/earnings/total` | `/rewards/user/total` | L2 |
+| `getUserEarningsAndMarketsConfig` | `/rewards/earnings/markets-config` | `/rewards/user/markets` | L2 |
+| `getRewardPercentages` | `/rewards/percentages` | `/rewards/user/percentages` | L2 |
+| `getCurrentRewards` | `/rewards/current` | `/rewards/markets/current` | L2 |
+| `getRawRewardsForMarket` | `/rewards/raw?conditionId=X` | `/rewards/markets/{conditionId}` | L2 |
+
+Also:
+- `getEarningsForDay` now accepts `address` param (required by API)
+- `getRewardPercentages` now sends `signature_type: 0` query param (required by API)
+- `DataClient.getLeaderboard` removed — no public leaderboard endpoint exists anywhere in Polymarket's API (all paths return 404)
+- Reward integration tests updated to use Level 2 credentials from `.env`
+
+**91 tests passing** (31 unit + 60 integration)
+
+---
+
 ## Dartdoc + ROADMAP update (2026-03-07)
 
 ### What changed

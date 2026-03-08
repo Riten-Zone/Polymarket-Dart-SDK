@@ -126,11 +126,12 @@ Currently skipped in v0.1:
 
 ---
 
-## Next: Publish to pub.dev
+## ✅ Done: v0.3.1 — Reward Endpoint Fixes (2026-03-08)
 
-The package is ready. Steps:
-1. Run `dart pub publish` (requires pub.dev login)
-2. Verify the pub.dev score after publishing
+- Fixed 6 reward endpoint paths (all were wrong) and auth level (L0 → L2 HMAC)
+- Removed `DataClient.getLeaderboard` — no public endpoint exists on Polymarket's Data API
+- Updated reward integration tests to use Level 2 credentials from `.env`
+- Published to pub.dev
 
 ---
 
@@ -171,5 +172,5 @@ This is the key integration between `polymarket_dart` and the Riten Flutter app.
 | post v0.1 | On-chain approvals (EOA + GnosisSafe), side bug fix, 63 tests passing | ✅ Done |
 | v0.2.0 | GammaClient, DataClient, Rewards, Readonly keys | ✅ Done |
 | v0.3.0 | RFQ, Builder API, Bridge, dartdoc, pub.dev prep | ✅ Done |
-| Next | Publish to pub.dev | Ready |
-| Future | Privy wallet adapter, fix leaderboard/rewards paths | Backlog |
+| v0.3.1 | Reward endpoint path fixes (6 methods, L0→L2), remove getLeaderboard | ✅ Done |
+| Future | Privy wallet adapter, WebSocket format verification | Backlog |
