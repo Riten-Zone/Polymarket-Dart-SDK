@@ -8,6 +8,7 @@
 library;
 
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
@@ -257,47 +258,82 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
-  // Rewards (Level 0 — public)
+  // Rewards (Level 2 — HMAC required)
   // ---------------------------------------------------------------------------
 
   group('Rewards', () {
-    // Reward endpoint paths are subject to API changes. These tests accept
-    // both successful responses and PolymarketApiException (path not available),
-    // verifying only that the client code executes without Dart errors.
-    test('getRewardPercentages does not throw a Dart error', () async {
+    late ClobClient authClient;
+    bool authAvailable = false;
+
+    setUpAll(() async {
+      final pk = _loadEnv('PRIVATE_KEY');
+      if (pk == null || pk.isEmpty) return;
       try {
-        final result = await client.getRewardPercentages();
+        final wallet = PrivateKeyWalletAdapter(pk);
+        final bootstrap = ClobClient(wallet: wallet);
+        final creds = await bootstrap.createOrDeriveApiKey();
+        bootstrap.close();
+        authClient = ClobClient(wallet: wallet, credentials: creds);
+        authAvailable = true;
+      } catch (_) {}
+    });
+
+    tearDownAll(() {
+      if (authAvailable) authClient.close();
+    });
+
+    test('getRewardPercentages does not throw a Dart error', () async {
+      if (!authAvailable) { markTestSkipped('No .env credentials'); return; }
+      try {
+        final result = await authClient.getRewardPercentages();
         expect(result, isA<Map<String, dynamic>>());
-      } on PolymarketApiException {
-        // API path unavailable — implementation is correct, skip.
+        print('getRewardPercentages → $result');
+      } on PolymarketApiException catch (e) {
+        print('getRewardPercentages → $e');
       }
-    }, timeout: const Timeout(Duration(seconds: 10)));
+    }, timeout: const Timeout(Duration(seconds: 15)));
 
     test('getCurrentRewards does not throw a Dart error', () async {
+      if (!authAvailable) { markTestSkipped('No .env credentials'); return; }
       try {
-        final result = await client.getCurrentRewards();
+        final result = await authClient.getCurrentRewards();
         expect(result, isA<Map<String, dynamic>>());
-      } on PolymarketApiException {
-        // API path unavailable — implementation is correct, skip.
+        print('getCurrentRewards → $result');
+      } on PolymarketApiException catch (e) {
+        print('getCurrentRewards → $e');
       }
-    }, timeout: const Timeout(Duration(seconds: 10)));
+    }, timeout: const Timeout(Duration(seconds: 15)));
 
     test('getEarningsForDay does not throw a Dart error', () async {
+      if (!authAvailable) { markTestSkipped('No .env credentials'); return; }
       try {
-        final result = await client.getEarningsForDay('2024-11-01');
+        final result = await authClient.getEarningsForDay('2026-03-01');
         expect(result, isA<Map<String, dynamic>>());
-      } on PolymarketApiException {
-        // API path unavailable — implementation is correct, skip.
+        print('getEarningsForDay → $result');
+      } on PolymarketApiException catch (e) {
+        print('getEarningsForDay → $e');
       }
-    }, timeout: const Timeout(Duration(seconds: 10)));
+    }, timeout: const Timeout(Duration(seconds: 15)));
 
     test('getTotalEarningsForDay does not throw a Dart error', () async {
+      if (!authAvailable) { markTestSkipped('No .env credentials'); return; }
       try {
-        final result = await client.getTotalEarningsForDay('2024-11-01');
+        final result = await authClient.getTotalEarningsForDay('2026-03-01');
         expect(result, isA<Map<String, dynamic>>());
-      } on PolymarketApiException {
-        // API path unavailable — implementation is correct, skip.
+        print('getTotalEarningsForDay → $result');
+      } on PolymarketApiException catch (e) {
+        print('getTotalEarningsForDay → $e');
       }
-    }, timeout: const Timeout(Duration(seconds: 10)));
+    }, timeout: const Timeout(Duration(seconds: 15)));
   });
+}
+
+String? _loadEnv(String key) {
+  try {
+    final lines = File('.env').readAsLinesSync();
+    for (final line in lines) {
+      if (line.startsWith('$key=')) return line.substring(key.length + 1);
+    }
+  } catch (_) {}
+  return null;
 }

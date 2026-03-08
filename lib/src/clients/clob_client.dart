@@ -1048,66 +1048,83 @@ class ClobClient {
   }
 
   // ---------------------------------------------------------------------------
-  // Rewards (Level 0 — public)
+  // Rewards (Level 2 — HMAC required)
   // ---------------------------------------------------------------------------
 
-  /// Returns LP reward earnings breakdown for a specific [date] (YYYY-MM-DD).
+  /// Returns LP reward earnings for the current wallet on [date] (YYYY-MM-DD).
+  ///
+  /// Requires Level 2 auth. Calls `GET /rewards/user`.
   Future<Map<String, dynamic>> getEarningsForDay(String date) async {
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      '/rewards/earnings/day',
-      queryParams: {'date': date},
-    );
+    _requireCredentials();
+    final address = (await _wallet!.getAddress()).toLowerCase();
+    const path = '/rewards/user';
+    final query = {'date': date, 'address': _checksumAddress(address)};
+    final headers = _buildLevel2Headers(method: 'GET', path: path, walletAddress: address);
+    final res = await _transport.get(PolymarketUrls.clob, path, queryParams: query, headers: headers);
     return res as Map<String, dynamic>;
   }
 
-  /// Returns total LP reward earnings across all markets for [date] (YYYY-MM-DD).
+  /// Returns total LP reward earnings for the current wallet on [date] (YYYY-MM-DD).
+  ///
+  /// Requires Level 2 auth. Calls `GET /rewards/user/total`.
   Future<Map<String, dynamic>> getTotalEarningsForDay(String date) async {
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      '/rewards/earnings/total',
-      queryParams: {'date': date},
-    );
+    _requireCredentials();
+    final address = (await _wallet!.getAddress()).toLowerCase();
+    const path = '/rewards/user/total';
+    final query = {'date': date, 'address': _checksumAddress(address)};
+    final headers = _buildLevel2Headers(method: 'GET', path: path, walletAddress: address);
+    final res = await _transport.get(PolymarketUrls.clob, path, queryParams: query, headers: headers);
     return res as Map<String, dynamic>;
   }
 
   /// Returns per-user earnings and per-market reward config for [date] (YYYY-MM-DD).
-  Future<Map<String, dynamic>> getUserEarningsAndMarketsConfig(
-      String date) async {
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      '/rewards/earnings/markets-config',
-      queryParams: {'date': date},
-    );
+  ///
+  /// Requires Level 2 auth. Calls `GET /rewards/user/markets`.
+  Future<Map<String, dynamic>> getUserEarningsAndMarketsConfig(String date) async {
+    _requireCredentials();
+    final address = (await _wallet!.getAddress()).toLowerCase();
+    const path = '/rewards/user/markets';
+    final query = {'date': date, 'address': _checksumAddress(address)};
+    final headers = _buildLevel2Headers(method: 'GET', path: path, walletAddress: address);
+    final res = await _transport.get(PolymarketUrls.clob, path, queryParams: query, headers: headers);
     return res as Map<String, dynamic>;
   }
 
-  /// Returns the current reward percentage allocations across markets.
-  Future<Map<String, dynamic>> getRewardPercentages() async {
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      '/rewards/percentages',
-    );
+  /// Returns LP reward percentage allocations for the current wallet.
+  ///
+  /// Requires Level 2 auth. Calls `GET /rewards/user/percentages`.
+  /// [signatureType] — `0` for EOA (default), `2` for Gnosis Safe.
+  Future<Map<String, dynamic>> getRewardPercentages({int signatureType = 0}) async {
+    _requireCredentials();
+    final address = (await _wallet!.getAddress()).toLowerCase();
+    const path = '/rewards/user/percentages';
+    final query = {'signature_type': signatureType.toString()};
+    final headers = _buildLevel2Headers(method: 'GET', path: path, walletAddress: address);
+    final res = await _transport.get(PolymarketUrls.clob, path, queryParams: query, headers: headers);
     return res as Map<String, dynamic>;
   }
 
-  /// Returns the current active rewards configuration.
+  /// Returns the current active rewards markets configuration.
+  ///
+  /// Requires Level 2 auth. Calls `GET /rewards/markets/current`.
   Future<Map<String, dynamic>> getCurrentRewards() async {
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      '/rewards/current',
-    );
+    _requireCredentials();
+    final address = (await _wallet!.getAddress()).toLowerCase();
+    const path = '/rewards/markets/current';
+    final headers = _buildLevel2Headers(method: 'GET', path: path, walletAddress: address);
+    final res = await _transport.get(PolymarketUrls.clob, path, headers: headers);
     return res as Map<String, dynamic>;
   }
 
-  /// Returns raw reward data for a market identified by [conditionId].
-  Future<Map<String, dynamic>> getRawRewardsForMarket(
-      String conditionId) async {
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      '/rewards/raw',
-      queryParams: {'conditionId': conditionId},
-    );
+  /// Returns rewards data for the market identified by [conditionId].
+  ///
+  /// Requires Level 2 auth. Calls `GET /rewards/markets/{conditionId}`.
+  Future<Map<String, dynamic>> getRawRewardsForMarket(String conditionId) async {
+    _requireCredentials();
+    final address = (await _wallet!.getAddress()).toLowerCase();
+    final path = '/rewards/markets/$conditionId';
+    final headers = _buildLevel2Headers(method: 'GET', path: path, walletAddress: address);
+    final res = await _transport.get(PolymarketUrls.clob, path, headers: headers);
     return res as Map<String, dynamic>;
   }
 

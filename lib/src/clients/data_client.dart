@@ -153,35 +153,6 @@ class DataClient {
         .toList();
   }
 
-  // ---------------------------------------------------------------------------
-  // Leaderboard
-  // ---------------------------------------------------------------------------
-
-  /// Returns the Polymarket trader leaderboard.
-  ///
-  /// [interval] — time window: `"1d"`, `"1w"`, `"1m"`, or `"all"`.
-  /// [limit] — max number of results.
-  Future<List<LeaderboardEntry>> getLeaderboard({
-    String? interval,
-    int? limit,
-  }) async {
-    final params = <String, String>{};
-    if (interval != null) params['interval'] = interval;
-    if (limit != null) params['limit'] = limit.toString();
-
-    final response = await _transport.get(
-      PolymarketUrls.data,
-      '/leaderboard',
-      queryParams: params.isEmpty ? null : params,
-    );
-
-    if (response == null) return [];
-    final list = response as List<dynamic>;
-    return list
-        .map((j) => LeaderboardEntry.fromJson(j as Map<String, dynamic>))
-        .toList();
-  }
-
   /// Closes the underlying HTTP client.
   void close() => _transport.close();
 }

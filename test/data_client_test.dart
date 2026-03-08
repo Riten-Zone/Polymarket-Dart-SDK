@@ -153,33 +153,4 @@ void main() {
     }, timeout: const Timeout(Duration(seconds: 10)));
   });
 
-  // ---------------------------------------------------------------------------
-  // Leaderboard
-  // ---------------------------------------------------------------------------
-
-  group('DataClient.getLeaderboard', () {
-    // The exact leaderboard endpoint path is subject to change.
-    // These tests accept both success and PolymarketApiException.
-    test('getLeaderboard does not throw a Dart error', () async {
-      try {
-        final board = await client.getLeaderboard(limit: 10);
-        expect(board, isA<List<LeaderboardEntry>>());
-        if (board.isNotEmpty) {
-          expect(board.first.address, isNotEmpty);
-          expect(board.first.rank, greaterThan(0));
-        }
-      } on PolymarketApiException {
-        // Endpoint path unavailable — implementation is correct.
-      }
-    }, timeout: const Timeout(Duration(seconds: 10)));
-
-    test('interval parameter is accepted without Dart error', () async {
-      try {
-        final board = await client.getLeaderboard(interval: '1w', limit: 5);
-        expect(board, isA<List<LeaderboardEntry>>());
-      } on PolymarketApiException {
-        // Endpoint path unavailable — implementation is correct.
-      }
-    }, timeout: const Timeout(Duration(seconds: 10)));
-  });
 }
