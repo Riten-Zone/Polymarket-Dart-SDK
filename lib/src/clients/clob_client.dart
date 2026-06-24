@@ -50,9 +50,9 @@ class ClobClient {
     ApiCredentials? credentials,
     BuilderCredentials? builderCredentials,
     HttpTransport? transport,
-  })  : _wallet = wallet,
-        _builderCredentials = builderCredentials,
-        _transport = transport ?? HttpTransport() {
+  }) : _wallet = wallet,
+       _builderCredentials = builderCredentials,
+       _transport = transport ?? HttpTransport() {
     if (credentials != null) {
       setCredentials(credentials);
     }
@@ -97,20 +97,21 @@ class ClobClient {
   Future<MarketsPage> getMarkets({String? nextCursor}) async {
     final params = <String, String>{};
     if (nextCursor != null) params['next_cursor'] = nextCursor;
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      '/markets',
-      queryParams: params.isEmpty ? null : params,
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.get(
+              PolymarketUrls.clob,
+              '/markets',
+              queryParams: params.isEmpty ? null : params,
+            )
+            as Map<String, dynamic>;
     return MarketsPage.fromJson(res);
   }
 
   /// Get a single market by its condition ID.
   Future<Market> getMarket(String conditionId) async {
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      '/markets/$conditionId',
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.get(PolymarketUrls.clob, '/markets/$conditionId')
+            as Map<String, dynamic>;
     return Market.fromJson(res);
   }
 
@@ -118,11 +119,13 @@ class ClobClient {
   Future<MarketsPage> getSamplingMarkets({String? nextCursor}) async {
     final params = <String, String>{};
     if (nextCursor != null) params['next_cursor'] = nextCursor;
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      '/sampling-markets',
-      queryParams: params.isEmpty ? null : params,
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.get(
+              PolymarketUrls.clob,
+              '/sampling-markets',
+              queryParams: params.isEmpty ? null : params,
+            )
+            as Map<String, dynamic>;
     return MarketsPage.fromJson(res);
   }
 
@@ -130,11 +133,13 @@ class ClobClient {
   Future<MarketsPage> getSimplifiedMarkets({String? nextCursor}) async {
     final params = <String, String>{};
     if (nextCursor != null) params['next_cursor'] = nextCursor;
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      '/simplified-markets',
-      queryParams: params.isEmpty ? null : params,
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.get(
+              PolymarketUrls.clob,
+              '/simplified-markets',
+              queryParams: params.isEmpty ? null : params,
+            )
+            as Map<String, dynamic>;
     return MarketsPage.fromJson(res);
   }
 
@@ -142,17 +147,20 @@ class ClobClient {
   Future<MarketsPage> getSamplingSimplifiedMarkets({String? nextCursor}) async {
     final params = <String, String>{};
     if (nextCursor != null) params['next_cursor'] = nextCursor;
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      '/sampling-simplified-markets',
-      queryParams: params.isEmpty ? null : params,
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.get(
+              PolymarketUrls.clob,
+              '/sampling-simplified-markets',
+              queryParams: params.isEmpty ? null : params,
+            )
+            as Map<String, dynamic>;
     return MarketsPage.fromJson(res);
   }
 
   /// Get recent trade events for a market.
   Future<List<MarketTradeEvent>> getMarketTradesEvents(
-      String conditionId) async {
+    String conditionId,
+  ) async {
     final res = await _transport.get(
       PolymarketUrls.clob,
       '/live-activity/events/$conditionId',
@@ -169,22 +177,25 @@ class ClobClient {
 
   /// Get the full orderbook for a token.
   Future<OrderBookSummary> getOrderBook(String tokenId) async {
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      '/book',
-      queryParams: {'token_id': tokenId},
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.get(
+              PolymarketUrls.clob,
+              '/book',
+              queryParams: {'token_id': tokenId},
+            )
+            as Map<String, dynamic>;
     return OrderBookSummary.fromJson(res);
   }
 
   /// Get orderbooks for multiple tokens.
-  Future<List<OrderBookSummary>> getOrderBooks(
-      List<BookParams> params) async {
-    final res = await _transport.post(
-      PolymarketUrls.clob,
-      '/books',
-      body: params.map((p) => p.toJson()).toList(),
-    ) as List;
+  Future<List<OrderBookSummary>> getOrderBooks(List<BookParams> params) async {
+    final res =
+        await _transport.post(
+              PolymarketUrls.clob,
+              '/books',
+              body: params.map((p) => p.toJson()).toList(),
+            )
+            as List;
     return res
         .map((e) => OrderBookSummary.fromJson(e as Map<String, dynamic>))
         .toList();
@@ -219,82 +230,99 @@ class ClobClient {
 
   /// Get the mid-price for a token.
   Future<String> getMidpoint(String tokenId) async {
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      '/midpoint',
-      queryParams: {'token_id': tokenId},
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.get(
+              PolymarketUrls.clob,
+              '/midpoint',
+              queryParams: {'token_id': tokenId},
+            )
+            as Map<String, dynamic>;
     return res['mid'].toString();
   }
 
   /// Get mid-prices for multiple tokens.
   Future<Map<String, String>> getMidpoints(List<BookParams> params) async {
-    final res = await _transport.post(
-      PolymarketUrls.clob,
-      '/midpoints',
-      body: params.map((p) => p.toJson()).toList(),
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.post(
+              PolymarketUrls.clob,
+              '/midpoints',
+              body: params.map((p) => p.toJson()).toList(),
+            )
+            as Map<String, dynamic>;
     return res.map((k, v) => MapEntry(k, v.toString()));
   }
 
   /// Get the best price for a token on a given side.
   Future<String> getPrice(String tokenId, String side) async {
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      '/price',
-      queryParams: {'token_id': tokenId, 'side': side},
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.get(
+              PolymarketUrls.clob,
+              '/price',
+              queryParams: {'token_id': tokenId, 'side': side},
+            )
+            as Map<String, dynamic>;
     return res['price'].toString();
   }
 
   /// Get prices for multiple token+side combos.
   Future<Map<String, String>> getPrices(List<BookParams> params) async {
-    final res = await _transport.post(
-      PolymarketUrls.clob,
-      '/prices',
-      body: params.map((p) => p.toJson()).toList(),
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.post(
+              PolymarketUrls.clob,
+              '/prices',
+              body: params.map((p) => p.toJson()).toList(),
+            )
+            as Map<String, dynamic>;
     return res.map((k, v) => MapEntry(k, v.toString()));
   }
 
   /// Get the spread for a token.
   Future<String> getSpread(String tokenId) async {
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      '/spread',
-      queryParams: {'token_id': tokenId},
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.get(
+              PolymarketUrls.clob,
+              '/spread',
+              queryParams: {'token_id': tokenId},
+            )
+            as Map<String, dynamic>;
     return res['spread'].toString();
   }
 
   /// Get spreads for multiple tokens.
   Future<Map<String, String>> getSpreads(List<BookParams> params) async {
-    final res = await _transport.post(
-      PolymarketUrls.clob,
-      '/spreads',
-      body: params.map((p) => p.toJson()).toList(),
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.post(
+              PolymarketUrls.clob,
+              '/spreads',
+              body: params.map((p) => p.toJson()).toList(),
+            )
+            as Map<String, dynamic>;
     return res.map((k, v) => MapEntry(k, v.toString()));
   }
 
   /// Get the last trade price for a token.
   Future<String> getLastTradePrice(String tokenId) async {
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      '/last-trade-price',
-      queryParams: {'token_id': tokenId},
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.get(
+              PolymarketUrls.clob,
+              '/last-trade-price',
+              queryParams: {'token_id': tokenId},
+            )
+            as Map<String, dynamic>;
     return res['price'].toString();
   }
 
   /// Get last trade prices for multiple tokens.
   Future<List<LastTradePrice>> getLastTradesPrices(
-      List<BookParams> params) async {
-    final res = await _transport.post(
-      PolymarketUrls.clob,
-      '/last-trades-prices',
-      body: params.map((p) => p.toJson()).toList(),
-    ) as List;
+    List<BookParams> params,
+  ) async {
+    final res =
+        await _transport.post(
+              PolymarketUrls.clob,
+              '/last-trades-prices',
+              body: params.map((p) => p.toJson()).toList(),
+            )
+            as List;
     return res
         .map((e) => LastTradePrice.fromJson(e as Map<String, dynamic>))
         .toList();
@@ -306,31 +334,37 @@ class ClobClient {
 
   /// Get the tick size for a token (e.g. "0.01").
   Future<String> getTickSize(String tokenId) async {
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      '/tick-size',
-      queryParams: {'token_id': tokenId},
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.get(
+              PolymarketUrls.clob,
+              '/tick-size',
+              queryParams: {'token_id': tokenId},
+            )
+            as Map<String, dynamic>;
     return res['minimum_tick_size'].toString();
   }
 
   /// Whether a token is a neg-risk market.
   Future<bool> getNegRisk(String tokenId) async {
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      '/neg-risk',
-      queryParams: {'token_id': tokenId},
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.get(
+              PolymarketUrls.clob,
+              '/neg-risk',
+              queryParams: {'token_id': tokenId},
+            )
+            as Map<String, dynamic>;
     return res['neg_risk'] as bool? ?? false;
   }
 
   /// Get the fee rate (in basis points) for a token.
   Future<int> getFeeRateBps(String tokenId) async {
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      '/fee-rate',
-      queryParams: {'token_id': tokenId},
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.get(
+              PolymarketUrls.clob,
+              '/fee-rate',
+              queryParams: {'token_id': tokenId},
+            )
+            as Map<String, dynamic>;
     return (res['base_fee'] as num).toInt();
   }
 
@@ -340,11 +374,13 @@ class ClobClient {
 
   /// Get price history for a market.
   Future<List<PricePoint>> getPricesHistory(PriceHistoryParams params) async {
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      '/prices-history',
-      queryParams: params.toQueryParams(),
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.get(
+              PolymarketUrls.clob,
+              '/prices-history',
+              queryParams: params.toQueryParams(),
+            )
+            as Map<String, dynamic>;
     final history = res['history'] as List? ?? [];
     return history
         .map((e) => PricePoint.fromJson(e as Map<String, dynamic>))
@@ -360,7 +396,7 @@ class ClobClient {
   ///
   /// [tokenId] — the token to trade.
   /// [side] — `'BUY'` or `'SELL'`.
-  /// [amount] — the USDC amount (for BUY) or share quantity (for SELL).
+  /// [amount] — the pUSD amount (for BUY) or share quantity (for SELL).
   /// [orderType] — the order type; if [OrderType.fok] and the book cannot
   ///   fill the full amount, an exception is thrown.
   ///
@@ -381,7 +417,7 @@ class ClobClient {
     }
   }
 
-  /// Walk asks in reverse to find the price that fills [amountToMatch] USDC.
+  /// Walk asks in reverse to find the price that fills [amountToMatch] pUSD.
   double _calculateBuyMarketPrice(
     List<OrderLevel> asks,
     double amountToMatch,
@@ -418,22 +454,26 @@ class ClobClient {
   /// Create a new API key for this wallet (Level 1 auth).
   Future<ApiCredentials> createApiKey({int nonce = 0}) async {
     final headers = await _buildLevel1Headers(nonce: nonce);
-    final res = await _transport.post(
-      PolymarketUrls.clob,
-      '/auth/api-key',
-      headers: headers,
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.post(
+              PolymarketUrls.clob,
+              '/auth/api-key',
+              headers: headers,
+            )
+            as Map<String, dynamic>;
     return ApiCredentials.fromJson(res);
   }
 
   /// Derive an existing API key deterministically from the wallet (Level 1 auth).
   Future<ApiCredentials> deriveApiKey({int nonce = 0}) async {
     final headers = await _buildLevel1Headers(nonce: nonce);
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      '/auth/derive-api-key',
-      headers: headers,
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.get(
+              PolymarketUrls.clob,
+              '/auth/derive-api-key',
+              headers: headers,
+            )
+            as Map<String, dynamic>;
     return ApiCredentials.fromJson(res);
   }
 
@@ -636,24 +676,22 @@ class ClobClient {
       body: body,
       walletAddress: address,
     );
-    final res = await _transport.post(
-      PolymarketUrls.clob,
-      '/order',
-      body: jsonDecode(body),
-      headers: headers,
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.post(
+              PolymarketUrls.clob,
+              '/order',
+              body: jsonDecode(body),
+              headers: headers,
+            )
+            as Map<String, dynamic>;
     return PostOrderResponse.fromJson(res);
   }
 
   /// Post multiple signed orders in a batch.
-  Future<List<PostOrderResponse>> postOrders(
-    List<PostOrderArgs> args,
-  ) async {
+  Future<List<PostOrderResponse>> postOrders(List<PostOrderArgs> args) async {
     _requireCredentials();
     final address = (await _wallet!.getAddress()).toLowerCase();
-    final bodyList = args
-        .map((a) => a.toJson(_credentials!.apiKey))
-        .toList();
+    final bodyList = args.map((a) => a.toJson(_credentials!.apiKey)).toList();
     final body = jsonEncode(bodyList);
     final headers = _buildLevel2Headers(
       method: 'POST',
@@ -661,12 +699,14 @@ class ClobClient {
       body: body,
       walletAddress: address,
     );
-    final res = await _transport.post(
-      PolymarketUrls.clob,
-      '/orders',
-      body: jsonDecode(body),
-      headers: headers,
-    ) as List;
+    final res =
+        await _transport.post(
+              PolymarketUrls.clob,
+              '/orders',
+              body: jsonDecode(body),
+              headers: headers,
+            )
+            as List;
     return res
         .map((e) => PostOrderResponse.fromJson(e as Map<String, dynamic>))
         .toList();
@@ -699,11 +739,9 @@ class ClobClient {
       path: path,
       walletAddress: address,
     );
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      path,
-      headers: headers,
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.get(PolymarketUrls.clob, path, headers: headers)
+            as Map<String, dynamic>;
     return OpenOrder.fromJson(res);
   }
 
@@ -727,12 +765,14 @@ class ClobClient {
       path: hmacPath,
       walletAddress: address,
     );
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      hmacPath,
-      queryParams: query,
-      headers: headers,
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.get(
+              PolymarketUrls.clob,
+              hmacPath,
+              queryParams: query,
+              headers: headers,
+            )
+            as Map<String, dynamic>;
     return OpenOrdersPage.fromJson(res);
   }
 
@@ -840,12 +880,14 @@ class ClobClient {
       path: hmacPath,
       walletAddress: address,
     );
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      hmacPath,
-      queryParams: query,
-      headers: headers,
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.get(
+              PolymarketUrls.clob,
+              hmacPath,
+              queryParams: query,
+              headers: headers,
+            )
+            as Map<String, dynamic>;
     return TradesPage.fromJson(res);
   }
 
@@ -853,7 +895,7 @@ class ClobClient {
   // Level 2: Account
   // ---------------------------------------------------------------------------
 
-  /// Get USDC balance and allowance for the current wallet.
+  /// Get pUSD collateral balance and allowance for the current wallet.
   Future<BalanceAllowance> getBalanceAllowance({
     BalanceAllowanceParams? params,
   }) async {
@@ -872,27 +914,27 @@ class ClobClient {
       path: hmacPath,
       walletAddress: address,
     );
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      hmacPath,
-      queryParams: query,
-      headers: headers,
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.get(
+              PolymarketUrls.clob,
+              hmacPath,
+              queryParams: query,
+              headers: headers,
+            )
+            as Map<String, dynamic>;
     return BalanceAllowance.fromJson(res);
   }
 
-  /// Update USDC or conditional token allowance.
+  /// Update pUSD collateral or conditional token allowance.
   ///
   /// Triggers a Polymarket backend meta-transaction that sets the on-chain
-  /// approval (USDC `approve` or CTF `setApprovalForAll`) on behalf of the
+  /// approval (pUSD `approve` or CTF `setApprovalForAll`) on behalf of the
   /// user — no on-chain transaction needed from the caller.
   ///
-  /// Pass `assetType: 'COLLATERAL'` to approve USDC spending.
+  /// Pass `assetType: 'COLLATERAL'` to approve pUSD spending.
   /// Pass `assetType: 'CONDITIONAL'` with a `tokenId` to approve CTF token transfers.
   /// Pass `signatureType: 2` in [params] to update allowances for a Gnosis Safe funder.
-  Future<void> updateBalanceAllowance({
-    BalanceAllowanceParams? params,
-  }) async {
+  Future<void> updateBalanceAllowance({BalanceAllowanceParams? params}) async {
     _requireCredentials();
     final address = (await _wallet!.getAddress()).toLowerCase();
     final query = <String, String>{
@@ -924,11 +966,9 @@ class ClobClient {
       path: path,
       walletAddress: address,
     );
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      path,
-      headers: headers,
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.get(PolymarketUrls.clob, path, headers: headers)
+            as Map<String, dynamic>;
     return BanStatus.fromJson(res);
   }
 
@@ -947,12 +987,14 @@ class ClobClient {
       path: hmacPath,
       walletAddress: address,
     );
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      hmacPath,
-      queryParams: {'signature_type': '0'},
-      headers: headers,
-    ) as List;
+    final res =
+        await _transport.get(
+              PolymarketUrls.clob,
+              hmacPath,
+              queryParams: {'signature_type': '0'},
+              headers: headers,
+            )
+            as List;
     return res
         .map((e) => Notification.fromJson(e as Map<String, dynamic>))
         .toList();
@@ -992,12 +1034,14 @@ class ClobClient {
       path: hmacPath,
       walletAddress: address,
     );
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      hmacPath,
-      queryParams: {'order_id': orderId},
-      headers: headers,
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.get(
+              PolymarketUrls.clob,
+              hmacPath,
+              queryParams: {'order_id': orderId},
+              headers: headers,
+            )
+            as Map<String, dynamic>;
     return OrderScoring.fromJson(res);
   }
 
@@ -1012,12 +1056,14 @@ class ClobClient {
       body: body,
       walletAddress: address,
     );
-    final res = await _transport.post(
-      PolymarketUrls.clob,
-      '/orders-scoring',
-      body: jsonDecode(body),
-      headers: headers,
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.post(
+              PolymarketUrls.clob,
+              '/orders-scoring',
+              body: jsonDecode(body),
+              headers: headers,
+            )
+            as Map<String, dynamic>;
     return OrdersScoring.fromJson(res);
   }
 
@@ -1038,12 +1084,14 @@ class ClobClient {
       body: body,
       walletAddress: address,
     );
-    final res = await _transport.post(
-      PolymarketUrls.clob,
-      '/v1/heartbeats',
-      body: bodyMap,
-      headers: headers,
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.post(
+              PolymarketUrls.clob,
+              '/v1/heartbeats',
+              body: bodyMap,
+              headers: headers,
+            )
+            as Map<String, dynamic>;
     return HeartbeatResponse.fromJson(res);
   }
 
@@ -1059,8 +1107,17 @@ class ClobClient {
     final address = (await _wallet!.getAddress()).toLowerCase();
     const path = '/rewards/user';
     final query = {'date': date, 'address': _checksumAddress(address)};
-    final headers = _buildLevel2Headers(method: 'GET', path: path, walletAddress: address);
-    final res = await _transport.get(PolymarketUrls.clob, path, queryParams: query, headers: headers);
+    final headers = _buildLevel2Headers(
+      method: 'GET',
+      path: path,
+      walletAddress: address,
+    );
+    final res = await _transport.get(
+      PolymarketUrls.clob,
+      path,
+      queryParams: query,
+      headers: headers,
+    );
     return res as Map<String, dynamic>;
   }
 
@@ -1072,21 +1129,41 @@ class ClobClient {
     final address = (await _wallet!.getAddress()).toLowerCase();
     const path = '/rewards/user/total';
     final query = {'date': date, 'address': _checksumAddress(address)};
-    final headers = _buildLevel2Headers(method: 'GET', path: path, walletAddress: address);
-    final res = await _transport.get(PolymarketUrls.clob, path, queryParams: query, headers: headers);
+    final headers = _buildLevel2Headers(
+      method: 'GET',
+      path: path,
+      walletAddress: address,
+    );
+    final res = await _transport.get(
+      PolymarketUrls.clob,
+      path,
+      queryParams: query,
+      headers: headers,
+    );
     return res as Map<String, dynamic>;
   }
 
   /// Returns per-user earnings and per-market reward config for [date] (YYYY-MM-DD).
   ///
   /// Requires Level 2 auth. Calls `GET /rewards/user/markets`.
-  Future<Map<String, dynamic>> getUserEarningsAndMarketsConfig(String date) async {
+  Future<Map<String, dynamic>> getUserEarningsAndMarketsConfig(
+    String date,
+  ) async {
     _requireCredentials();
     final address = (await _wallet!.getAddress()).toLowerCase();
     const path = '/rewards/user/markets';
     final query = {'date': date, 'address': _checksumAddress(address)};
-    final headers = _buildLevel2Headers(method: 'GET', path: path, walletAddress: address);
-    final res = await _transport.get(PolymarketUrls.clob, path, queryParams: query, headers: headers);
+    final headers = _buildLevel2Headers(
+      method: 'GET',
+      path: path,
+      walletAddress: address,
+    );
+    final res = await _transport.get(
+      PolymarketUrls.clob,
+      path,
+      queryParams: query,
+      headers: headers,
+    );
     return res as Map<String, dynamic>;
   }
 
@@ -1094,13 +1171,24 @@ class ClobClient {
   ///
   /// Requires Level 2 auth. Calls `GET /rewards/user/percentages`.
   /// [signatureType] — `0` for EOA (default), `2` for Gnosis Safe.
-  Future<Map<String, dynamic>> getRewardPercentages({int signatureType = 0}) async {
+  Future<Map<String, dynamic>> getRewardPercentages({
+    int signatureType = 0,
+  }) async {
     _requireCredentials();
     final address = (await _wallet!.getAddress()).toLowerCase();
     const path = '/rewards/user/percentages';
     final query = {'signature_type': signatureType.toString()};
-    final headers = _buildLevel2Headers(method: 'GET', path: path, walletAddress: address);
-    final res = await _transport.get(PolymarketUrls.clob, path, queryParams: query, headers: headers);
+    final headers = _buildLevel2Headers(
+      method: 'GET',
+      path: path,
+      walletAddress: address,
+    );
+    final res = await _transport.get(
+      PolymarketUrls.clob,
+      path,
+      queryParams: query,
+      headers: headers,
+    );
     return res as Map<String, dynamic>;
   }
 
@@ -1111,20 +1199,38 @@ class ClobClient {
     _requireCredentials();
     final address = (await _wallet!.getAddress()).toLowerCase();
     const path = '/rewards/markets/current';
-    final headers = _buildLevel2Headers(method: 'GET', path: path, walletAddress: address);
-    final res = await _transport.get(PolymarketUrls.clob, path, headers: headers);
+    final headers = _buildLevel2Headers(
+      method: 'GET',
+      path: path,
+      walletAddress: address,
+    );
+    final res = await _transport.get(
+      PolymarketUrls.clob,
+      path,
+      headers: headers,
+    );
     return res as Map<String, dynamic>;
   }
 
   /// Returns rewards data for the market identified by [conditionId].
   ///
   /// Requires Level 2 auth. Calls `GET /rewards/markets/{conditionId}`.
-  Future<Map<String, dynamic>> getRawRewardsForMarket(String conditionId) async {
+  Future<Map<String, dynamic>> getRawRewardsForMarket(
+    String conditionId,
+  ) async {
     _requireCredentials();
     final address = (await _wallet!.getAddress()).toLowerCase();
     final path = '/rewards/markets/$conditionId';
-    final headers = _buildLevel2Headers(method: 'GET', path: path, walletAddress: address);
-    final res = await _transport.get(PolymarketUrls.clob, path, headers: headers);
+    final headers = _buildLevel2Headers(
+      method: 'GET',
+      path: path,
+      walletAddress: address,
+    );
+    final res = await _transport.get(
+      PolymarketUrls.clob,
+      path,
+      headers: headers,
+    );
     return res as Map<String, dynamic>;
   }
 
@@ -1144,11 +1250,13 @@ class ClobClient {
       path: '/auth/readonly-api-key',
       walletAddress: address,
     );
-    final res = await _transport.post(
-      PolymarketUrls.clob,
-      '/auth/readonly-api-key',
-      headers: headers,
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.post(
+              PolymarketUrls.clob,
+              '/auth/readonly-api-key',
+              headers: headers,
+            )
+            as Map<String, dynamic>;
     return ApiCredentials.fromJson(res);
   }
 
@@ -1203,10 +1311,7 @@ class ClobClient {
     final res = await _transport.get(
       PolymarketUrls.clob,
       '/auth/validate-readonly-api-key',
-      queryParams: {
-        'address': _checksumAddress(address),
-        'apiKey': apiKey,
-      },
+      queryParams: {'address': _checksumAddress(address), 'apiKey': apiKey},
     );
     if (res == null) return false;
     final map = res as Map<String, dynamic>;
@@ -1227,16 +1332,28 @@ class ClobClient {
     final query = <String, String>{};
     if (market != null) query['market'] = market;
     final headers = {
-      ..._buildLevel2Headers(method: 'GET', path: hmacPath, walletAddress: address),
-      ...generateBuilderHeaders(creds: _builderCredentials!, method: 'GET', path: hmacPath),
+      ..._buildLevel2Headers(
+        method: 'GET',
+        path: hmacPath,
+        walletAddress: address,
+      ),
+      ...generateBuilderHeaders(
+        creds: _builderCredentials!,
+        method: 'GET',
+        path: hmacPath,
+      ),
     };
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      hmacPath,
-      queryParams: query.isEmpty ? null : query,
-      headers: headers,
-    ) as List;
-    return res.map((e) => OpenOrder.fromJson(e as Map<String, dynamic>)).toList();
+    final res =
+        await _transport.get(
+              PolymarketUrls.clob,
+              hmacPath,
+              queryParams: query.isEmpty ? null : query,
+              headers: headers,
+            )
+            as List;
+    return res
+        .map((e) => OpenOrder.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   /// Returns open orders attributed to this builder account.
@@ -1253,15 +1370,25 @@ class ClobClient {
     if (market != null) query['market'] = market;
     if (assetId != null) query['asset_id'] = assetId;
     final headers = {
-      ..._buildLevel2Headers(method: 'GET', path: hmacPath, walletAddress: address),
-      ...generateBuilderHeaders(creds: _builderCredentials!, method: 'GET', path: hmacPath),
+      ..._buildLevel2Headers(
+        method: 'GET',
+        path: hmacPath,
+        walletAddress: address,
+      ),
+      ...generateBuilderHeaders(
+        creds: _builderCredentials!,
+        method: 'GET',
+        path: hmacPath,
+      ),
     };
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      hmacPath,
-      queryParams: query.isEmpty ? null : query,
-      headers: headers,
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.get(
+              PolymarketUrls.clob,
+              hmacPath,
+              queryParams: query.isEmpty ? null : query,
+              headers: headers,
+            )
+            as Map<String, dynamic>;
     return OpenOrdersPage.fromJson(res);
   }
 
@@ -1276,15 +1403,25 @@ class ClobClient {
     if (market != null) query['market'] = market;
     if (limit != null) query['limit'] = limit.toString();
     final headers = {
-      ..._buildLevel2Headers(method: 'GET', path: hmacPath, walletAddress: address),
-      ...generateBuilderHeaders(creds: _builderCredentials!, method: 'GET', path: hmacPath),
+      ..._buildLevel2Headers(
+        method: 'GET',
+        path: hmacPath,
+        walletAddress: address,
+      ),
+      ...generateBuilderHeaders(
+        creds: _builderCredentials!,
+        method: 'GET',
+        path: hmacPath,
+      ),
     };
-    final res = await _transport.get(
-      PolymarketUrls.clob,
-      hmacPath,
-      queryParams: query.isEmpty ? null : query,
-      headers: headers,
-    ) as Map<String, dynamic>;
+    final res =
+        await _transport.get(
+              PolymarketUrls.clob,
+              hmacPath,
+              queryParams: query.isEmpty ? null : query,
+              headers: headers,
+            )
+            as Map<String, dynamic>;
     return TradesPage.fromJson(res);
   }
 
@@ -1296,8 +1433,16 @@ class ClobClient {
     final address = (await _wallet!.getAddress()).toLowerCase();
     const path = '/auth/builder-api-key';
     final headers = {
-      ..._buildLevel2Headers(method: 'DELETE', path: path, walletAddress: address),
-      ...generateBuilderHeaders(creds: _builderCredentials!, method: 'DELETE', path: path),
+      ..._buildLevel2Headers(
+        method: 'DELETE',
+        path: path,
+        walletAddress: address,
+      ),
+      ...generateBuilderHeaders(
+        creds: _builderCredentials!,
+        method: 'DELETE',
+        path: path,
+      ),
     };
     await _transport.delete(PolymarketUrls.clob, path, headers: headers);
   }
@@ -1335,8 +1480,9 @@ class ClobClient {
   void _requireWallet() {
     if (_wallet == null) {
       throw StateError(
-          'ClobClient: wallet is required for this operation. '
-          'Pass a WalletAdapter when constructing ClobClient.');
+        'ClobClient: wallet is required for this operation. '
+        'Pass a WalletAdapter when constructing ClobClient.',
+      );
     }
   }
 
@@ -1344,8 +1490,9 @@ class ClobClient {
     _requireWallet();
     if (_credentials == null || _hmac == null) {
       throw StateError(
-          'ClobClient: API credentials required for this operation. '
-          'Call createOrDeriveApiKey() and then setCredentials().');
+        'ClobClient: API credentials required for this operation. '
+        'Call createOrDeriveApiKey() and then setCredentials().',
+      );
     }
   }
 
@@ -1353,8 +1500,9 @@ class ClobClient {
     _requireCredentials();
     if (_builderCredentials == null) {
       throw StateError(
-          'ClobClient: builderCredentials required for builder methods. '
-          'Pass BuilderCredentials when constructing ClobClient.');
+        'ClobClient: builderCredentials required for builder methods. '
+        'Pass BuilderCredentials when constructing ClobClient.',
+      );
     }
   }
 
@@ -1363,8 +1511,8 @@ class ClobClient {
     _requireWallet();
     final wallet = _wallet!;
     final address = (await wallet.getAddress()).toLowerCase();
-    final timestamp =
-        (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString();
+    final timestamp = (DateTime.now().millisecondsSinceEpoch ~/ 1000)
+        .toString();
     final typedData = buildClobAuthTypedData(
       address: address,
       timestamp: timestamp,
@@ -1387,7 +1535,9 @@ class ClobClient {
     String? walletAddress,
   }) {
     if (_hmac == null) {
-      throw StateError('ClobClient: credentials not set. Call setCredentials().');
+      throw StateError(
+        'ClobClient: credentials not set. Call setCredentials().',
+      );
     }
     return _hmac!.generateHeaders(
       walletAddress: walletAddress ?? '',
@@ -1416,8 +1566,9 @@ class ClobClient {
       if ('0123456789'.contains(c)) {
         checksummed.write(c);
       } else {
-        final nibble =
-            i.isEven ? (hash[i ~/ 2] >> 4) & 0xF : hash[i ~/ 2] & 0xF;
+        final nibble = i.isEven
+            ? (hash[i ~/ 2] >> 4) & 0xF
+            : hash[i ~/ 2] & 0xF;
         checksummed.write(nibble >= 8 ? c.toUpperCase() : c);
       }
     }
@@ -1451,7 +1602,7 @@ class ClobClient {
     required List<int> roundConfig,
   }) {
     if (side == OrderSide.buy) {
-      // BUY: maker spends USDC → makerAmount = price * size
+      // BUY: maker spends pUSD → makerAmount = price * size
       final amount = price * size;
       return _toMicro(amount, decimals: roundConfig[2]);
     } else {
@@ -1470,7 +1621,7 @@ class ClobClient {
       // BUY: taker receives conditional tokens → takerAmount = size
       return _toMicro(size, decimals: roundConfig[1]);
     } else {
-      // SELL: taker pays USDC → takerAmount = price * size
+      // SELL: taker pays pUSD → takerAmount = price * size
       final amount = price * size;
       return _toMicro(amount, decimals: roundConfig[2]);
     }

@@ -86,7 +86,7 @@ Map<String, dynamic> buildOrderTypedData({
   return {
     'domain': {
       'name': 'Polymarket CTF Exchange',
-      'version': '1',
+      'version': PolymarketChain.exchangeDomainVersion,
       'chainId': PolymarketChain.chainId,
       'verifyingContract': verifyingContract,
     },

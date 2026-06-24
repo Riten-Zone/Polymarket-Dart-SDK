@@ -7,10 +7,10 @@ library;
 
 /// The side of a prediction market order.
 enum OrderSide {
-  /// Buy outcome tokens (spend USDC).
+  /// Buy outcome tokens (spend pUSD collateral).
   buy,
 
-  /// Sell outcome tokens (receive USDC).
+  /// Sell outcome tokens (receive pUSD collateral).
   sell,
 }
 
@@ -66,10 +66,10 @@ class ApiCredentials {
   }
 
   Map<String, dynamic> toJson() => {
-        'apiKey': apiKey,
-        'secret': secret,
-        'passphrase': passphrase,
-      };
+    'apiKey': apiKey,
+    'secret': secret,
+    'passphrase': passphrase,
+  };
 
   @override
   String toString() => 'ApiCredentials(apiKey: $apiKey)';
@@ -165,14 +165,13 @@ class Market {
       closed: json['closed'] as bool? ?? false,
       acceptingOrders: json['accepting_orders'] as bool? ?? false,
       enableOrderBook: json['enable_order_book'] as bool? ?? false,
-      minimumOrderSize:
-          (json['minimum_order_size'] as num?)?.toDouble() ?? 0,
-      minimumTickSize:
-          (json['minimum_tick_size'] as num?)?.toDouble() ?? 0.01,
+      minimumOrderSize: (json['minimum_order_size'] as num?)?.toDouble() ?? 0,
+      minimumTickSize: (json['minimum_tick_size'] as num?)?.toDouble() ?? 0.01,
       negRisk: json['neg_risk'] as bool? ?? false,
       feeRateBps: json['fee_rate_bps']?.toString(),
       endDateIso: json['end_date_iso'] as String?,
-      tokens: (json['tokens'] as List?)
+      tokens:
+          (json['tokens'] as List?)
               ?.map((t) => Token.fromJson(t as Map<String, dynamic>))
               .toList() ??
           [],
@@ -197,7 +196,8 @@ class MarketsPage {
 
   factory MarketsPage.fromJson(Map<String, dynamic> json) {
     return MarketsPage(
-      data: (json['data'] as List?)
+      data:
+          (json['data'] as List?)
               ?.map((m) => Market.fromJson(m as Map<String, dynamic>))
               .toList() ??
           [],
@@ -235,9 +235,9 @@ class BookParams {
   const BookParams({required this.tokenId, this.side});
 
   Map<String, dynamic> toJson() => {
-        'token_id': tokenId,
-        if (side != null) 'side': side,
-      };
+    'token_id': tokenId,
+    if (side != null) 'side': side,
+  };
 }
 
 /// Full orderbook snapshot for a token.
@@ -263,11 +263,13 @@ class OrderBookSummary {
       market: json['market'] as String? ?? '',
       asset: json['asset_id'] as String? ?? '',
       hash: json['hash'] as String?,
-      bids: (json['bids'] as List?)
+      bids:
+          (json['bids'] as List?)
               ?.map((b) => OrderLevel.fromJson(b as Map<String, dynamic>))
               .toList() ??
           [],
-      asks: (json['asks'] as List?)
+      asks:
+          (json['asks'] as List?)
               ?.map((a) => OrderLevel.fromJson(a as Map<String, dynamic>))
               .toList() ??
           [],
@@ -310,10 +312,7 @@ class PricePoint {
   const PricePoint({required this.t, required this.p});
 
   factory PricePoint.fromJson(Map<String, dynamic> json) {
-    return PricePoint(
-      t: json['t'] as int,
-      p: json['p'].toString(),
-    );
+    return PricePoint(t: json['t'] as int, p: json['p'].toString());
   }
 }
 
@@ -406,7 +405,7 @@ class OrderArgs {
 /// Arguments to build a market order (dollar-amount based).
 class MarketOrderArgs {
   final String tokenId;
-  final double amount; // USDC amount to spend (BUY) or shares to sell (SELL)
+  final double amount; // pUSD amount to spend (BUY) or shares to sell (SELL)
   final OrderSide side;
   final int feeRateBps;
   final String? taker;
@@ -468,20 +467,20 @@ class SignedOrder {
   });
 
   Map<String, dynamic> toJson() => {
-        'salt': int.parse(salt), // API requires integer, not string
-        'maker': maker,
-        'signer': signer,
-        'taker': taker,
-        'tokenId': tokenId,
-        'makerAmount': makerAmount,
-        'takerAmount': takerAmount,
-        'expiration': expiration,
-        'nonce': nonce,
-        'feeRateBps': feeRateBps,
-        'side': side == 0 ? 'BUY' : 'SELL', // API expects string, EIP-712 uses int
-        'signatureType': signatureType,
-        'signature': signature,
-      };
+    'salt': int.parse(salt), // API requires integer, not string
+    'maker': maker,
+    'signer': signer,
+    'taker': taker,
+    'tokenId': tokenId,
+    'makerAmount': makerAmount,
+    'takerAmount': takerAmount,
+    'expiration': expiration,
+    'nonce': nonce,
+    'feeRateBps': feeRateBps,
+    'side': side == 0 ? 'BUY' : 'SELL', // API expects string, EIP-712 uses int
+    'signatureType': signatureType,
+    'signature': signature,
+  };
 }
 
 /// Arguments for posting a single order.
@@ -497,11 +496,11 @@ class PostOrderArgs {
   });
 
   Map<String, dynamic> toJson(String apiKey) => {
-        'order': order.toJson(),
-        'owner': apiKey,
-        'orderType': orderType,
-        'postOnly': postOnly,
-      };
+    'order': order.toJson(),
+    'owner': apiKey,
+    'orderType': orderType,
+    'postOnly': postOnly,
+  };
 }
 
 /// Response from POST /order or POST /orders.
@@ -576,7 +575,8 @@ class OpenOrder {
       tokenId: json['token_id']?.toString(),
       side: json['side']?.toString() ?? '',
       price: json['price']?.toString() ?? '',
-      size: json['size_remaining']?.toString() ?? json['size']?.toString() ?? '',
+      size:
+          json['size_remaining']?.toString() ?? json['size']?.toString() ?? '',
       sizeMatched: json['size_matched']?.toString(),
       originalSize: json['original_size']?.toString(),
       orderType: json['order_type']?.toString(),
@@ -620,7 +620,8 @@ class OpenOrdersPage {
 
   factory OpenOrdersPage.fromJson(Map<String, dynamic> json) {
     return OpenOrdersPage(
-      data: (json['data'] as List?)
+      data:
+          (json['data'] as List?)
               ?.map((o) => OpenOrder.fromJson(o as Map<String, dynamic>))
               .toList() ??
           [],
@@ -723,7 +724,8 @@ class TradesPage {
 
   factory TradesPage.fromJson(Map<String, dynamic> json) {
     return TradesPage(
-      data: (json['data'] as List?)
+      data:
+          (json['data'] as List?)
               ?.map((t) => Trade.fromJson(t as Map<String, dynamic>))
               .toList() ??
           [],
@@ -741,9 +743,11 @@ class TradesPage {
 class BalanceAllowanceParams {
   final String? assetType; // 'collateral' or 'conditional'
   final String? tokenId;
+
   /// Override the `user` query param (normally the authenticated wallet).
   /// Use this to query a funder/proxy address balance instead.
   final String? user;
+
   /// Override the `signature_type` query param (default 0 = EOA).
   /// Use 1 for POLY_PROXY wallets, 2 for POLY_GNOSIS_SAFE.
   final int? signatureType;
@@ -760,12 +764,14 @@ class BalanceAllowanceParams {
     if (assetType != null) params['asset_type'] = assetType!;
     if (tokenId != null) params['token_id'] = tokenId!;
     if (user != null) params['user'] = user!;
-    if (signatureType != null) params['signature_type'] = signatureType!.toString();
+    if (signatureType != null) {
+      params['signature_type'] = signatureType!.toString();
+    }
     return params;
   }
 }
 
-/// USDC or conditional token balance and allowance for a wallet.
+/// pUSD collateral or conditional token balance and allowance for a wallet.
 class BalanceAllowance {
   final String? balance;
   final String? allowance;
@@ -832,9 +838,7 @@ class DropNotificationParams {
 
   const DropNotificationParams({this.ids});
 
-  Map<String, dynamic> toJson() => {
-        if (ids != null) 'ids': ids,
-      };
+  Map<String, dynamic> toJson() => {if (ids != null) 'ids': ids};
 }
 
 // ---------------------------------------------------------------------------

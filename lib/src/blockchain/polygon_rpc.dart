@@ -8,6 +8,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
+import 'package:pointycastle/digests/keccak.dart';
 
 import '../utils/contracts.dart';
 
@@ -19,11 +20,9 @@ class PolygonRpc {
   final String rpcUrl;
   final http.Client _http;
 
-  PolygonRpc({
-    String? rpcUrl,
-    http.Client? httpClient,
-  })  : rpcUrl = rpcUrl ?? PolymarketContracts.polygonRpc,
-        _http = httpClient ?? http.Client();
+  PolygonRpc({String? rpcUrl, http.Client? httpClient})
+    : rpcUrl = rpcUrl ?? PolymarketContracts.polygonRpc,
+      _http = httpClient ?? http.Client();
 
   /// Execute a read-only contract call (`eth_call`).
   ///
@@ -38,8 +37,7 @@ class PolygonRpc {
 
   /// Get the transaction count (nonce) for [address].
   Future<int> getTransactionCount(String address) async {
-    final result =
-        await _rpc('eth_getTransactionCount', [address, 'latest']);
+    final result = await _rpc('eth_getTransactionCount', [address, 'latest']);
     return int.parse((result as String).substring(2), radix: 16);
   }
 
@@ -71,7 +69,8 @@ class PolygonRpc {
       await Future<void>.delayed(interval);
       final receipt = await _rpcNullable('eth_getTransactionReceipt', [txHash]);
       if (receipt != null) {
-        final statusHex = (receipt as Map<String, dynamic>)['status'] as String?;
+        final statusHex =
+            (receipt as Map<String, dynamic>)['status'] as String?;
         if (statusHex != null) {
           return int.parse(statusHex.substring(2), radix: 16) == 1;
         }
@@ -119,13 +118,38 @@ class AbiEncoder {
   static final _maxUint256 = (BigInt.one << 256) - BigInt.one;
 
   /// `approve(address spender, uint256 amount)` with MAX_UINT256.
-  static Uint8List encodeApprove(String spender) {
+  static Uint8List encodeApprove(String spender, {BigInt? amount}) {
     // selector: keccak256("approve(address,uint256)")[0:4] = 0x095ea7b3
     const selector = '095ea7b3';
     return _encodeSelectorAndArgs(selector, [
       _encodeAddress(spender),
-      _encodeUint256(_maxUint256),
+      _encodeUint256(amount ?? _maxUint256),
     ]);
+  }
+
+  /// `wrap(address _asset, address _to, uint256 _amount)` call data.
+  static Uint8List encodeWrap({
+    String asset = PolymarketContracts.usdc,
+    required String to,
+    required BigInt amount,
+  }) {
+    return _encodeSelectorAndArgs(_selector('wrap(address,address,uint256)'), [
+      _encodeAddress(asset),
+      _encodeAddress(to),
+      _encodeUint256(amount),
+    ]);
+  }
+
+  /// `unwrap(address _asset, address _to, uint256 _amount)` call data.
+  static Uint8List encodeUnwrap({
+    String asset = PolymarketContracts.usdc,
+    required String to,
+    required BigInt amount,
+  }) {
+    return _encodeSelectorAndArgs(
+      _selector('unwrap(address,address,uint256)'),
+      [_encodeAddress(asset), _encodeAddress(to), _encodeUint256(amount)],
+    );
   }
 
   /// `setApprovalForAll(address operator, bool approved)` with approved=true.
@@ -159,7 +183,9 @@ class AbiEncoder {
   }
 
   static Uint8List _encodeSelectorAndArgs(
-      String selectorHex, List<Uint8List> args) {
+    String selectorHex,
+    List<Uint8List> args,
+  ) {
     final selector = _hexToBytes(selectorHex);
     final total = 4 + args.fold<int>(0, (s, a) => s + a.length);
     final result = Uint8List(total);
@@ -194,6 +220,17 @@ class AbiEncoder {
     final result = Uint8List(32);
     result[31] = value ? 1 : 0;
     return result;
+  }
+
+  static String _selector(String signature) {
+    final input = utf8.encode(signature);
+    final digest = KeccakDigest(256)..update(input, 0, input.length);
+    final output = Uint8List(32);
+    digest.doFinal(output, 0);
+    return output
+        .take(4)
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join();
   }
 
   static Uint8List _hexToBytes(String hex) {

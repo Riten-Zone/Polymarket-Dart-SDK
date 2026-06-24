@@ -52,12 +52,14 @@ Before treating the rest of the roadmap as endpoint parity work, the SDK docs an
 
 ### Collateral model
 
-- Add `pUSD` to the SDK vocabulary and docs as the trading collateral layer
-- Add contract constants for `pUSD`, `CollateralOnramp`, and `CollateralOfframp`
-- Add helpers for wrapping USDC.e -> pUSD
-- Add helpers for unwrapping pUSD -> USDC.e
-- Audit approval and balance language that still assumes raw USDC is the user-facing trading collateral
-- Update examples and comments that still describe trading collateral as only USDC or USDC.e
+- Done: add `pUSD` to the SDK vocabulary and docs as the trading collateral layer
+- Done: add contract constants for `pUSD`, `CollateralOnramp`, and `CollateralOfframp`
+- Done: add ABI helpers for wrapping USDC.e -> pUSD
+- Done: add ABI helpers for unwrapping pUSD -> USDC.e
+- Done: update EOA and Safe approval helpers to use pUSD collateral approvals
+- Done: update CLOB V2 exchange addresses and order domain version
+- Remaining: add high-level helpers that sign and submit wrap/unwrap transactions end to end
+- Remaining: complete a deeper audit of examples and comments that still describe accounting values as USDC-denominated
 
 ### Official client direction
 
@@ -180,9 +182,12 @@ The SDK is already beyond the point where "more basic CLOB polish" is the bottle
 
 Focus on pUSD and public REST parity:
 
-- pUSD contract constants
-- wrap helper
-- unwrap helper
+- pUSD contract constants: done
+- wrap calldata helper: done
+- unwrap calldata helper: done
+- pUSD approval migration: done
+- CLOB V2 exchange domain migration: done
+- high-level wrap/unwrap transaction helpers
 - `getClobMarketInfo`
 - leaderboard
 - closed positions

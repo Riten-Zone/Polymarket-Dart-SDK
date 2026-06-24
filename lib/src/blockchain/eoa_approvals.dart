@@ -15,7 +15,7 @@ import 'polygon_rpc.dart';
 ///
 /// Submits up to 7 Polygon transactions (skipping any already approved):
 /// - `CTF.setApprovalForAll` → CTF Exchange, NegRisk Adapter, NegRisk Exchange
-/// - `USDC.approve(MAX)` → CTF Contract, CTF Exchange, NegRisk Adapter, NegRisk Exchange
+/// - `pUSD.approve(MAX)` → CTF Contract, CTF Exchange, NegRisk Adapter, NegRisk Exchange
 ///
 /// Each transaction is waited on for confirmation before proceeding.
 /// Throws [PolygonRpcException] if the node rejects a transaction.
@@ -49,7 +49,8 @@ Future<void> ensureEoaApprovals(
         to: PolymarketContracts.ctf,
         data: '0x${_bytesToHex(callData)}',
       );
-      final isApproved = BigInt.parse(result.substring(2), radix: 16) == BigInt.one;
+      final isApproved =
+          BigInt.parse(result.substring(2), radix: 16) == BigInt.one;
 
       if (isApproved) {
         log('  ✓ CTF → $name: already approved');
@@ -69,38 +70,38 @@ Future<void> ensureEoaApprovals(
       );
     }
 
-    // --- 2. ERC-20 USDC approve (USDC → all targets) ------------------------
-    log('USDC Approvals:');
-    final usdcTargets = [
+    // --- 2. ERC-20 pUSD approve (pUSD → all targets) ------------------------
+    log('pUSD Approvals:');
+    final pusdTargets = [
       ('CTF Contract', PolymarketContracts.ctf),
       ('CTF Exchange', PolymarketContracts.ctfExchange),
       ('NegRisk Adapter', PolymarketContracts.negRiskAdapter),
       ('NegRisk Exchange', PolymarketContracts.negRiskExchange),
     ];
 
-    for (final (name, spender) in usdcTargets) {
+    for (final (name, spender) in pusdTargets) {
       final callData = AbiEncoder.encodeAllowance(address, spender);
       final result = await rpc.ethCall(
-        to: PolymarketContracts.usdc,
+        to: PolymarketContracts.pusd,
         data: '0x${_bytesToHex(callData)}',
       );
       final allowance = BigInt.parse(result.substring(2), radix: 16);
 
-      // Consider approved if allowance > 1000 USDC (1e9 in 6-decimal micro-units)
+      // Consider approved if allowance > 1000 pUSD (1e9 in 6-decimal units).
       if (allowance > BigInt.from(1_000_000_000)) {
-        log('  ✓ USDC → $name: already approved');
+        log('  ✓ pUSD → $name: already approved');
         continue;
       }
 
-      log('  ⏳ USDC → $name: setting approval...');
+      log('  ⏳ pUSD → $name: setting approval...');
       final txData = AbiEncoder.encodeApprove(spender);
       await _sendAndWait(
         wallet: wallet,
         rpc: rpc,
         address: address,
-        to: PolymarketContracts.usdc,
+        to: PolymarketContracts.pusd,
         data: '0x${_bytesToHex(txData)}',
-        label: 'USDC → $name',
+        label: 'pUSD → $name',
         log: log,
       );
     }

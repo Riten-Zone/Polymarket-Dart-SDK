@@ -30,6 +30,29 @@ That changes the shape of the gap. The SDK is not just missing extra endpoints; 
 
 ---
 
+## v0.4.1 — pUSD + CLOB V2 foundation (2026-06-24)
+
+Added the first slice of the pUSD/CLOB V2 roadmap:
+
+- current pUSD collateral contract constants
+- `CollateralOnramp` and `CollateralOfframp` constants
+- current CTF Exchange V2 and Neg-Risk CTF Exchange V2 constants
+- legacy exchange aliases for migration tooling
+- pUSD collateral approval flow for EOA approvals
+- pUSD collateral approval flow for Safe multisend approvals
+- `AbiEncoder.encodeWrap()` for USDC.e -> pUSD calldata
+- `AbiEncoder.encodeUnwrap()` for pUSD -> USDC.e calldata
+- exact-amount ERC-20 approval encoding via `AbiEncoder.encodeApprove(..., amount: ...)`
+- CLOB V2 EIP-712 order domain version `"2"`
+
+New tests:
+
+- `test/pusd_test.dart` validates pUSD/collateral/v2 exchange constants and wrap/unwrap calldata
+- `test/eip712_test.dart` now validates CLOB V2 exchange domain addresses and version
+- `test/approvals_test.dart` now reads pUSD collateral allowance instead of USDC.e allowance
+
+---
+
 ## What still matches the official docs
 
 These areas are implemented and still broadly aligned with the current official documentation:
@@ -97,9 +120,7 @@ The official docs now expose a larger surface than this SDK currently implements
 - No support for the Quoter Gateway WebSocket.
 - No authenticated user-channel WebSocket support.
 - No sports WebSocket support.
-- No first-class `pUSD` collateral model in the SDK surface.
-- No helpers for `pUSD` wrap or unwrap via `CollateralOnramp` / `CollateralOfframp`.
-- The SDK still documents and names collateral primarily as USDC or USDC.e rather than pUSD-backed trading collateral.
+- pUSD support exists for constants, approvals, and wrap/unwrap calldata, but there is not yet a high-level wallet flow that submits wrap/unwrap transactions end to end.
 - No `getClobMarketInfo` endpoint.
 - No documented Data API leaderboard implementation.
 - No closed positions, total portfolio value, total markets traded, or positions-for-market endpoints.

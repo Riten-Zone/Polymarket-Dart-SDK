@@ -32,7 +32,10 @@ void main() {
         timestamp: '1700000000',
       );
       final msg = td['message'] as Map<String, dynamic>;
-      expect(msg['address'], equals('0xabcdef1234567890abcdef1234567890abcdef12'));
+      expect(
+        msg['address'],
+        equals('0xabcdef1234567890abcdef1234567890abcdef12'),
+      );
     });
 
     test('uses exact attestation string', () {
@@ -91,11 +94,11 @@ void main() {
 
       final domain = td['domain'] as Map<String, dynamic>;
       expect(domain['name'], equals('Polymarket CTF Exchange'));
-      expect(domain['version'], equals('1'));
+      expect(domain['version'], equals('2'));
       expect(domain['chainId'], equals(137));
       expect(
         domain['verifyingContract'],
-        equals('0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E'),
+        equals('0xE111180000d2663C0091e4f400237545B87B996B'),
       );
     });
 
@@ -119,7 +122,7 @@ void main() {
       final domain = td['domain'] as Map<String, dynamic>;
       expect(
         domain['verifyingContract'],
-        equals('0xC5d563A36AE78145C45a50134d48A1215220f80a'),
+        equals('0xe2222d279d744050d28e00520010520000310F59'),
       );
     });
 
@@ -144,11 +147,23 @@ void main() {
           .map((f) => (f as Map<String, dynamic>)['name'])
           .toSet();
 
-      expect(names, containsAll([
-        'salt', 'maker', 'signer', 'taker', 'tokenId',
-        'makerAmount', 'takerAmount', 'expiration', 'nonce',
-        'feeRateBps', 'side', 'signatureType',
-      ]));
+      expect(
+        names,
+        containsAll([
+          'salt',
+          'maker',
+          'signer',
+          'taker',
+          'tokenId',
+          'makerAmount',
+          'takerAmount',
+          'expiration',
+          'nonce',
+          'feeRateBps',
+          'side',
+          'signatureType',
+        ]),
+      );
     });
 
     test('lowercases maker, signer, and taker addresses', () {
@@ -195,8 +210,7 @@ void main() {
     // Well-known test private key — DO NOT use with real funds.
     const testPrivKey =
         '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
-    const expectedAddress =
-        '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266';
+    const expectedAddress = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266';
 
     test('derives correct address from private key', () async {
       final wallet = PrivateKeyWalletAdapter(testPrivKey);
@@ -224,7 +238,8 @@ void main() {
         maker: address,
         signer: address,
         taker: '0x0000000000000000000000000000000000000000',
-        tokenId: '71321045679252212594626385532706912750332728571942532289631379312455583992563',
+        tokenId:
+            '71321045679252212594626385532706912750332728571942532289631379312455583992563',
         makerAmount: '100000000',
         takerAmount: '200000000',
         expiration: '0',
@@ -258,9 +273,11 @@ void main() {
     // Private key: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
     // Expected signature: 0x302cd9abd0b5fcaa202a344437ec0b6660da984e24ae9ad915a592a90facf5a51bb8a873cd8d270f070217fea1986531d5eec66f1162a81f66e026db653bf7ce1c
     test('signature matches TypeScript SDK output', () async {
-      const privKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
+      const privKey =
+          '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
       final wallet = PrivateKeyWalletAdapter(privKey);
-      final address = await wallet.getAddress(); // 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+      final address = await wallet
+          .getAddress(); // 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
 
       // Build typed data manually using Amoy testnet params from the TS vector
       final typedData = <String, dynamic>{
@@ -311,10 +328,14 @@ void main() {
 
       final sig = await wallet.signTypedData(typedData);
       print('Dart sig:       $sig');
-      print('Expected sig:   0x302cd9abd0b5fcaa202a344437ec0b6660da984e24ae9ad915a592a90facf5a51bb8a873cd8d270f070217fea1986531d5eec66f1162a81f66e026db653bf7ce1c');
+      print(
+        'Expected sig:   0x302cd9abd0b5fcaa202a344437ec0b6660da984e24ae9ad915a592a90facf5a51bb8a873cd8d270f070217fea1986531d5eec66f1162a81f66e026db653bf7ce1c',
+      );
       expect(
         sig,
-        equals('0x302cd9abd0b5fcaa202a344437ec0b6660da984e24ae9ad915a592a90facf5a51bb8a873cd8d270f070217fea1986531d5eec66f1162a81f66e026db653bf7ce1c'),
+        equals(
+          '0x302cd9abd0b5fcaa202a344437ec0b6660da984e24ae9ad915a592a90facf5a51bb8a873cd8d270f070217fea1986531d5eec66f1162a81f66e026db653bf7ce1c',
+        ),
       );
     });
   });

@@ -35,7 +35,7 @@ void main() {
   late PrivateKeyWalletAdapter wallet;
   late String funderAddress;
   late BuilderCredentials builderCreds;
-  bool _skip = false;
+  bool skip = false;
 
   setUpAll(() async {
     final privateKey = _loadEnv('PRIVATE_KEY');
@@ -44,13 +44,16 @@ void main() {
     final secret = _loadEnv('BUILDER_API_SECRET');
     final passphrase = _loadEnv('BUILDER_API_PASSPHRASE');
 
-    if (privateKey == null || funder == null ||
-        apiKey == null || secret == null || passphrase == null) {
+    if (privateKey == null ||
+        funder == null ||
+        apiKey == null ||
+        secret == null ||
+        passphrase == null) {
       print(
         'Skipping relayer tests: missing PRIVATE_KEY, FUNDER_ADDRESS, '
         'or BUILDER_API_* in .env',
       );
-      _skip = true;
+      skip = true;
       return;
     }
 
@@ -68,27 +71,25 @@ void main() {
   });
 
   group('RelayerClient — runApprovals', () {
-    test('runApprovals completes without error (idempotent)', () async {
-      if (_skip) {
-        print('Skipping: required .env vars not set');
-        return;
-      }
+    test(
+      'runApprovals completes without error (idempotent)',
+      () async {
+        if (skip) {
+          print('Skipping: required .env vars not set');
+          return;
+        }
 
-      final relayer = RelayerClient(
-        wallet: wallet,
-        creds: builderCreds,
-      );
+        final relayer = RelayerClient(wallet: wallet, creds: builderCreds);
 
-      try {
-        await relayer.runApprovals(
-          funderAddress,
-          onStatus: print,
-        );
-        // After approvals, CLOB balance allowance should be non-null
-        print('Safe approvals submitted successfully');
-      } finally {
-        relayer.close();
-      }
-    }, timeout: const Timeout(Duration(seconds: 60)));
+        try {
+          await relayer.runApprovals(funderAddress, onStatus: print);
+          // After approvals, CLOB balance allowance should be non-null
+          print('Safe approvals submitted successfully');
+        } finally {
+          relayer.close();
+        }
+      },
+      timeout: const Timeout(Duration(seconds: 60)),
+    );
   });
 }

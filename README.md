@@ -62,7 +62,7 @@ See [docs/plan/GUIDES.md](docs/plan/GUIDES.md) for detailed examples covering pu
 ### EOA Trading
 
 1. A Polygon wallet private key with MATIC for gas
-2. USDC on Polygon for collateral
+2. pUSD on Polygon for trading collateral
 
 Run on-chain approvals once before trading:
 
@@ -73,7 +73,7 @@ await ensureEoaApprovals(wallet, onStatus: print);
 
 ### GnosisSafe Trading
 
-1. A GnosisSafe address funded with USDC
+1. A GnosisSafe address funded with pUSD
 2. Builder Program API credentials from [polymarket.com/settings?tab=builder](https://polymarket.com/settings?tab=builder)
 
 Run gasless approvals once:
@@ -95,9 +95,12 @@ await relayer.runApprovals(safeAddress);
 | Contract | Address |
 |----------|---------|
 | USDC (USDC.e) | `0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174` |
+| pUSD | `0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB` |
+| Collateral Onramp | `0x93070a847efEf7F70739046A929D47a521F5B8ee` |
+| Collateral Offramp | `0x2957922Eb93258b93368531d39fAcCA3B4dC5854` |
 | CTF | `0x4D97DCd97eC945f40cF65F87097ACe5EA0476045` |
-| CTF Exchange | `0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E` |
-| Neg Risk Exchange | `0xC5d563A36AE78145C45a50134d48A1215220f80a` |
+| CTF Exchange V2 | `0xE111180000d2663C0091e4f400237545B87B996B` |
+| Neg Risk Exchange V2 | `0xe2222d279d744050d28e00520010520000310F59` |
 | Neg Risk Adapter | `0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296` |
 
 ## Testing

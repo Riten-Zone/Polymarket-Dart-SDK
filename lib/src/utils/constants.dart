@@ -15,13 +15,16 @@ class PolymarketChain {
   /// Polygon mainnet chain ID.
   static const int chainId = 137;
 
-  /// CTF Exchange contract on Polygon (regular markets).
+  /// CTF Exchange V2 contract on Polygon (regular markets).
   static const String exchangeAddress =
-      '0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E';
+      '0xE111180000d2663C0091e4f400237545B87B996B';
 
-  /// CTF Exchange contract on Polygon (neg-risk markets).
+  /// CTF Exchange V2 contract on Polygon (neg-risk markets).
   static const String negRiskExchangeAddress =
-      '0xC5d563A36AE78145C45a50134d48A1215220f80a';
+      '0xe2222d279d744050d28e00520010520000310F59';
+
+  /// EIP-712 Exchange domain version for CLOB V2 orders.
+  static const String exchangeDomainVersion = '2';
 
   /// Zero address — used as default taker for open orders.
   static const String zeroAddress =

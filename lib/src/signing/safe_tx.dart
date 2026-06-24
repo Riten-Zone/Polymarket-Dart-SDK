@@ -49,29 +49,33 @@ Uint8List hashSafeTx({
   int chainId = 137,
 }) {
   // Domain separator
-  final domainSep = _keccak256(_concat([
-    _domainTypeHash,
-    _encodeUint256(BigInt.from(chainId)),
-    _encodeAddress(safeAddress),
-  ]));
+  final domainSep = _keccak256(
+    _concat([
+      _domainTypeHash,
+      _encodeUint256(BigInt.from(chainId)),
+      _encodeAddress(safeAddress),
+    ]),
+  );
 
   // dataHash = keccak256(data)
   final dataHash = _keccak256(data);
 
   // SafeTx struct hash
-  final structHash = _keccak256(_concat([
-    _safeTxTypeHash,
-    _encodeAddress(to),
-    _encodeUint256(BigInt.zero),        // value = 0
-    dataHash,                            // bytes data → keccak256(data)
-    _encodeUint8(operation),             // operation
-    _encodeUint256(BigInt.zero),        // safeTxGas = 0
-    _encodeUint256(BigInt.zero),        // baseGas = 0
-    _encodeUint256(BigInt.zero),        // gasPrice = 0
-    _encodeAddress(PolymarketChain.zeroAddress), // gasToken
-    _encodeAddress(PolymarketChain.zeroAddress), // refundReceiver
-    _encodeUint256(BigInt.from(nonce)),
-  ]));
+  final structHash = _keccak256(
+    _concat([
+      _safeTxTypeHash,
+      _encodeAddress(to),
+      _encodeUint256(BigInt.zero), // value = 0
+      dataHash, // bytes data → keccak256(data)
+      _encodeUint8(operation), // operation
+      _encodeUint256(BigInt.zero), // safeTxGas = 0
+      _encodeUint256(BigInt.zero), // baseGas = 0
+      _encodeUint256(BigInt.zero), // gasPrice = 0
+      _encodeAddress(PolymarketChain.zeroAddress), // gasToken
+      _encodeAddress(PolymarketChain.zeroAddress), // refundReceiver
+      _encodeUint256(BigInt.from(nonce)),
+    ]),
+  );
 
   // EIP-712 final digest: \x19\x01 + domainSep + structHash
   final payload = Uint8List(66);
@@ -88,18 +92,37 @@ Uint8List hashSafeTx({
 /// with 0x prefix, and the target address (MULTISEND_ADDRESS).
 ({String to, String data}) encodeApprovalMultisend() {
   final txns = [
-    (to: PolymarketContracts.usdc, data: AbiEncoder.encodeApprove(PolymarketContracts.ctfExchange)),
-    (to: PolymarketContracts.usdc, data: AbiEncoder.encodeApprove(PolymarketContracts.negRiskExchange)),
-    (to: PolymarketContracts.usdc, data: AbiEncoder.encodeApprove(PolymarketContracts.negRiskAdapter)),
-    (to: PolymarketContracts.ctf, data: AbiEncoder.encodeSetApprovalForAll(PolymarketContracts.ctfExchange)),
-    (to: PolymarketContracts.ctf, data: AbiEncoder.encodeSetApprovalForAll(PolymarketContracts.negRiskExchange)),
-    (to: PolymarketContracts.ctf, data: AbiEncoder.encodeSetApprovalForAll(PolymarketContracts.negRiskAdapter)),
+    (
+      to: PolymarketContracts.pusd,
+      data: AbiEncoder.encodeApprove(PolymarketContracts.ctfExchange),
+    ),
+    (
+      to: PolymarketContracts.pusd,
+      data: AbiEncoder.encodeApprove(PolymarketContracts.negRiskExchange),
+    ),
+    (
+      to: PolymarketContracts.pusd,
+      data: AbiEncoder.encodeApprove(PolymarketContracts.negRiskAdapter),
+    ),
+    (
+      to: PolymarketContracts.ctf,
+      data: AbiEncoder.encodeSetApprovalForAll(PolymarketContracts.ctfExchange),
+    ),
+    (
+      to: PolymarketContracts.ctf,
+      data: AbiEncoder.encodeSetApprovalForAll(
+        PolymarketContracts.negRiskExchange,
+      ),
+    ),
+    (
+      to: PolymarketContracts.ctf,
+      data: AbiEncoder.encodeSetApprovalForAll(
+        PolymarketContracts.negRiskAdapter,
+      ),
+    ),
   ];
 
-  return (
-    to: PolymarketContracts.multisend,
-    data: _encodeMultisend(txns),
-  );
+  return (to: PolymarketContracts.multisend, data: _encodeMultisend(txns));
 }
 
 // ---------------------------------------------------------------------------
@@ -172,7 +195,8 @@ String _encodeMultisend(List<({String to, Uint8List data})> txns) {
 // ---------------------------------------------------------------------------
 
 class PolymarketChain {
-  static const String zeroAddress = '0x0000000000000000000000000000000000000000';
+  static const String zeroAddress =
+      '0x0000000000000000000000000000000000000000';
 }
 
 Uint8List _keccak256(Uint8List data) {

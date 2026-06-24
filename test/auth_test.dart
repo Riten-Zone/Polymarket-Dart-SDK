@@ -2,14 +2,14 @@
 /// Level 2 read-only (HMAC) endpoints, plus order placement and WebSocket.
 ///
 /// Requires a private key in `.env`:
-///   PRIVATE_KEY=<hex without 0x prefix>
-///   FUNDER_ADDRESS=<checksummed Gnosis Safe address>
+///   PRIVATE_KEY=`hex without 0x prefix`
+///   FUNDER_ADDRESS=`checksummed Gnosis Safe address`
 ///
 /// Run with:
 ///   dart test test/auth_test.dart --tags auth
 ///
 /// No funds required for L1/L2 read tests.
-/// Order placement tests require USDC on the Gnosis Safe.
+/// Order placement tests require pUSD collateral on the trading wallet.
 @Tags(['integration', 'auth'])
 library;
 
@@ -66,9 +66,7 @@ Future<String?> _fetchLiveTokenId() async {
   for (final m in markets) {
     // clobTokenIds is a JSON-encoded string in the Gamma API response
     final raw = m['clobTokenIds'];
-    final ids = raw is String
-        ? (jsonDecode(raw) as List?)
-        : raw as List?;
+    final ids = raw is String ? (jsonDecode(raw) as List?) : raw as List?;
     if (ids != null && ids.isNotEmpty) {
       return ids[0] as String;
     }
@@ -126,19 +124,27 @@ void main() {
       print('apiKey: ${creds.apiKey}');
     });
 
-    test('deriveApiKey is deterministic', () async {
-      final wallet = PrivateKeyWalletAdapter(privateKey);
-      final client2 = ClobClient(wallet: wallet);
-      final creds2 = await client2.deriveApiKey();
-      client2.close();
-      expect(creds2.apiKey, equals(creds.apiKey));
-      expect(creds2.secret, equals(creds.secret));
-    }, timeout: const Timeout(Duration(seconds: 15)));
+    test(
+      'deriveApiKey is deterministic',
+      () async {
+        final wallet = PrivateKeyWalletAdapter(privateKey);
+        final client2 = ClobClient(wallet: wallet);
+        final creds2 = await client2.deriveApiKey();
+        client2.close();
+        expect(creds2.apiKey, equals(creds.apiKey));
+        expect(creds2.secret, equals(creds.secret));
+      },
+      timeout: const Timeout(Duration(seconds: 15)),
+    );
 
-    test('getApiKeys returns a list including current key', () async {
-      final res = await client.getApiKeys();
-      expect(res.apiKeys, isA<List>());
-    }, timeout: const Timeout(Duration(seconds: 10)));
+    test(
+      'getApiKeys returns a list including current key',
+      () async {
+        final res = await client.getApiKeys();
+        expect(res.apiKeys, isA<List>());
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
   });
 
   // ---------------------------------------------------------------------------
@@ -146,43 +152,69 @@ void main() {
   // ---------------------------------------------------------------------------
 
   group('L2 — Read-only account endpoints', () {
-    test('getOpenOrders returns a list (empty for fresh wallet)', () async {
-      final page = await client.getOpenOrders();
-      expect(page.data, isA<List<OpenOrder>>());
-    }, timeout: const Timeout(Duration(seconds: 10)));
+    test(
+      'getOpenOrders returns a list (empty for fresh wallet)',
+      () async {
+        final page = await client.getOpenOrders();
+        expect(page.data, isA<List<OpenOrder>>());
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
 
-    test('getTrades returns a page (empty for fresh wallet)', () async {
-      final page = await client.getTrades();
-      expect(page.data, isA<List<Trade>>());
-    }, timeout: const Timeout(Duration(seconds: 10)));
+    test(
+      'getTrades returns a page (empty for fresh wallet)',
+      () async {
+        final page = await client.getTrades();
+        expect(page.data, isA<List<Trade>>());
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
 
-    test('getBalanceAllowance returns a BalanceAllowance object', () async {
-      // asset_type must be uppercase 'COLLATERAL' for USDC balance
-      final balance = await client.getBalanceAllowance(
-        params: const BalanceAllowanceParams(assetType: 'COLLATERAL'),
-      );
-      expect(balance, isA<BalanceAllowance>());
-      print('balance: ${balance.balance}, allowance: ${balance.allowance}, assetAddress: ${balance.assetAddress}');
-    }, timeout: const Timeout(Duration(seconds: 10)));
+    test(
+      'getBalanceAllowance returns a BalanceAllowance object',
+      () async {
+        // asset_type must be uppercase 'COLLATERAL' for pUSD balance
+        final balance = await client.getBalanceAllowance(
+          params: const BalanceAllowanceParams(assetType: 'COLLATERAL'),
+        );
+        expect(balance, isA<BalanceAllowance>());
+        print(
+          'balance: ${balance.balance}, allowance: ${balance.allowance}, assetAddress: ${balance.assetAddress}',
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
 
-    test('getNotifications returns a list', () async {
-      final notifications = await client.getNotifications();
-      expect(notifications, isA<List<Notification>>());
-    }, timeout: const Timeout(Duration(seconds: 10)));
+    test(
+      'getNotifications returns a list',
+      () async {
+        final notifications = await client.getNotifications();
+        expect(notifications, isA<List<Notification>>());
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
 
     test('postHeartbeat does not throw', () async {
       await client.postHeartbeat();
     }, timeout: const Timeout(Duration(seconds: 10)));
 
-    test('getClosedOnlyMode returns a BanStatus object', () async {
-      final status = await client.getClosedOnlyMode();
-      expect(status, isA<BanStatus>());
-    }, timeout: const Timeout(Duration(seconds: 10)));
+    test(
+      'getClosedOnlyMode returns a BanStatus object',
+      () async {
+        final status = await client.getClosedOnlyMode();
+        expect(status, isA<BanStatus>());
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
 
-    test('cancelAll succeeds with no open orders', () async {
-      // Idempotent — fresh wallet has no orders, should not throw.
-      await client.cancelAll();
-    }, timeout: const Timeout(Duration(seconds: 10)));
+    test(
+      'cancelAll succeeds with no open orders',
+      () async {
+        // Idempotent — fresh wallet has no orders, should not throw.
+        await client.cancelAll();
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
   });
 
   // ---------------------------------------------------------------------------
@@ -190,234 +222,262 @@ void main() {
   // ---------------------------------------------------------------------------
 
   group('L2 — Allowance setup', () {
-    test('updateBalanceAllowance COLLATERAL (EOA) does not throw', () async {
-      await client.updateBalanceAllowance(
-        params: const BalanceAllowanceParams(assetType: 'COLLATERAL'),
-      );
-      final bal = await client.getBalanceAllowance(
-        params: const BalanceAllowanceParams(assetType: 'COLLATERAL'),
-      );
-      print('EOA allowance after update: ${bal.allowance}');
-    }, timeout: const Timeout(Duration(seconds: 15)));
+    test(
+      'updateBalanceAllowance COLLATERAL (EOA) does not throw',
+      () async {
+        await client.updateBalanceAllowance(
+          params: const BalanceAllowanceParams(assetType: 'COLLATERAL'),
+        );
+        final bal = await client.getBalanceAllowance(
+          params: const BalanceAllowanceParams(assetType: 'COLLATERAL'),
+        );
+        print('EOA allowance after update: ${bal.allowance}');
+      },
+      timeout: const Timeout(Duration(seconds: 15)),
+    );
 
-    test('updateBalanceAllowance CONDITIONAL (EOA) does not throw', () async {
-      if (testTokenId.isEmpty) return;
-      await client.updateBalanceAllowance(
-        params: BalanceAllowanceParams(
-          assetType: 'CONDITIONAL',
-          tokenId: testTokenId,
-        ),
-      );
-      final bal = await client.getBalanceAllowance(
-        params: BalanceAllowanceParams(
-          assetType: 'CONDITIONAL',
-          tokenId: testTokenId,
-        ),
-      );
-      print('EOA conditional allowance after update: ${bal.allowance}');
-    }, timeout: const Timeout(Duration(seconds: 15)));
+    test(
+      'updateBalanceAllowance CONDITIONAL (EOA) does not throw',
+      () async {
+        if (testTokenId.isEmpty) return;
+        await client.updateBalanceAllowance(
+          params: BalanceAllowanceParams(
+            assetType: 'CONDITIONAL',
+            tokenId: testTokenId,
+          ),
+        );
+        final bal = await client.getBalanceAllowance(
+          params: BalanceAllowanceParams(
+            assetType: 'CONDITIONAL',
+            tokenId: testTokenId,
+          ),
+        );
+        print('EOA conditional allowance after update: ${bal.allowance}');
+      },
+      timeout: const Timeout(Duration(seconds: 15)),
+    );
 
-    test('updateBalanceAllowance COLLATERAL (GnosisSafe funder) does not throw', () async {
-      if (funderAddress.isEmpty) {
-        print('Skipping: FUNDER_ADDRESS not set in .env');
-        return;
-      }
-      await client.updateBalanceAllowance(
-        params: BalanceAllowanceParams(
-          assetType: 'COLLATERAL',
-          signatureType: 2,
-        ),
-      );
-      final bal = await client.getBalanceAllowance(
-        params: BalanceAllowanceParams(
-          assetType: 'COLLATERAL',
-          user: funderAddress,
-          signatureType: 2,
-        ),
-      );
-      print('Safe allowance after update: ${bal.allowance}');
-    }, timeout: const Timeout(Duration(seconds: 15)));
+    test(
+      'updateBalanceAllowance COLLATERAL (GnosisSafe funder) does not throw',
+      () async {
+        if (funderAddress.isEmpty) {
+          print('Skipping: FUNDER_ADDRESS not set in .env');
+          return;
+        }
+        await client.updateBalanceAllowance(
+          params: BalanceAllowanceParams(
+            assetType: 'COLLATERAL',
+            signatureType: 2,
+          ),
+        );
+        final bal = await client.getBalanceAllowance(
+          params: BalanceAllowanceParams(
+            assetType: 'COLLATERAL',
+            user: funderAddress,
+            signatureType: 2,
+          ),
+        );
+        print('Safe allowance after update: ${bal.allowance}');
+      },
+      timeout: const Timeout(Duration(seconds: 15)),
+    );
 
-    test('updateBalanceAllowance CONDITIONAL (GnosisSafe funder) does not throw', () async {
-      if (funderAddress.isEmpty || testTokenId.isEmpty) return;
-      await client.updateBalanceAllowance(
-        params: BalanceAllowanceParams(
-          assetType: 'CONDITIONAL',
-          tokenId: testTokenId,
-          signatureType: 2,
-        ),
-      );
-      final bal = await client.getBalanceAllowance(
-        params: BalanceAllowanceParams(
-          assetType: 'CONDITIONAL',
-          tokenId: testTokenId,
-          user: funderAddress,
-          signatureType: 2,
-        ),
-      );
-      print('Safe conditional allowance after update: ${bal.allowance}');
-    }, timeout: const Timeout(Duration(seconds: 15)));
+    test(
+      'updateBalanceAllowance CONDITIONAL (GnosisSafe funder) does not throw',
+      () async {
+        if (funderAddress.isEmpty || testTokenId.isEmpty) return;
+        await client.updateBalanceAllowance(
+          params: BalanceAllowanceParams(
+            assetType: 'CONDITIONAL',
+            tokenId: testTokenId,
+            signatureType: 2,
+          ),
+        );
+        final bal = await client.getBalanceAllowance(
+          params: BalanceAllowanceParams(
+            assetType: 'CONDITIONAL',
+            tokenId: testTokenId,
+            user: funderAddress,
+            signatureType: 2,
+          ),
+        );
+        print('Safe conditional allowance after update: ${bal.allowance}');
+      },
+      timeout: const Timeout(Duration(seconds: 15)),
+    );
   });
 
   // ---------------------------------------------------------------------------
-  // Level 2 — Order placement & cancellation (requires USDC on Gnosis Safe)
+  // Level 2 — Order placement & cancellation (requires pUSD collateral)
   // ---------------------------------------------------------------------------
 
   group('L2 — Order placement & cancellation', () {
-    test('postOrder places a tiny limit buy and cancels it', () async {
-      if (testTokenId.isEmpty) {
-        print('Skipping: could not fetch a live market token');
-        return;
-      }
+    test(
+      'postOrder places a tiny limit buy and cancels it',
+      () async {
+        if (testTokenId.isEmpty) {
+          print('Skipping: could not fetch a live market token');
+          return;
+        }
 
-      // Check USDC balance upfront — order placement requires funded accounts.
-      // EIP-712 signing correctness is verified by the unit test known vector.
-      final bal = await client.getBalanceAllowance(
-        params: const BalanceAllowanceParams(assetType: 'COLLATERAL'),
-      );
-      print('USDC balance: ${bal.balance}, allowance: ${bal.allowance}, assetAddress: ${bal.assetAddress}');
-      final rawBalance = bal.balance;
-      final balance = rawBalance != null ? double.tryParse(rawBalance) ?? 0.0 : 0.0;
-      // Balance is in micro-USDC (6 decimals): 5_000_000 = $5.00 USDC.
-      if (balance < 5_000_000) {
-        print(
-          'Skipping order placement: insufficient USDC balance ($rawBalance). '
-          'Fund the wallet and approve the exchange contract to enable this test. '
-          'EIP-712 signing correctness is verified by the known-vector unit test.',
+        // Check pUSD balance upfront — order placement requires funded accounts.
+        // EIP-712 signing correctness is verified by the unit test known vector.
+        final bal = await client.getBalanceAllowance(
+          params: const BalanceAllowanceParams(assetType: 'COLLATERAL'),
         );
-        return;
-      }
-
-      // Try EOA order (signatureType=0) — simplest form, maker==signer.
-      final orderEoa = await client.createOrder(
-        OrderArgs(
-          tokenId: testTokenId,
-          price: 0.01,
-          size: 500.0,
-          side: OrderSide.buy,
-          feeRateBps: 0,
-        ),
-        options: CreateOrderOptions(
-          negRisk: testTokenNegRisk,
-          signatureType: 0,
-        ),
-      );
-      print('EOA order json: ${jsonEncode(orderEoa.toJson())}');
-
-      try {
-        final response = await client.postOrder(orderEoa);
-        print('orderId (EOA): ${response.orderId}');
-        expect(response.orderId, isNotEmpty);
-        await client.cancelOrder(response.orderId!);
-        return;
-      } on PolymarketApiException catch (e) {
-        print('EOA order error ${e.statusCode}: ${e.message}');
-        if (e.statusCode == 403) {
-          print('Geo-restricted. Order signing verified OK.');
-          return;
-        }
-        if (e.statusCode != 400 || funderAddress.isEmpty) rethrow;
-        // Fall through to GnosisSafe if FUNDER_ADDRESS is configured.
-      }
-
-      // Fallback: signatureType=2 with Gnosis Safe as maker.
-      final order = await client.createOrder(
-        OrderArgs(
-          tokenId: testTokenId,
-          price: 0.01,
-          size: 500.0,
-          side: OrderSide.buy,
-          feeRateBps: 0,
-        ),
-        options: CreateOrderOptions(
-          funder: funderAddress,
-          signatureType: 2,
-          negRisk: testTokenNegRisk,
-        ),
-      );
-      print('GnosisSafe order json: ${jsonEncode(order.toJson())}');
-
-      try {
-        final response = await client.postOrder(order);
-        print('orderId (GnosisSafe): ${response.orderId}');
-        expect(response.orderId, isNotEmpty);
-        await client.cancelOrder(response.orderId!);
-      } on PolymarketApiException catch (e) {
-        if (e.statusCode == 403) {
-          print('Geo-restricted. Order signing verified OK.');
-          return;
-        }
-        rethrow;
-      }
-    }, timeout: const Timeout(Duration(seconds: 30)));
-
-    test('postOrder with GnosisSafe funder places and cancels a limit buy',
-        () async {
-      if (funderAddress.isEmpty) {
-        print('Skipping: FUNDER_ADDRESS not set in .env');
-        return;
-      }
-      if (testTokenId.isEmpty) {
-        print('Skipping: could not fetch a live market token');
-        return;
-      }
-
-      // Check funder USDC balance using signatureType=2 (POLY_GNOSIS_SAFE).
-      // The balance is tracked per signature-type; sig=2 is required for Gnosis Safe wallets.
-      final funderBal = await client.getBalanceAllowance(
-        params: BalanceAllowanceParams(
-          assetType: 'COLLATERAL',
-          user: funderAddress,
-          signatureType: 2,
-        ),
-      );
-      print(
-        'Funder balance (sig=2): ${funderBal.balance}, '
-        'allowance: ${funderBal.allowance}, '
-        'assetAddress: ${funderBal.assetAddress}',
-      );
-      final rawFunderBalance = funderBal.balance;
-      final funderBalance =
-          rawFunderBalance != null ? double.tryParse(rawFunderBalance) ?? 0.0 : 0.0;
-      // Balance is in micro-USDC (6 decimals): 5_000_000 = $5.00 USDC.
-      if (funderBalance < 5_000_000) {
         print(
-          'Skipping funder order: insufficient USDC balance ($rawFunderBalance). '
-          'Deposit USDC through the Polymarket frontend to fund this wallet.',
+          'pUSD balance: ${bal.balance}, allowance: ${bal.allowance}, assetAddress: ${bal.assetAddress}',
         );
-        return;
-      }
-
-      // Submit as GnosisSafe (signatureType=2) — this is where the balance lives.
-      final order = await client.createOrder(
-        OrderArgs(
-          tokenId: testTokenId,
-          price: 0.01,
-          size: 500.0,
-          side: OrderSide.buy,
-          feeRateBps: 0,
-        ),
-        options: CreateOrderOptions(
-          funder: funderAddress,
-          signatureType: 2, // POLY_GNOSIS_SAFE
-          negRisk: testTokenNegRisk,
-        ),
-      );
-      print('GnosisSafe order json: ${jsonEncode(order.toJson())}');
-
-      try {
-        final response = await client.postOrder(order);
-        print('orderId (GnosisSafe): ${response.orderId}');
-        expect(response.orderId, isNotEmpty);
-        await client.cancelOrder(response.orderId!);
-      } on PolymarketApiException catch (e) {
-        if (e.statusCode == 403) {
-          print('Geo-restricted. Order signing verified OK.');
+        final rawBalance = bal.balance;
+        final balance = rawBalance != null
+            ? double.tryParse(rawBalance) ?? 0.0
+            : 0.0;
+        // Balance is in pUSD base units (6 decimals): 5_000_000 = $5.00.
+        if (balance < 5_000_000) {
+          print(
+            'Skipping order placement: insufficient pUSD balance ($rawBalance). '
+            'Fund the wallet and approve the exchange contract to enable this test. '
+            'EIP-712 signing correctness is verified by the known-vector unit test.',
+          );
           return;
         }
-        rethrow;
-      }
-    }, timeout: const Timeout(Duration(seconds: 30)));
+
+        // Try EOA order (signatureType=0) — simplest form, maker==signer.
+        final orderEoa = await client.createOrder(
+          OrderArgs(
+            tokenId: testTokenId,
+            price: 0.01,
+            size: 500.0,
+            side: OrderSide.buy,
+            feeRateBps: 0,
+          ),
+          options: CreateOrderOptions(
+            negRisk: testTokenNegRisk,
+            signatureType: 0,
+          ),
+        );
+        print('EOA order json: ${jsonEncode(orderEoa.toJson())}');
+
+        try {
+          final response = await client.postOrder(orderEoa);
+          print('orderId (EOA): ${response.orderId}');
+          expect(response.orderId, isNotEmpty);
+          await client.cancelOrder(response.orderId!);
+          return;
+        } on PolymarketApiException catch (e) {
+          print('EOA order error ${e.statusCode}: ${e.message}');
+          if (e.statusCode == 403) {
+            print('Geo-restricted. Order signing verified OK.');
+            return;
+          }
+          if (e.statusCode != 400 || funderAddress.isEmpty) rethrow;
+          // Fall through to GnosisSafe if FUNDER_ADDRESS is configured.
+        }
+
+        // Fallback: signatureType=2 with Gnosis Safe as maker.
+        final order = await client.createOrder(
+          OrderArgs(
+            tokenId: testTokenId,
+            price: 0.01,
+            size: 500.0,
+            side: OrderSide.buy,
+            feeRateBps: 0,
+          ),
+          options: CreateOrderOptions(
+            funder: funderAddress,
+            signatureType: 2,
+            negRisk: testTokenNegRisk,
+          ),
+        );
+        print('GnosisSafe order json: ${jsonEncode(order.toJson())}');
+
+        try {
+          final response = await client.postOrder(order);
+          print('orderId (GnosisSafe): ${response.orderId}');
+          expect(response.orderId, isNotEmpty);
+          await client.cancelOrder(response.orderId!);
+        } on PolymarketApiException catch (e) {
+          if (e.statusCode == 403) {
+            print('Geo-restricted. Order signing verified OK.');
+            return;
+          }
+          rethrow;
+        }
+      },
+      timeout: const Timeout(Duration(seconds: 30)),
+    );
+
+    test(
+      'postOrder with GnosisSafe funder places and cancels a limit buy',
+      () async {
+        if (funderAddress.isEmpty) {
+          print('Skipping: FUNDER_ADDRESS not set in .env');
+          return;
+        }
+        if (testTokenId.isEmpty) {
+          print('Skipping: could not fetch a live market token');
+          return;
+        }
+
+        // Check funder pUSD balance using signatureType=2 (POLY_GNOSIS_SAFE).
+        // The balance is tracked per signature-type; sig=2 is required for Gnosis Safe wallets.
+        final funderBal = await client.getBalanceAllowance(
+          params: BalanceAllowanceParams(
+            assetType: 'COLLATERAL',
+            user: funderAddress,
+            signatureType: 2,
+          ),
+        );
+        print(
+          'Funder balance (sig=2): ${funderBal.balance}, '
+          'allowance: ${funderBal.allowance}, '
+          'assetAddress: ${funderBal.assetAddress}',
+        );
+        final rawFunderBalance = funderBal.balance;
+        final funderBalance = rawFunderBalance != null
+            ? double.tryParse(rawFunderBalance) ?? 0.0
+            : 0.0;
+        // Balance is in pUSD base units (6 decimals): 5_000_000 = $5.00.
+        if (funderBalance < 5_000_000) {
+          print(
+            'Skipping funder order: insufficient pUSD balance ($rawFunderBalance). '
+            'Deposit through the Polymarket frontend or wrap USDC.e into pUSD.',
+          );
+          return;
+        }
+
+        // Submit as GnosisSafe (signatureType=2) — this is where the balance lives.
+        final order = await client.createOrder(
+          OrderArgs(
+            tokenId: testTokenId,
+            price: 0.01,
+            size: 500.0,
+            side: OrderSide.buy,
+            feeRateBps: 0,
+          ),
+          options: CreateOrderOptions(
+            funder: funderAddress,
+            signatureType: 2, // POLY_GNOSIS_SAFE
+            negRisk: testTokenNegRisk,
+          ),
+        );
+        print('GnosisSafe order json: ${jsonEncode(order.toJson())}');
+
+        try {
+          final response = await client.postOrder(order);
+          print('orderId (GnosisSafe): ${response.orderId}');
+          expect(response.orderId, isNotEmpty);
+          await client.cancelOrder(response.orderId!);
+        } on PolymarketApiException catch (e) {
+          if (e.statusCode == 403) {
+            print('Geo-restricted. Order signing verified OK.');
+            return;
+          }
+          rethrow;
+        }
+      },
+      timeout: const Timeout(Duration(seconds: 30)),
+    );
   });
 
   // ---------------------------------------------------------------------------
@@ -425,46 +485,63 @@ void main() {
   // ---------------------------------------------------------------------------
 
   group('WebSocket — orderbook subscription', () {
-    test('raw WS connection receives messages', () async {
-      if (testTokenId.isEmpty) {
-        print('Skipping: could not fetch a live market token');
-        return;
-      }
-      final rawMessages = <String>[];
-      final wsUri = Uri.parse('wss://ws-subscriptions-clob.polymarket.com/ws/market');
-      final channel = WebSocketChannel.connect(wsUri);
-      await channel.ready;
-      print('WS connected');
-      channel.stream.listen(
-        (msg) {
-          print('WS msg: $msg');
-          rawMessages.add(msg.toString());
-        },
-        onError: (e) => print('WS error: $e'),
-        onDone: () => print('WS done'),
-      );
-      // Correct CLOB WS subscription: assets_ids array + type "market"
-      channel.sink.add(jsonEncode({'assets_ids': [testTokenId], 'type': 'market'}));
-      await Future.delayed(const Duration(seconds: 5));
-      await channel.sink.close();
-      print('Total raw messages: ${rawMessages.length}');
-      expect(rawMessages, isNotEmpty);
-    }, timeout: const Timeout(Duration(seconds: 15)));
+    test(
+      'raw WS connection receives messages',
+      () async {
+        if (testTokenId.isEmpty) {
+          print('Skipping: could not fetch a live market token');
+          return;
+        }
+        final rawMessages = <String>[];
+        final wsUri = Uri.parse(
+          'wss://ws-subscriptions-clob.polymarket.com/ws/market',
+        );
+        final channel = WebSocketChannel.connect(wsUri);
+        await channel.ready;
+        print('WS connected');
+        channel.stream.listen(
+          (msg) {
+            print('WS msg: $msg');
+            rawMessages.add(msg.toString());
+          },
+          onError: (e) => print('WS error: $e'),
+          onDone: () => print('WS done'),
+        );
+        // Correct CLOB WS subscription: assets_ids array + type "market"
+        channel.sink.add(
+          jsonEncode({
+            'assets_ids': [testTokenId],
+            'type': 'market',
+          }),
+        );
+        await Future.delayed(const Duration(seconds: 5));
+        await channel.sink.close();
+        print('Total raw messages: ${rawMessages.length}');
+        expect(rawMessages, isNotEmpty);
+      },
+      timeout: const Timeout(Duration(seconds: 15)),
+    );
 
-    test('subscribeOrderbook receives at least one message', () async {
-      if (testTokenId.isEmpty) {
-        print('Skipping: could not fetch a live market token');
-        return;
-      }
+    test(
+      'subscribeOrderbook receives at least one message',
+      () async {
+        if (testTokenId.isEmpty) {
+          print('Skipping: could not fetch a live market token');
+          return;
+        }
 
-      final wsClient = WebSocketClient();
-      await wsClient.connectClob();
-      final messages = <OrderbookUpdate>[];
-      final sub = wsClient.subscribeOrderbook(testTokenId).listen(messages.add);
-      await Future.delayed(const Duration(seconds: 8));
-      await sub.cancel();
-      await wsClient.dispose();
-      expect(messages, isNotEmpty);
-    }, timeout: const Timeout(Duration(seconds: 20)));
+        final wsClient = WebSocketClient();
+        await wsClient.connectClob();
+        final messages = <OrderbookUpdate>[];
+        final sub = wsClient
+            .subscribeOrderbook(testTokenId)
+            .listen(messages.add);
+        await Future.delayed(const Duration(seconds: 8));
+        await sub.cancel();
+        await wsClient.dispose();
+        expect(messages, isNotEmpty);
+      },
+      timeout: const Timeout(Duration(seconds: 20)),
+    );
   });
 }

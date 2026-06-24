@@ -59,12 +59,16 @@ void main() {
     });
 
     test('encodeSetApprovalForAll produces 68-byte calldata', () {
-      final data = AbiEncoder.encodeSetApprovalForAll(PolymarketContracts.ctfExchange);
+      final data = AbiEncoder.encodeSetApprovalForAll(
+        PolymarketContracts.ctfExchange,
+      );
       expect(data.length, equals(68)); // 4 selector + 32 address + 32 bool
     });
 
     test('encodeSetApprovalForAll selector is 0xa22cb465', () {
-      final data = AbiEncoder.encodeSetApprovalForAll(PolymarketContracts.ctfExchange);
+      final data = AbiEncoder.encodeSetApprovalForAll(
+        PolymarketContracts.ctfExchange,
+      );
       expect(data[0], equals(0xa2));
       expect(data[1], equals(0x2c));
       expect(data[2], equals(0xb4));
@@ -72,7 +76,9 @@ void main() {
     });
 
     test('encodeSetApprovalForAll bool=true is 0x01 in last byte', () {
-      final data = AbiEncoder.encodeSetApprovalForAll(PolymarketContracts.ctfExchange);
+      final data = AbiEncoder.encodeSetApprovalForAll(
+        PolymarketContracts.ctfExchange,
+      );
       expect(data[67], equals(0x01));
       // Preceding 31 bytes should be zero
       for (var i = 36; i < 67; i++) {
@@ -158,50 +164,62 @@ void main() {
       print('Checking approvals for EOA: $address');
     });
 
-    test('can read isApprovedForAll state from Polygon', () async {
-      final privateKey = _loadPrivateKey();
-      if (privateKey == null) {
-        print('Skipping: PRIVATE_KEY not in .env');
-        return;
-      }
-      final rpc = PolygonRpc();
-      try {
-        final data = AbiEncoder.encodeIsApprovedForAll(
-            address, PolymarketContracts.ctfExchange);
-        final result = await rpc.ethCall(
-          to: PolymarketContracts.ctf,
-          data: '0x${_bytesToHex(data)}',
-        );
-        final isApproved =
-            BigInt.parse(result.substring(2), radix: 16) == BigInt.one;
-        print('CTF → CTF Exchange approved: $isApproved');
-        expect(result, startsWith('0x'));
-      } finally {
-        rpc.close();
-      }
-    }, timeout: const Timeout(Duration(seconds: 15)));
+    test(
+      'can read isApprovedForAll state from Polygon',
+      () async {
+        final privateKey = _loadPrivateKey();
+        if (privateKey == null) {
+          print('Skipping: PRIVATE_KEY not in .env');
+          return;
+        }
+        final rpc = PolygonRpc();
+        try {
+          final data = AbiEncoder.encodeIsApprovedForAll(
+            address,
+            PolymarketContracts.ctfExchange,
+          );
+          final result = await rpc.ethCall(
+            to: PolymarketContracts.ctf,
+            data: '0x${_bytesToHex(data)}',
+          );
+          final isApproved =
+              BigInt.parse(result.substring(2), radix: 16) == BigInt.one;
+          print('CTF → CTF Exchange approved: $isApproved');
+          expect(result, startsWith('0x'));
+        } finally {
+          rpc.close();
+        }
+      },
+      timeout: const Timeout(Duration(seconds: 15)),
+    );
 
-    test('can read USDC allowance from Polygon', () async {
-      final privateKey = _loadPrivateKey();
-      if (privateKey == null) {
-        print('Skipping: PRIVATE_KEY not in .env');
-        return;
-      }
-      final rpc = PolygonRpc();
-      try {
-        final data = AbiEncoder.encodeAllowance(
-            address, PolymarketContracts.ctfExchange);
-        final result = await rpc.ethCall(
-          to: PolymarketContracts.usdc,
-          data: '0x${_bytesToHex(data)}',
-        );
-        final allowance = BigInt.parse(result.substring(2), radix: 16);
-        print('USDC allowance for CTF Exchange: $allowance');
-        expect(result, startsWith('0x'));
-      } finally {
-        rpc.close();
-      }
-    }, timeout: const Timeout(Duration(seconds: 15)));
+    test(
+      'can read pUSD allowance from Polygon',
+      () async {
+        final privateKey = _loadPrivateKey();
+        if (privateKey == null) {
+          print('Skipping: PRIVATE_KEY not in .env');
+          return;
+        }
+        final rpc = PolygonRpc();
+        try {
+          final data = AbiEncoder.encodeAllowance(
+            address,
+            PolymarketContracts.ctfExchange,
+          );
+          final result = await rpc.ethCall(
+            to: PolymarketContracts.pusd,
+            data: '0x${_bytesToHex(data)}',
+          );
+          final allowance = BigInt.parse(result.substring(2), radix: 16);
+          print('pUSD allowance for CTF Exchange: $allowance');
+          expect(result, startsWith('0x'));
+        } finally {
+          rpc.close();
+        }
+      },
+      timeout: const Timeout(Duration(seconds: 15)),
+    );
   });
 }
 
