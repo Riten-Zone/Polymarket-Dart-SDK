@@ -1,779 +1,229 @@
 # Guides — `polymarket_dart`
 
-Practical examples for common tasks. All examples assume `polymarket_dart` is imported:
+Working guide for closing the gap between the current Dart SDK and the official Polymarket docs.
 
-```dart
-import 'package:polymarket_dart/polymarket_dart.dart';
-```
+Last reviewed on 2026-06-24.
 
 ---
 
-## 1. Public Market Data (no auth)
+## Source of truth
 
-```dart
-final client = ClobClient();
+Use the official docs first, then verify against the official SDK repos when the docs are ambiguous.
 
-// Fetch active markets
-final markets = await client.getMarkets();
-print(markets.data.first.question);
+- Docs index: https://docs.polymarket.com/llms.txt
+- API intro: https://docs.polymarket.com/api-reference/introduction
+- Clients & SDKs: https://docs.polymarket.com/api-reference/clients-sdks
+- TypeScript unified SDK beta: https://docs.polymarket.com/dev-tooling/typescript
+- Python unified SDK beta: https://docs.polymarket.com/dev-tooling/python
 
-// Get orderbook for a specific token
-final book = await client.getOrderBook('0xabc...');
-print('Best bid: ${book.bids.first.price}');
-
-// Get mid price
-final mid = await client.getMidpoint('0xabc...');
-print('Mid: ${mid.mid}');
-
-// Get last trade price
-final ltp = await client.getLastTradePrice('0xabc...');
-print('Last trade: ${ltp.price}');
-
-client.close();
-```
+Do not extend the Dart SDK from the older March 2026 roadmap alone. It is now missing official surface area.
 
 ---
 
-## 2. Wallet Setup
+## Current comparison rules
 
-```dart
-// From a raw private key
-final wallet = PrivateKeyWalletAdapter('0x<your_private_key>');
-final address = await wallet.getAddress();
-print('EOA address: $address');
-```
+When deciding whether something is "done", use this standard:
 
----
+1. The endpoint or WebSocket channel is explicitly documented in the official docs.
+2. The Dart client has a public method or stream that maps cleanly to it.
+3. The request model, auth level, and response model match the docs.
+4. There is at least one live or fixture-backed test proving the shape.
 
-## 3. API Key Management (Level 1 — EIP-712)
-
-Run once per session to get HMAC credentials:
-
-```dart
-final wallet = PrivateKeyWalletAdapter('0x...');
-final client = ClobClient(wallet: wallet);
-
-// Create or reuse an existing API key
-final creds = await client.createOrDeriveApiKey();
-print('API key: ${creds.apiKey}');
-print('Secret:  ${creds.secret}');
-```
+If any of those are missing, treat the item as incomplete.
 
 ---
 
-## 4. Authenticated Requests (Level 2 — HMAC)
+## Gap map by area
 
-```dart
-final client = ClobClient(
-  wallet: wallet,
-  credentials: ApiCredentials(
-    apiKey: '...',
-    secret: '...',
-    passphrase: '...',
-  ),
-);
+### CLOB
 
-// Check balance/allowance
-final balance = await client.getBalanceAllowance(
-  BalanceAllowanceParams(assetType: 'COLLATERAL'),
-);
-print('Allowance: ${balance.allowance}');
+Already covered well:
 
-// Get open orders
-final orders = await client.getOpenOrders();
-print('Open orders: ${orders.data.length}');
-```
+- Market data
+- Order entry and cancellation
+- Balance allowance
+- Notifications
+- Order scoring
+- Heartbeats
+- Rewards
+- Some builder endpoints
 
----
+Still missing or incomplete:
 
-## 5. EOA On-Chain Approvals (one-time setup)
+- `getClobMarketInfo`
+- explicit fee-rate path variant support
+- explicit tick-size path variant support
+- better alignment with current unified SDK trading abstractions
 
-Required before placing any orders with an EOA wallet. Sends 7 Polygon transactions (costs MATIC gas).
+### Gamma API
 
-```dart
-final wallet = PrivateKeyWalletAdapter('0x...');
+Already covered:
 
-await ensureEoaApprovals(
-  wallet,
-  onStatus: print, // optional progress callback
-);
-// Output:
-// Checking approvals for 0xD53D...
-// [1/7] setApprovalForAll CTF → CTF_EXCHANGE ... tx: 0xabc... confirmed
-// ...
-// ✅ All EOA approvals set!
-```
+- markets
+- events
+- tags
+- simple market search
 
-Idempotent — safe to call again if already approved, will skip existing approvals.
+Still missing:
 
----
+- event by slug
+- market by slug
+- market-by-token style helpers where applicable
+- series
+- comments
+- sports metadata and teams
+- richer tag relation endpoints
+- unified search across markets, events, and profiles
+- public profile endpoint support
 
-## 6. GnosisSafe Gasless Approvals (one-time setup)
+### Data API
 
-For GnosisSafe wallets — no MATIC needed. Requires Builder Program API credentials from [polymarket.com/settings?tab=builder](https://polymarket.com/settings?tab=builder).
+Already covered:
 
-```dart
-final wallet = PrivateKeyWalletAdapter('0x<eoa_key>');
-final safeAddress = '0x<gnosis_safe_address>';
+- positions
+- proxy wallet lookup
+- trades
+- activity
+- holders
 
-final relayer = RelayerClient(
-  wallet: wallet,
-  creds: BuilderCredentials(
-    apiKey: 'your_builder_api_key',
-    secret: 'your_builder_secret',
-    passphrase: 'your_passphrase',
-  ),
-);
+Still missing:
 
-await relayer.runApprovals(
-  safeAddress,
-  onStatus: print, // optional progress callback
-);
-relayer.close();
-// Output:
-// Safe nonce: 5
-// Submitting relayer transaction...
-// Transaction ID: abc123 — polling...
-// ✅ All Safe approvals complete!
-```
+- closed positions
+- total value of user positions
+- total markets traded by user
+- positions for a market
+- trader leaderboard rankings
+- builder analytics endpoints
+- accounting snapshot download
+- combo positions
+- combo activity
 
----
+### Bridge and relayer
 
-## 7. Placing Orders (EOA)
+Already covered:
 
-After approvals are set:
+- supported assets
+- quote
+- deposit-address creation
+- status
+- custom relayer-backed Safe approvals
 
-```dart
-final wallet = PrivateKeyWalletAdapter('0x...');
-final client = ClobClient(
-  wallet: wallet,
-  credentials: ApiCredentials(apiKey: '...', secret: '...', passphrase: '...'),
-);
+Still missing:
 
-// Build and sign a limit order
-final order = await client.createOrder(
-  OrderArgs(
-    tokenId: '0x<outcome_token_id>',
-    price: 0.65,       // 65 cents per share
-    size: 10.0,        // 10 USDC worth
-    side: OrderSide.buy,
-  ),
-);
+- withdrawal-address creation parity
+- relayer transaction submit/query endpoints
+- relayer recent-transactions endpoints
+- relayer nonce and wallet-deployment helpers
+- relayer API key helpers
+- deposit-wallet workflow abstraction matching the current official SDK direction
 
-// Submit
-final response = await client.postOrder(order);
-print('Order ID: ${response.orderId}');
+### WebSockets
 
-client.close();
-```
+Already covered:
 
----
+- market orderbook
+- market trades
+- RTDS prices
+- RTDS comments
 
-## 8. Placing Orders (GnosisSafe)
+Still missing:
 
-```dart
-final wallet = PrivateKeyWalletAdapter('0x...');
-final safeAddress = '0x<gnosis_safe>';
+- authenticated user channel
+- sports channel
+- combo/RFQ quoter gateway
+- current message-format audit against the live docs
 
-final client = ClobClient(
-  wallet: wallet,
-  credentials: ApiCredentials(apiKey: '...', secret: '...', passphrase: '...'),
-);
+### Combos / RFQ
 
-// GnosisSafe uses signatureType: 2
-final order = await client.createOrder(
-  OrderArgs(
-    tokenId: '0x<outcome_token_id>',
-    price: 0.65,
-    size: 10.0,
-    side: OrderSide.buy,
-    funderAddress: safeAddress, // funds come from the Safe
-    signatureType: SignatureType.gnosisSafe,
-  ),
-);
+Current risk:
 
-final response = await client.postOrder(order);
-print('Order ID: ${response.orderId}');
-```
+- the local `RfqClient` looks legacy relative to the current docs
+
+Required next audit:
+
+- combo markets
+- submit quote
+- cancel quote
+- confirm or decline last look
+- combo user positions
+- combo user activity
+- quoter gateway WebSocket
+
+Do not assume the existing RFQ client maps 1:1 to the current docs without revalidation.
 
 ---
 
-## 9. Cancel Orders
+## Recommended implementation order
 
-```dart
-// Cancel a single order
-await client.cancelOrder(orderId: 'abc123');
+### Phase 1: fill obvious public-data gaps
 
-// Cancel multiple
-await client.cancelOrders(['id1', 'id2']);
+Implement public endpoints that do not require new auth flows:
 
-// Cancel all open orders
-await client.cancelAll();
+- `getClobMarketInfo`
+- trader leaderboard
+- closed positions
+- total value
+- total markets traded
+- series
+- comments
+- sports metadata
+- teams
+- tag relationship endpoints
+- unified search
 
-// Cancel all orders for a specific market
-await client.cancelMarketOrders(
-  assetId: '0x<outcome_token_id>',
-);
-```
+This gives the fastest increase in official coverage with the lowest risk.
 
----
+### Phase 2: add combo parity
 
-## 10. WebSocket — Live Orderbook
+Implement the documented combo endpoints and then decide whether to:
 
-```dart
-final ws = WebSocketClient();
+- rename `RfqClient` to reflect the current docs, or
+- keep `RfqClient` but add a new `ComboClient`
 
-final subscription = ws.subscribeOrderbook('0x<token_id>');
-subscription.listen((update) {
-  print('Bids: ${update.bids.first.price} × ${update.bids.first.size}');
-  print('Asks: ${update.asks.first.price} × ${update.asks.first.size}');
-});
+The second option is cleaner if backward compatibility matters.
 
-// Disconnect when done
-ws.close();
-```
+### Phase 3: expand relayer and deposit-wallet support
 
----
+Add a first-class relayer/deposit-wallet workflow instead of keeping relayer logic limited to Safe approvals.
 
-## 11. WebSocket — Live Trades
+This is where the official unified SDKs have moved, so Dart should not stay pinned to only raw-key trading patterns.
 
-```dart
-final ws = WebSocketClient();
+### Phase 4: close WebSocket parity
 
-final subscription = ws.subscribeTrades('0x<token_id>');
-subscription.listen((trade) {
-  print('${trade.side} ${trade.size} @ ${trade.price}');
-});
-```
+Add:
+
+- user channel
+- sports channel
+- quoter gateway
+
+Then verify subscription and ping behavior against live endpoints.
 
 ---
 
-## 12. Reading On-Chain State Directly
+## Testing guidance
 
-```dart
-final rpc = PolygonRpc();
+For each new area:
 
-// Check USDC allowance for CTF Exchange
-final data = AbiEncoder.encodeAllowance(
-  '0x<your_address>',
-  PolymarketContracts.ctfExchange,
-);
-final hex = await rpc.ethCall(
-  to: PolymarketContracts.usdc,
-  data: '0x${data.map((b) => b.toRadixString(16).padLeft(2, '0')).join()}',
-);
-final allowance = BigInt.parse(hex.substring(2), radix: 16);
-print('USDC allowance: $allowance');
+- prefer real API tests for public REST endpoints
+- use live opt-in tests for auth-sensitive endpoints
+- keep parsing tests for weird response shapes
+- record exact auth assumptions in the test name or comment
 
-// Check CTF approval status
-final isApprovedData = AbiEncoder.encodeIsApprovedForAll(
-  '0x<your_address>',
-  PolymarketContracts.ctfExchange,
-);
-final result = await rpc.ethCall(
-  to: PolymarketContracts.ctf,
-  data: '0x${isApprovedData.map((b) => b.toRadixString(16).padLeft(2, '0')).join()}',
-);
-final isApproved = BigInt.parse(result.substring(2), radix: 16) == BigInt.one;
-print('CTF approved: $isApproved');
+Specific caution areas:
 
-rpc.close();
-```
+- query-param names often differ from obvious guesses
+- some IDs are strings even when they look numeric
+- cursor pagination is now documented more explicitly
+- docs may describe both query-param and path-param variants for the same resource
 
 ---
 
-## Environment Setup (`.env`)
+## Documentation update rule
 
-```
-# EOA private key (hex, with or without 0x prefix)
-PRIVATE_KEY=0x...
+Whenever a new endpoint is implemented:
 
-# GnosisSafe address (for relayer path)
-FUNDER_ADDRESS=0x...
+1. update `ROADMAP.md`
+2. add a short note to `ACHIEVEMENTS.md`
+3. add or revise a usage example only if the API is verified
 
-# Builder Program credentials (for GnosisSafe approvals)
-# Get from: https://polymarket.com/settings?tab=builder
-BUILDER_API_KEY=...
-BUILDER_API_SECRET=...
-BUILDER_API_PASSPHRASE=...
-```
-
----
-
-## 13. Neg-Risk Markets
-
-Neg-risk markets (multi-outcome markets) use a different exchange contract. Detection and order placement is automatic:
-
-```dart
-final wallet = PrivateKeyWalletAdapter('0x...');
-final client = ClobClient(
-  wallet: wallet,
-  credentials: ApiCredentials(apiKey: '...', secret: '...', passphrase: '...'),
-);
-
-// Check if a market is neg-risk
-final tokenId = '0x<outcome_token_id>';
-final isNegRisk = await client.getNegRisk(tokenId);
-print('Neg-risk: $isNegRisk');
-
-// Place an order — pass negRisk: true to use the correct exchange contract.
-// When negRisk: true, EIP-712 signing uses 0xC5d563A... instead of 0x4bFb41d...
-final order = await client.createOrder(
-  OrderArgs(
-    tokenId: tokenId,
-    price: 0.40,
-    size: 20.0,
-    side: OrderSide.buy,
-  ),
-  options: CreateOrderOptions(negRisk: true),
-);
-
-final response = await client.postOrder(order);
-print('Order ID: ${response.orderId}');
-```
-
-On-chain approvals (`ensureEoaApprovals`) already include the neg-risk adapter and exchange — no extra setup needed.
-
----
-
-## Contract Address Reference
-
-```dart
-// Access via PolymarketContracts constants
-PolymarketContracts.usdc            // USDC (USDC.e on Polygon)
-PolymarketContracts.ctf             // Conditional Token Framework
-PolymarketContracts.ctfExchange     // CTF Exchange
-PolymarketContracts.negRiskExchange // Neg Risk Exchange
-PolymarketContracts.negRiskAdapter  // Neg Risk Adapter
-PolymarketContracts.multisend       // Gnosis Safe Multisend
-PolymarketContracts.relayerUrl      // Polymarket relayer endpoint
-PolymarketContracts.polygonRpc      // Default Polygon RPC URL
-```
-
----
-
-## 14. GammaClient — Market Discovery
-
-`GammaClient` hits `https://gamma-api.polymarket.com`. No auth required.
-
-```dart
-final gamma = GammaClient();
-
-// Top active markets by 24h volume
-final markets = await gamma.getMarkets(
-  active: true,
-  closed: false,
-  order: 'volume24hr',
-  ascending: false,
-  limit: 20,
-);
-for (final m in markets) {
-  print('${m.question}  vol24h=${m.volume24hr}');
-}
-
-// Single market by numeric ID
-final market = await gamma.getMarket(markets.first.id);
-print('Tokens: ${market.clobTokenIds}');
-
-// Browse events (topic groups containing multiple markets)
-final events = await gamma.getEvents(active: true, limit: 5);
-for (final e in events) {
-  print('${e.title} — ${e.markets.length} markets');
-}
-
-// All category tags
-final tags = await gamma.getTags();
-print(tags.map((t) => t.label).join(', '));
-
-// Free-text search
-final results = await gamma.searchMarkets('trump tariff');
-print('Found ${results.length} markets');
-
-gamma.close();
-```
-
----
-
-## 15. DataClient — User Analytics
-
-`DataClient` hits `https://data-api.polymarket.com`. No auth required.
-
-```dart
-final data = DataClient();
-
-final eoaAddress = '0xYourEOAAddress';
-
-// All active positions (accepts EOA or proxy wallet)
-final positions = await data.getPositions(eoaAddress);
-for (final p in positions) {
-  print('${p.title}: ${p.size} shares @ conditionId=${p.conditionId}');
-}
-
-// Lookup the Polymarket Safe proxy wallet for an EOA
-final proxy = await data.getProxyWallet(eoaAddress);
-print('Proxy wallet: $proxy'); // 0xProxyAddress or null
-
-// Completed trades
-final trades = await data.getTrades(eoaAddress, limit: 20);
-for (final t in trades) {
-  print('${t.side} ${t.size} @ ${t.price}  tx=${t.transactionHash}');
-}
-
-// Activity events (trades, redemptions, etc.)
-final activity = await data.getActivity(eoaAddress, limit: 10);
-for (final a in activity) {
-  print('${a.type}  size=${a.size}  ts=${a.timestamp}');
-}
-
-// Outcome token holders for a market
-final conditionId = '0x...'; // CTF condition ID
-final holders = await data.getHolders(conditionId, limit: 50);
-for (final h in holders) {
-  print('${h.pseudonym ?? h.address}: ${h.amount}');
-}
-
-data.close();
-```
-
----
-
-## 16. Quick Order (createAndPostOrder)
-
-Convenience wrapper — builds, signs, and posts an order in one call:
-
-```dart
-final client = ClobClient(
-  wallet: PrivateKeyWalletAdapter('0x...'),
-  credentials: ApiCredentials(apiKey: '...', secret: '...', passphrase: '...'),
-);
-
-// GTC limit order — buy 50 USDC worth of YES shares at 65¢
-final response = await client.createAndPostOrder(
-  OrderArgs(
-    tokenId: '0x<outcome_token_id>',
-    price: 0.65,
-    size: 50.0,
-    side: OrderSide.buy,
-  ),
-  orderType: 'GTC',
-);
-print('Order ID: ${response.orderId}');
-
-// Post-only (maker only, rejected if it would fill immediately)
-final makerOnly = await client.createAndPostOrder(
-  OrderArgs(
-    tokenId: '0x<outcome_token_id>',
-    price: 0.60,
-    size: 20.0,
-    side: OrderSide.buy,
-  ),
-  postOnly: true,
-);
-
-client.close();
-```
-
----
-
-## 17. Market Price Estimation (calculateMarketPrice)
-
-Walks the live orderbook to estimate fill price before placing an order:
-
-```dart
-final client = ClobClient();
-
-final tokenId = '0x<outcome_token_id>';
-
-// Estimate cost to BUY 100 USDC worth of shares
-final buyPrice = await client.calculateMarketPrice(
-  tokenId,
-  'BUY',
-  100.0,
-  OrderType.gtc,
-);
-print('Estimated buy price: $buyPrice'); // e.g. 0.67
-
-// Estimate proceeds from SELL 200 shares
-final sellPrice = await client.calculateMarketPrice(
-  tokenId,
-  'SELL',
-  200.0,
-  OrderType.gtc,
-);
-print('Estimated sell price: $sellPrice');
-
-// FOK — throws if the book cannot fill the full amount
-try {
-  final fokPrice = await client.calculateMarketPrice(
-    tokenId,
-    'BUY',
-    10000.0,
-    OrderType.fok,
-  );
-  print('FOK price: $fokPrice');
-} on StateError catch (e) {
-  print('Cannot fill: $e');
-}
-
-client.close();
-```
-
----
-
-## 18. RTDS WebSocket — Crypto Prices
-
-Real-time crypto price feed from `wss://ws-live-data.polymarket.com/ws`:
-
-```dart
-final ws = WebSocketClient();
-
-// Subscribe to BTC, ETH, and SOL prices
-final stream = ws.subscribePrices(['BTC', 'ETH', 'SOL']);
-stream.listen((update) {
-  print('${update.asset}: \$${update.price}  ts=${update.timestamp}');
-});
-
-// Run for 30 seconds then close
-await Future.delayed(const Duration(seconds: 30));
-ws.close();
-```
-
----
-
-## 19. RTDS WebSocket — Market Comments
-
-Live comment feed for a specific market:
-
-```dart
-final ws = WebSocketClient();
-
-final marketId = '0x<condition_id_or_market_id>';
-
-final stream = ws.subscribeComments(marketId);
-stream.listen((comment) {
-  print('[${comment.author}] ${comment.content}');
-});
-
-await Future.delayed(const Duration(seconds: 60));
-ws.close();
-```
-
----
-
-## 20. BridgeClient — Cross-Chain Deposits
-
-Deposit ETH, USDC, SOL, BTC etc. and receive USDC.e on Polygon:
-
-```dart
-final bridge = BridgeClient();
-
-// Your Polymarket proxy wallet address (from DataClient.getProxyWallet)
-final polymarketAddress = '0xYourProxyWallet';
-
-// Generate deposit addresses
-final deposit = await bridge.createDeposit(polymarketAddress);
-print('Send EVM tokens to:     ${deposit.address.evm}');
-print('Send Solana tokens to:  ${deposit.address.svm}');
-print('Send Bitcoin to:        ${deposit.address.btc}');
-
-// List supported chains and tokens
-final assets = await bridge.getSupportedAssets();
-for (final a in assets) {
-  print('${a.chainName}  ${a.token.symbol}  min=\$${a.minCheckoutUsd}');
-}
-
-// Track deposit status (poll until completed)
-final status = await bridge.getStatus(deposit.address.evm);
-for (final tx in status.transactions) {
-  print('${tx.state}  amount=${tx.amount}  hash=${tx.hash}');
-}
-
-bridge.close();
-```
-
----
-
-## 21. RfqClient — Request for Quote
-
-RFQ is a private liquidity system where requesters post desired trades and
-market makers respond with competing quotes.
-
-All methods require Level 2 HMAC auth.
-
-```dart
-final wallet = PrivateKeyWalletAdapter('0x...');
-final clob = ClobClient(wallet: wallet);
-final creds = await clob.createOrDeriveApiKey();
-clob.close();
-
-final rfq = RfqClient(wallet: wallet, credentials: creds);
-
-// ── Requester side ──────────────────────────────────────────────────────────
-
-// Post a buy request (you want to buy 50 YES shares at max 65¢)
-final req = await rfq.createRequest(RfqUserRequest(
-  tokenId: '0x<outcome_token_id>',
-  side: 'BUY',
-  price: 0.65,
-  size: 50.0,
-));
-print('Request ID: ${req.requestId}');
-
-// View quotes received on your request
-final quotes = await rfq.getRequesterQuotes();
-for (final q in quotes.data) {
-  print('Quote ${q.quoteId}: ${q.price} × ${q.size}');
-}
-
-// Accept the best quote
-if (quotes.data.isNotEmpty) {
-  await rfq.acceptQuote(AcceptQuoteParams(quoteId: quotes.data.first.quoteId));
-}
-
-// Cancel a request
-await rfq.cancelRequest(CancelRfqRequestParams(requestId: req.requestId));
-
-// ── Quoter (market-maker) side ──────────────────────────────────────────────
-
-// Browse open requests from all requesters
-final requests = await rfq.getRequests(GetRfqRequestsParams(limit: 10));
-for (final r in requests.data) {
-  print('${r.side} ${r.size} @ ${r.price}  token=${r.tokenId}');
-}
-
-// Respond to a request with a quote
-final quote = await rfq.createQuote(RfqUserQuote(
-  requestId: requests.data.first.requestId,
-  price: 0.63,
-  size: 50.0,
-));
-print('Quote ID: ${quote.quoteId}');
-
-// Get global RFQ config (min sizes, fee rates, etc.)
-final config = await rfq.getConfig();
-print('RFQ config: $config');
-
-rfq.close();
-```
-
----
-
-## 22. Builder API
-
-Builder credentials let you attribute orders and trades to your builder account
-and access the builder-specific endpoints.
-
-```dart
-final wallet = PrivateKeyWalletAdapter('0x...');
-final creds = ApiCredentials(apiKey: '...', secret: '...', passphrase: '...');
-final builderCreds = BuilderCredentials(
-  apiKey: 'your_builder_api_key',
-  secret: 'your_builder_secret',
-  passphrase: 'your_builder_passphrase',
-);
-
-// Pass builderCredentials to the constructor
-final client = ClobClient(
-  wallet: wallet,
-  credentials: creds,
-  builderCredentials: builderCreds,
-);
-
-// All orders attributed to your builder account
-final orders = await client.getBuilderOrders();
-print('Builder orders: ${orders.length}');
-
-// Open orders only, optionally filtered by market (conditionId)
-final openOrders = await client.getBuilderOpenOrders();
-print('Open: ${openOrders.data.length}');
-
-// Trades routed through your builder account
-final trades = await client.getBuilderTrades(limit: 50);
-print('Trades: ${trades.data.length}');
-
-// Public builder leaderboard (no builder creds needed)
-final leaderboard = await client.getBuilderLeaderboard(limit: 10);
-for (final entry in leaderboard) {
-  print('${entry.builderAddress}  vol=\$${entry.volumeUsd}');
-}
-
-// Revoke builder API key
-await client.revokeBuilderApiKey();
-
-client.close();
-```
-
----
-
-## 23. Rewards (LP Earnings)
-
-All reward methods require Level 2 HMAC auth. Returns raw JSON maps —
-the Polymarket API returns variable structures depending on wallet activity.
-
-```dart
-final client = ClobClient(
-  wallet: PrivateKeyWalletAdapter('0x...'),
-  credentials: ApiCredentials(apiKey: '...', secret: '...', passphrase: '...'),
-);
-
-// Currently active reward markets (which markets earn LP rewards)
-final current = await client.getCurrentRewards();
-print('Active reward markets: ${(current['data'] as List?)?.length}');
-
-// Your LP earnings for a specific date (YYYY-MM-DD)
-final earnings = await client.getEarningsForDay('2026-03-01');
-print('Earnings: $earnings');
-
-// Total cumulative earnings for a date
-final total = await client.getTotalEarningsForDay('2026-03-01');
-print('Total: $total');
-
-// Per-market earnings and reward config for a date
-final markets = await client.getUserEarningsAndMarketsConfig('2026-03-01');
-print('Markets config: $markets');
-
-// Your reward percentage allocation
-final pct = await client.getRewardPercentages();
-print('Percentages: $pct');
-
-// Raw reward data for a specific market
-final conditionId = '0x<condition_id>';
-final raw = await client.getRawRewardsForMarket(conditionId);
-print('Market rewards: $raw');
-
-client.close();
-```
-
----
-
-## 24. Read-Only API Keys
-
-Read-only keys let third parties query your account data without being able
-to place or cancel orders.
-
-```dart
-final client = ClobClient(
-  wallet: PrivateKeyWalletAdapter('0x...'),
-  credentials: ApiCredentials(apiKey: '...', secret: '...', passphrase: '...'),
-);
-
-// Create a new read-only key
-final roKey = await client.createReadonlyApiKey();
-print('Read-only key: ${roKey.apiKey}');
-print('Secret:        ${roKey.secret}');
-
-// List all read-only keys on this wallet
-final keys = await client.getReadonlyApiKeys();
-print('${keys.length} read-only keys');
-
-// Validate a read-only key (useful to verify before sharing)
-final ownerAddress = await client.getAddress();
-final valid = await client.validateReadonlyApiKey(ownerAddress, roKey.apiKey);
-print('Valid: $valid'); // true
-
-// Revoke a read-only key
-await client.deleteReadonlyApiKey(roKey.apiKey);
-print('Key revoked');
-
-client.close();
-```
+That keeps plan docs synchronized with real implementation state instead of drifting behind the official docs again.

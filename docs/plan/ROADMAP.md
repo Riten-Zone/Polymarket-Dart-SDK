@@ -1,176 +1,232 @@
 # Roadmap — `polymarket_dart`
 
----
-
-## ✅ Done: v0.2.0 — GammaClient + DataClient + Rewards (2026-03-05)
-
-Added `GammaClient` for market/event discovery, expanded `DataClient` with 4 new methods, added 10 new methods to `ClobClient` (rewards + read-only API keys).
-
-**80 tests passing** (23 unit + 18 L0 + 8 auth + 14 approvals + 17 new)
-
-Remaining work from v0.2.0:
-- `getLeaderboard` — correct API path not yet found (404 on `/leaderboard`)
-- Rewards endpoint paths speculative (404/405) — need verification against current API
-- `getHolders` — works with `market` query param ✅
+Current roadmap after reviewing the SDK against the official Polymarket docs on 2026-06-24.
 
 ---
 
-## ✅ Done: On-Chain Approvals + Order Placement (2026-03-05)
+## Status summary
 
-Both order paths now work end-to-end:
-- **EOA**: `ensureEoaApprovals(wallet)` — direct Polygon JSON-RPC, 7 transactions, EOA pays MATIC gas
-- **GnosisSafe**: `RelayerClient(wallet, creds).runApprovals(safeAddress)` — gasless via Polymarket relayer
+The SDK already has strong coverage for:
 
-Orders confirmed working:
-- EOA `postOrder()` returns `orderId` directly after approvals set
-- GnosisSafe `postOrder()` uses `signatureType: 2` (GnosisSafe)
+- legacy direct-CLOB trading
+- L1 and L2 auth
+- EOA and Safe approval flows
+- rewards
+- builder basics
+- bridge basics
+- starter Gamma and Data clients
+- market-data WebSockets
 
-Bug fixed: `SignedOrder.toJson()` serialized `side` as int (0/1) — API requires string ("BUY"/"SELL").
+The next roadmap should not focus on small CLOB cleanup. The main gap is platform breadth and platform model drift.
 
-**63 tests passing** (23 unit + 18 L0 + 8 auth + 14 approvals)
+Two shifts now need to be explicit in the roadmap:
 
----
-
-## ✅ Done: Live Testing & Bug Fixes
-
-All 18 integration tests pass against the live API. Fixes applied:
-- `getServerTime` — API returns raw `int`, not JSON object
-- `getFeeRateBps` — path was `/fee-rate-bps`, correct is `/fee-rate`; key was `fee_rate_bps`, correct is `base_fee`
-- `OrderBookSummary.timestamp` — API returns timestamp as string, not int
-- Integration tests now use dynamic market discovery (Gamma API, top 5 by 24h volume)
-
-**✅ Done — auth tests 8/8 pass, all L2 paths verified against Python SDK**
-
-All CLOB endpoint paths have been audited against `py_clob_client/endpoints.py`. Fixes applied:
-- `getApiKeys`: `/auth/api-key` → `/auth/api-keys`
-- `cancelAll`: `/orders` → `/cancel-all`
-- `cancelMarketOrders`: `/orders` → `/cancel-market-orders`
-- `getClosedOnlyMode`: `/closed-only-mode` → `/auth/ban-status/closed-only`
-- `updateBalanceAllowance`: `/balance-allowance` → `/balance-allowance/update`
-- HMAC signs bare path only (not including query string)
-- EIP-55 checksummed addresses in query params (`owner`, `maker`, `user`)
-
-**Remaining unverified (needs funds or real usage):**
-
-| Item | Notes |
-|------|-------|
-| CLOB WS subscription message format | `action`/`channel` field names need live verification |
-| RTDS ping format | May expect plain `"PING"` string |
-| `postOrder` / `cancelOrder` end-to-end | ✅ Done — both EOA and GnosisSafe place orders successfully |
+- Polymarket documents `pUSD` as the collateral token used for all trading
+- Polymarket now documents both legacy CLOB v2 SDKs and newer unified SDK beta flows
 
 ---
 
-## v0.2 — GammaClient + DataClient
+## Completed foundation
 
-Two additional clients covering market discovery and user analytics.
-Both are **zero-auth** — pure GET requests against separate base URLs.
+These are effectively done and should stay marked complete:
 
-### `GammaClient` (`https://gamma-api.polymarket.com`)
-```dart
-Future<List<GammaEvent>> getEvents({String? nextCursor});
-Future<GammaEvent> getEvent(int eventId);
-Future<List<GammaMarket>> getGammaMarkets({String? nextCursor, bool? active});
-Future<GammaMarket> getGammaMarket(String slug);
-Future<List<Tag>> getTags();
-Future<List<GammaMarket>> searchMarkets(String query);
-```
-
-### `DataClient` (`https://data-api.polymarket.com`)
-```dart
-Future<List<Position>> getPositions(String userAddress);
-Future<List<UserTrade>> getTrades(String userAddress);
-Future<List<Activity>> getActivity(String userAddress);
-Future<List<Holder>> getHolders(String conditionId);
-Future<Leaderboard> getLeaderboard({String? interval});
-```
-
-New models: `GammaEvent`, `GammaMarket`, `Tag`, `Position`, `UserTrade`, `Activity`, `Holder`, `Leaderboard`
+- Core CLOB client
+- Live auth and order placement validation
+- EOA approval flow
+- Gnosis Safe approval flow through relayer
+- Rewards endpoints
+- Readonly API keys
+- Builder leaderboard and builder trade endpoints
+- Bridge client
+- Gamma client initial release
+- Data client initial release
+- RTDS and market WebSocket support
 
 ---
 
-## v0.2 — Rewards & Earnings (CLOB)
+## Priority roadmap
 
-6 methods missing from v0.1 that TypeScript and Rust SDKs have:
-```dart
-Future<List<UserEarning>> getEarningsForDay(String date);
-Future<List<TotalUserEarning>> getTotalEarningsForDay(String date);
-Future<List<UserRewardsEarning>> getUserEarningsAndMarketsConfig(String date);
-Future<RewardsPercentages> getRewardPercentages();
-Future<List<MarketReward>> getCurrentRewards();
-Future<List<MarketReward>> getRawRewardsForMarket(String conditionId);
-```
+## P0 — pUSD and CLOB v2 alignment
 
----
+Before treating the rest of the roadmap as endpoint parity work, the SDK docs and abstractions need to reflect the current trading model.
 
-## v0.2 — Additional API Key Features
+### Collateral model
 
-Currently skipped in v0.1:
-- `createReadonlyApiKey()` — read-only keys for third-party integrations
-- `getReadonlyApiKeys()` — list read-only keys
-- `deleteReadonlyApiKey(key)` — revoke one
-- `validateReadonlyApiKey(address, key)` — verify ownership
+- Add `pUSD` to the SDK vocabulary and docs as the trading collateral layer
+- Add contract constants for `pUSD`, `CollateralOnramp`, and `CollateralOfframp`
+- Add helpers for wrapping USDC.e -> pUSD
+- Add helpers for unwrapping pUSD -> USDC.e
+- Audit approval and balance language that still assumes raw USDC is the user-facing trading collateral
+- Update examples and comments that still describe trading collateral as only USDC or USDC.e
 
----
+### Official client direction
 
-## ✅ Done: v0.3.0 — RFQ + Builder API + Bridge + Pub.dev Prep (2026-03-07)
+- Mark the current Dart SDK as closest to the legacy direct CLOB v2 client model
+- Add a roadmap note for compatibility with the newer unified SDK beta flow
+- Audit where a higher-level secure client abstraction should exist in Dart
 
-- **RfqClient** — full Request-for-Quote system (requester + quoter side, all data queries)
-- **BridgeClient** — cross-chain deposit API (EVM, Solana, Bitcoin → USDC.e on Polygon)
-- **Builder API** extension to `ClobClient` — attributed orders/trades, builder leaderboard, `revokeBuilderApiKey`
-- `ClobClient.createAndPostOrder()` — convenience one-call order wrapper
-- `ClobClient.calculateMarketPrice()` — live orderbook price estimator
-- `ClobClient.getSamplingSimplifiedMarkets()` + `getOrderBookHash()`
-- Full `dartdoc` on all public classes, methods, and enums
-- `dart pub publish --dry-run` passes with **0 warnings**
-- **88+ tests passing**
+### Result
+
+This prevents the SDK from staying conceptually pinned to a pre-pUSD mental model.
 
 ---
 
-## ✅ Done: v0.3.1 — Reward Endpoint Fixes (2026-03-08)
+## P0 — align with the current official docs
 
-- Fixed 6 reward endpoint paths (all were wrong) and auth level (L0 → L2 HMAC)
-- Removed `DataClient.getLeaderboard` — no public endpoint exists on Polymarket's Data API
-- Updated reward integration tests to use Level 2 credentials from `.env`
-- Published to pub.dev
+These are the highest-value gaps because they are clearly documented today and materially expand SDK parity.
 
----
+### Public REST parity
 
-## Future — Privy Wallet Adapter
+- Add `getClobMarketInfo`
+- Add Data API leaderboard support
+- Add closed positions
+- Add total portfolio value
+- Add total markets traded
+- Add positions-for-market
+- Add builder analytics endpoints
+- Add Gamma comments endpoints
+- Add Gamma series endpoints
+- Add Gamma sports endpoints
+- Add Gamma tag relationship endpoints
+- Add unified search for markets, events, and profiles
+- Add public profile lookup
 
-Since the main app uses Privy for auth, a `PrivyWalletAdapter` would let users
-trade directly from their embedded Privy wallet without exposing a private key:
+### Result
 
-```dart
-// In the Flutter app:
-class PrivyWalletAdapter implements WalletAdapter {
-  final PrivyEmbeddedWallet _privy;
-
-  @override
-  Future<String> getAddress() async => await _privy.address;
-
-  @override
-  Future<String> signTypedData(Map<String, dynamic> typedData) async {
-    return await _privy.signTypedData(typedData);
-  }
-}
-
-// Usage:
-final wallet = PrivyWalletAdapter(privyEmbeddedWallet);
-final client = ClobClient(wallet: wallet);
-```
-
-This is the key integration between `polymarket_dart` and the Riten Flutter app.
+This closes the largest doc-visible holes without introducing new signing complexity.
 
 ---
 
-## Version Summary
+## P1 — combo and RFQ parity
 
-| Version | Focus | Status |
-|---------|-------|--------|
-| v0.1.0 | Core CLOB — 42 methods, full auth, WebSocket, 23 tests | ✅ Done |
-| post v0.1 | Live testing — 49 tests passing, full path audit, all known bugs fixed | ✅ Done |
-| post v0.1 | On-chain approvals (EOA + GnosisSafe), side bug fix, 63 tests passing | ✅ Done |
-| v0.2.0 | GammaClient, DataClient, Rewards, Readonly keys | ✅ Done |
-| v0.3.0 | RFQ, Builder API, Bridge, dartdoc, pub.dev prep | ✅ Done |
-| v0.3.1 | Reward endpoint path fixes (6 methods, L0→L2), remove getLeaderboard | ✅ Done |
-| Future | Privy wallet adapter, WebSocket format verification | Backlog |
+The official docs now expose combos as a first-class feature set. This SDK currently does not match that surface.
+
+- Add combo markets
+- Add combo user positions
+- Add combo user activity
+- Add quote submission
+- Add quote cancellation
+- Add confirm/decline last look
+- Add Quoter Gateway WebSocket
+
+### Design decision required
+
+Pick one of:
+
+- keep `RfqClient` and retrofit it to the current combo docs
+- introduce a new `ComboClient` and leave `RfqClient` as legacy
+
+Preferred direction: add `ComboClient` and deprecate the older RFQ naming later if needed.
+
+---
+
+## P1 — relayer and deposit-wallet workflows
+
+The current official SDK direction is more deposit-wallet and relayer centric than this Dart SDK.
+
+- Add withdrawal-address creation
+- Add relayer transaction submission
+- Add relayer transaction lookup
+- Add relayer recent-transactions query
+- Add relayer nonce helpers
+- Add wallet deployment check
+- Add relayer API key queries
+- Add a higher-level trading setup abstraction for deposit-wallet onboarding
+
+### Result
+
+This moves the Dart SDK closer to the documented onboarding flow used by the new official SDKs.
+
+---
+
+## P2 — WebSocket parity
+
+- Add authenticated user channel
+- Add sports channel
+- Audit market-channel payloads against the current docs
+- Audit RTDS ping/subscription format against the current docs
+- Add combo/quoter gateway streaming support
+
+### Result
+
+This completes real-time parity and reduces uncertainty around currently inferred message formats.
+
+---
+
+## P2 — developer-experience improvements
+
+- Add examples that mirror the current official docs, not only the older CLOB flows
+- Add integration tests for new public endpoints
+- Add opt-in live tests for relayer and combo flows
+- Add a single coverage matrix in the repo root or docs folder
+
+---
+
+## Explicit non-priority items
+
+These should not be the next focus unless directly needed by the app:
+
+- a Privy adapter before the official API surface gap is closed
+- cosmetic refactors without parity gains
+- more March 2026 cleanup on already-working CLOB methods
+
+The SDK is already beyond the point where "more basic CLOB polish" is the bottleneck.
+
+---
+
+## Short-term milestone proposal
+
+### v0.4.0
+
+Focus on pUSD and public REST parity:
+
+- pUSD contract constants
+- wrap helper
+- unwrap helper
+- `getClobMarketInfo`
+- leaderboard
+- closed positions
+- total value
+- total markets traded
+- positions-for-market
+- series
+- comments
+- sports metadata
+- teams
+- tag relationships
+- unified search
+- public profile
+
+### v0.5.0
+
+Focus on combos and relayer breadth:
+
+- combo endpoints
+- quoter gateway
+- relayer transaction endpoints
+- deposit-wallet workflow helpers
+- higher-level unified-client style trading setup
+
+### v0.6.0
+
+Focus on WebSocket and unified-SDK alignment:
+
+- user channel
+- sports channel
+- message-format audit cleanup
+- docs/examples aligned to the current official platform story
+
+---
+
+## Bottom line
+
+As of 2026-06-24, the SDK is solid on the older direct CLOB integration style but behind the current official docs in six areas:
+
+- pUSD collateral alignment
+- unified / CLOB v2 client direction
+- combo support
+- relayer and deposit-wallet workflows
+- broader Gamma/Data coverage
+- full WebSocket parity
+
+That is the real roadmap now.
