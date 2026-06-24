@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **pUSD collateral support** — current pUSD, CollateralOnramp, CollateralOfframp, CTF Exchange V2, and Neg-Risk Exchange V2 contract constants
+- **`CollateralClient`** — signed live transaction helpers for wrapping USDC.e to pUSD and unwrapping pUSD back to USDC.e
+- **pUSD ABI helpers** — `AbiEncoder.encodeWrap()`, `AbiEncoder.encodeUnwrap()`, `AbiEncoder.encodeBalanceOf()`, and exact-amount `encodeApprove()`
+- **Live pUSD test** — `test/pusd_live_test.dart` performs a USDC.e -> pUSD -> USDC.e round trip on Polygon
+
+### Changed
+
+- EOA and Safe approval helpers now approve pUSD collateral for current CLOB V2 contracts
+- CLOB order EIP-712 domain now uses Exchange version `2` and current CLOB V2 exchange addresses
+
 ## [0.4.0] - 2026-03-08
 
 ### Added

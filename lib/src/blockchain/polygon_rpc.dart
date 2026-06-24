@@ -35,6 +35,12 @@ class PolygonRpc {
     return result as String;
   }
 
+  /// Get native POL balance for [address], in wei.
+  Future<BigInt> getBalance(String address) async {
+    final result = await _rpc('eth_getBalance', [address, 'latest']);
+    return BigInt.parse((result as String).substring(2), radix: 16);
+  }
+
   /// Get the transaction count (nonce) for [address].
   Future<int> getTransactionCount(String address) async {
     final result = await _rpc('eth_getTransactionCount', [address, 'latest']);
@@ -180,6 +186,13 @@ class AbiEncoder {
       _encodeAddress(owner),
       _encodeAddress(spender),
     ]);
+  }
+
+  /// `balanceOf(address account)` call data.
+  static Uint8List encodeBalanceOf(String account) {
+    // selector: keccak256("balanceOf(address)")[0:4] = 0x70a08231
+    const selector = '70a08231';
+    return _encodeSelectorAndArgs(selector, [_encodeAddress(account)]);
   }
 
   static Uint8List _encodeSelectorAndArgs(

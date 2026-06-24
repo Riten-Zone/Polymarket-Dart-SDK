@@ -43,11 +43,15 @@ Added the first slice of the pUSD/CLOB V2 roadmap:
 - `AbiEncoder.encodeWrap()` for USDC.e -> pUSD calldata
 - `AbiEncoder.encodeUnwrap()` for pUSD -> USDC.e calldata
 - exact-amount ERC-20 approval encoding via `AbiEncoder.encodeApprove(..., amount: ...)`
+- `CollateralClient.wrapUsdcToPusd()` for signed wrap transactions
+- `CollateralClient.unwrapPusdToUsdc()` for signed unwrap transactions
+- `CollateralClient.balanceOf()`, `allowance()`, and `nativeBalance()` read helpers
 - CLOB V2 EIP-712 order domain version `"2"`
 
 New tests:
 
 - `test/pusd_test.dart` validates pUSD/collateral/v2 exchange constants and wrap/unwrap calldata
+- `test/pusd_live_test.dart` submits a live USDC.e -> pUSD -> USDC.e round trip
 - `test/eip712_test.dart` now validates CLOB V2 exchange domain addresses and version
 - `test/approvals_test.dart` now reads pUSD collateral allowance instead of USDC.e allowance
 
@@ -120,7 +124,7 @@ The official docs now expose a larger surface than this SDK currently implements
 - No support for the Quoter Gateway WebSocket.
 - No authenticated user-channel WebSocket support.
 - No sports WebSocket support.
-- pUSD support exists for constants, approvals, and wrap/unwrap calldata, but there is not yet a high-level wallet flow that submits wrap/unwrap transactions end to end.
+- pUSD support exists for constants, approvals, wrap/unwrap calldata, and live EOA wrap/unwrap transaction submission.
 - No `getClobMarketInfo` endpoint.
 - No documented Data API leaderboard implementation.
 - No closed positions, total portfolio value, total markets traded, or positions-for-market endpoints.

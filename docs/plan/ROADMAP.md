@@ -58,7 +58,8 @@ Before treating the rest of the roadmap as endpoint parity work, the SDK docs an
 - Done: add ABI helpers for unwrapping pUSD -> USDC.e
 - Done: update EOA and Safe approval helpers to use pUSD collateral approvals
 - Done: update CLOB V2 exchange addresses and order domain version
-- Remaining: add high-level helpers that sign and submit wrap/unwrap transactions end to end
+- Done: add high-level helpers that sign and submit wrap/unwrap transactions end to end
+- Done: add live wrap/unwrap round-trip test
 - Remaining: complete a deeper audit of examples and comments that still describe accounting values as USDC-denominated
 
 ### Official client direction
@@ -187,7 +188,8 @@ Focus on pUSD and public REST parity:
 - unwrap calldata helper: done
 - pUSD approval migration: done
 - CLOB V2 exchange domain migration: done
-- high-level wrap/unwrap transaction helpers
+- high-level wrap/unwrap transaction helpers: done
+- live pUSD wrap/unwrap test: done
 - `getClobMarketInfo`
 - leaderboard
 - closed positions

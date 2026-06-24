@@ -65,6 +65,7 @@ export 'src/transport/http_transport.dart';
 export 'src/transport/websocket_transport.dart';
 
 // Blockchain
+export 'src/blockchain/collateral.dart';
 export 'src/blockchain/polygon_rpc.dart';
 export 'src/blockchain/eoa_approvals.dart';
 export 'src/blockchain/rlp.dart' show rlpEncode;

@@ -124,6 +124,9 @@ dart test test/auth_test.dart --tags auth
 # Approvals (requires PRIVATE_KEY in .env)
 dart test test/approvals_test.dart --tags approvals
 
+# pUSD live wrap/unwrap (requires PRIVATE_KEY, POL gas, and USDC.e)
+dart test test/pusd_live_test.dart --tags pusd-live
+
 # GnosisSafe relayer (requires BUILDER_* creds in .env)
 dart test test/relayer_test.dart --tags relayer
 
@@ -135,6 +138,7 @@ Create a `.env` file in the project root:
 
 ```
 PRIVATE_KEY=0x...
+PUSD_LIVE_TEST_AMOUNT=10000  # optional; base units, 10000 = 0.01 USDC.e/pUSD
 FUNDER_ADDRESS=0x...          # GnosisSafe address
 BUILDER_API_KEY=...
 BUILDER_API_SECRET=...
