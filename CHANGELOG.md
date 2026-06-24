@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`CollateralClient`** — signed live transaction helpers for wrapping USDC.e to pUSD and unwrapping pUSD back to USDC.e
 - **pUSD ABI helpers** — `AbiEncoder.encodeWrap()`, `AbiEncoder.encodeUnwrap()`, `AbiEncoder.encodeBalanceOf()`, and exact-amount `encodeApprove()`
 - **Live pUSD test** — `test/pusd_live_test.dart` performs a USDC.e -> pUSD -> USDC.e round trip on Polygon
+- **`ClobClient.getClobMarketInfo()`** — public CLOB V2 market details endpoint for tokens, fees, rewards, RFQ status, and market flags
 
 ### Changed
 

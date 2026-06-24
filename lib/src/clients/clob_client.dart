@@ -115,6 +115,17 @@ class ClobClient {
     return Market.fromJson(res);
   }
 
+  /// Get CLOB-level market parameters for a condition ID.
+  ///
+  /// Includes compact CLOB fields such as tokens, minimum tick size, base fees,
+  /// rewards, RFQ status, and CLOB book/order flags.
+  Future<ClobMarketInfo> getClobMarketInfo(String conditionId) async {
+    final res =
+        await _transport.get(PolymarketUrls.clob, '/clob-markets/$conditionId')
+            as Map<String, dynamic>;
+    return ClobMarketInfo.fromJson(res);
+  }
+
   /// List sampling markets (subset used for rewards computation).
   Future<MarketsPage> getSamplingMarkets({String? nextCursor}) async {
     final params = <String, String>{};

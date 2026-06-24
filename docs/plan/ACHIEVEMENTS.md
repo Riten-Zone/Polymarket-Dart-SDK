@@ -57,6 +57,18 @@ New tests:
 
 ---
 
+## v0.4.1 — `getClobMarketInfo` parity (2026-06-24)
+
+Added the public CLOB V2 market-details endpoint:
+
+- `ClobClient.getClobMarketInfo(conditionId)`
+- `ClobMarketInfo`, `ClobMarketInfoToken`, and `ClobMarketFeeDetails` models
+- live integration coverage in `test/clob_client_test.dart`
+
+The model exposes stable documented fields and preserves the raw response map for compact or newly added CLOB keys.
+
+---
+
 ## What still matches the official docs
 
 These areas are implemented and still broadly aligned with the current official documentation:
@@ -125,7 +137,6 @@ The official docs now expose a larger surface than this SDK currently implements
 - No authenticated user-channel WebSocket support.
 - No sports WebSocket support.
 - pUSD support exists for constants, approvals, wrap/unwrap calldata, and live EOA wrap/unwrap transaction submission.
-- No `getClobMarketInfo` endpoint.
 - No documented Data API leaderboard implementation.
 - No closed positions, total portfolio value, total markets traded, or positions-for-market endpoints.
 - No builder analytics client for aggregated leaderboard and daily builder volume.

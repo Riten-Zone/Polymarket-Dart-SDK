@@ -208,6 +208,125 @@ class MarketsPage {
   }
 }
 
+/// A token entry in `GET /clob-markets/{condition_id}`.
+class ClobMarketInfoToken {
+  /// Outcome token ID.
+  final String tokenId;
+
+  /// Outcome label, for example `Yes` or `No`.
+  final String outcome;
+
+  const ClobMarketInfoToken({required this.tokenId, required this.outcome});
+
+  factory ClobMarketInfoToken.fromJson(Map<String, dynamic> json) {
+    return ClobMarketInfoToken(
+      tokenId: json['t']?.toString() ?? json['token_id']?.toString() ?? '',
+      outcome: json['o']?.toString() ?? json['outcome']?.toString() ?? '',
+    );
+  }
+}
+
+/// Fee details returned by `GET /clob-markets/{condition_id}`.
+class ClobMarketFeeDetails {
+  final double? rate;
+  final double? exponent;
+  final bool? takersOnly;
+  final Map<String, dynamic> raw;
+
+  const ClobMarketFeeDetails({
+    this.rate,
+    this.exponent,
+    this.takersOnly,
+    required this.raw,
+  });
+
+  factory ClobMarketFeeDetails.fromJson(Map<String, dynamic> json) {
+    return ClobMarketFeeDetails(
+      rate: _toDoubleOrNull(json['r']),
+      exponent: _toDoubleOrNull(json['e']),
+      takersOnly: json['to'] as bool?,
+      raw: json,
+    );
+  }
+}
+
+/// CLOB-level market parameters from `GET /clob-markets/{condition_id}`.
+class ClobMarketInfo {
+  final String conditionId;
+  final String? gameStartTime;
+  final Map<String, dynamic>? rewards;
+  final List<ClobMarketInfoToken> tokens;
+  final double minimumOrderSize;
+  final double minimumTickSize;
+  final int? makerBaseFee;
+  final int? takerBaseFee;
+  final bool rfqEnabled;
+  final bool takerOrderDelayEnabled;
+  final bool blockaidCheckEnabled;
+  final bool acceptingOrders;
+  final bool negRisk;
+  final bool clobBookOrdersEnabled;
+  final String? acceptingOrdersTimestamp;
+  final ClobMarketFeeDetails? feeDetails;
+  final int? minimumOrderAgeSeconds;
+  final Map<String, dynamic> raw;
+
+  const ClobMarketInfo({
+    required this.conditionId,
+    this.gameStartTime,
+    this.rewards,
+    required this.tokens,
+    required this.minimumOrderSize,
+    required this.minimumTickSize,
+    this.makerBaseFee,
+    this.takerBaseFee,
+    required this.rfqEnabled,
+    required this.takerOrderDelayEnabled,
+    required this.blockaidCheckEnabled,
+    required this.acceptingOrders,
+    required this.negRisk,
+    required this.clobBookOrdersEnabled,
+    this.acceptingOrdersTimestamp,
+    this.feeDetails,
+    this.minimumOrderAgeSeconds,
+    required this.raw,
+  });
+
+  factory ClobMarketInfo.fromJson(Map<String, dynamic> json) {
+    final rawFeeDetails = json['fd'];
+    return ClobMarketInfo(
+      conditionId:
+          json['c']?.toString() ?? json['condition_id']?.toString() ?? '',
+      gameStartTime: json['gst']?.toString(),
+      rewards: json['r'] as Map<String, dynamic>?,
+      tokens:
+          (json['t'] as List?)
+              ?.map(
+                (token) =>
+                    ClobMarketInfoToken.fromJson(token as Map<String, dynamic>),
+              )
+              .toList() ??
+          [],
+      minimumOrderSize: _toDouble(json['mos']),
+      minimumTickSize: _toDouble(json['mts']),
+      makerBaseFee: _toIntOrNull(json['mbf']),
+      takerBaseFee: _toIntOrNull(json['tbf']),
+      rfqEnabled: json['rfqe'] as bool? ?? false,
+      takerOrderDelayEnabled: json['itode'] as bool? ?? false,
+      blockaidCheckEnabled: json['ibce'] as bool? ?? false,
+      acceptingOrders: json['ao'] as bool? ?? false,
+      negRisk: json['nr'] as bool? ?? false,
+      clobBookOrdersEnabled: json['cbos'] as bool? ?? false,
+      acceptingOrdersTimestamp: json['aot']?.toString(),
+      feeDetails: rawFeeDetails is Map<String, dynamic>
+          ? ClobMarketFeeDetails.fromJson(rawFeeDetails)
+          : null,
+      minimumOrderAgeSeconds: _toIntOrNull(json['oas']),
+      raw: json,
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Orderbook
 // ---------------------------------------------------------------------------
@@ -905,10 +1024,28 @@ class BuilderLeaderboardEntry {
 }
 
 double _leaderboardDouble(dynamic v) {
+  return _toDouble(v);
+}
+
+double _toDouble(dynamic v) {
   if (v == null) return 0.0;
   if (v is double) return v;
   if (v is int) return v.toDouble();
+  if (v is num) return v.toDouble();
   return double.tryParse(v.toString()) ?? 0.0;
+}
+
+double? _toDoubleOrNull(dynamic v) {
+  if (v == null) return null;
+  if (v is num) return v.toDouble();
+  return double.tryParse(v.toString());
+}
+
+int? _toIntOrNull(dynamic v) {
+  if (v == null) return null;
+  if (v is int) return v;
+  if (v is num) return v.toInt();
+  return int.tryParse(v.toString());
 }
 
 // ---------------------------------------------------------------------------

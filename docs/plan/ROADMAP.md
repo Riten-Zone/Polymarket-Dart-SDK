@@ -190,7 +190,7 @@ Focus on pUSD and public REST parity:
 - CLOB V2 exchange domain migration: done
 - high-level wrap/unwrap transaction helpers: done
 - live pUSD wrap/unwrap test: done
-- `getClobMarketInfo`
+- `getClobMarketInfo`: done
 - leaderboard
 - closed positions
 - total value
