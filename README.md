@@ -6,7 +6,7 @@ A Dart SDK for the [Polymarket](https://polymarket.com) CLOB API — REST, WebSo
 
 - **53 CLOB API methods** — markets, CLOB market info, orderbook, pricing, order management, rewards, auth
 - **GammaClient** — 6 methods for market/event discovery, tags, and search (no auth required)
-- **DataClient** — 5 methods for user positions, trades, activity, and holders
+- **DataClient** — 10 methods for positions, trades, activity, holders, leaderboard, and portfolio analytics
 - **EIP-712 signing** — order signing for both EOA and GnosisSafe wallets
 - **HMAC Level 2 auth** — API key management and authenticated requests
 - **On-chain approvals** — EOA (direct Polygon RPC) and GnosisSafe (gasless relayer)
@@ -130,7 +130,7 @@ dart test test/pusd_live_test.dart --tags pusd-live
 # GnosisSafe relayer (requires BUILDER_* creds in .env)
 dart test test/relayer_test.dart --tags relayer
 
-# Full suite (91 tests)
+# Full suite
 dart test --tags integration
 ```
 

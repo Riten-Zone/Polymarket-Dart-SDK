@@ -50,7 +50,7 @@ Already covered well:
 
 Still missing or incomplete:
 
-- `getClobMarketInfo`
+- `getClobMarketInfo`: done
 - explicit fee-rate path variant support
 - explicit tick-size path variant support
 - better alignment with current unified SDK trading abstractions
@@ -85,14 +85,14 @@ Already covered:
 - trades
 - activity
 - holders
-
-Still missing:
-
 - closed positions
 - total value of user positions
 - total markets traded by user
 - positions for a market
 - trader leaderboard rankings
+
+Still missing:
+
 - builder analytics endpoints
 - accounting snapshot download
 - combo positions
@@ -160,10 +160,11 @@ Do not assume the existing RFQ client maps 1:1 to the current docs without reval
 Implement public endpoints that do not require new auth flows:
 
 - `getClobMarketInfo`
-- trader leaderboard
-- closed positions
-- total value
-- total markets traded
+- trader leaderboard: done
+- closed positions: done
+- total value: done
+- total markets traded: done
+- positions for a market: done
 - series
 - comments
 - sports metadata

@@ -80,12 +80,12 @@ These are the highest-value gaps because they are clearly documented today and m
 
 ### Public REST parity
 
-- Add `getClobMarketInfo`
-- Add Data API leaderboard support
-- Add closed positions
-- Add total portfolio value
-- Add total markets traded
-- Add positions-for-market
+- Done: add `getClobMarketInfo`
+- Done: add Data API leaderboard support
+- Done: add closed positions
+- Done: add total portfolio value
+- Done: add total markets traded
+- Done: add positions-for-market
 - Add builder analytics endpoints
 - Add Gamma comments endpoints
 - Add Gamma series endpoints
@@ -191,11 +191,11 @@ Focus on pUSD and public REST parity:
 - high-level wrap/unwrap transaction helpers: done
 - live pUSD wrap/unwrap test: done
 - `getClobMarketInfo`: done
-- leaderboard
-- closed positions
-- total value
-- total markets traded
-- positions-for-market
+- leaderboard: done
+- closed positions: done
+- total value: done
+- total markets traded: done
+- positions-for-market: done
 - series
 - comments
 - sports metadata

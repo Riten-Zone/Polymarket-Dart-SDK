@@ -95,7 +95,8 @@ These areas are implemented and still broadly aligned with the current official 
 ### Other clients
 
 - `GammaClient`: markets, events, tags, market search
-- `DataClient`: positions, proxy wallet lookup, trades, activity, holders
+- `DataClient`: positions, proxy wallet lookup, trades, activity, holders,
+  leaderboard, closed positions, total value, total markets traded, positions for market
 - `BridgeClient`: supported assets, deposit address creation, quote, status
 - `WebSocketClient`: market orderbook/trades plus RTDS price/comments
 
@@ -137,8 +138,6 @@ The official docs now expose a larger surface than this SDK currently implements
 - No authenticated user-channel WebSocket support.
 - No sports WebSocket support.
 - pUSD support exists for constants, approvals, wrap/unwrap calldata, and live EOA wrap/unwrap transaction submission.
-- No documented Data API leaderboard implementation.
-- No closed positions, total portfolio value, total markets traded, or positions-for-market endpoints.
 - No builder analytics client for aggregated leaderboard and daily builder volume.
 - No Gamma coverage for comments, series, sports, richer tag relationships, or event/market slug helpers.
 - No relayer client coverage beyond the custom approval flow.

@@ -115,10 +115,12 @@ class Position {
           ? _toDouble(json['currentValue'])
           : null,
       cashPnl: json['cashPnl'] != null ? _toDouble(json['cashPnl']) : null,
-      percentPnl:
-          json['percentPnl'] != null ? _toDouble(json['percentPnl']) : null,
-      realizedPnl:
-          json['realizedPnl'] != null ? _toDouble(json['realizedPnl']) : null,
+      percentPnl: json['percentPnl'] != null
+          ? _toDouble(json['percentPnl'])
+          : null,
+      realizedPnl: json['realizedPnl'] != null
+          ? _toDouble(json['realizedPnl'])
+          : null,
       redeemed: json['redeemed'] as bool? ?? false,
       mergeable: json['mergeable'] as bool? ?? false,
       title: json['title'] as String?,
@@ -141,6 +143,12 @@ double _toDouble(dynamic value) {
   if (value is double) return value;
   if (value is int) return value.toDouble();
   return double.tryParse(value.toString()) ?? 0.0;
+}
+
+int _toInt(dynamic value) {
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  return int.tryParse(value.toString()) ?? 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -320,40 +328,243 @@ class Holder {
 ///
 /// Returned by [DataClient.getLeaderboard].
 class LeaderboardEntry {
-  /// Wallet address (proxy wallet).
-  final String address;
-
-  /// Polymarket display name or pseudonym.
-  final String pseudonym;
-
-  /// Total trading volume (USDC).
-  final double volume;
-
-  /// Realized profit and loss (USDC).
-  final double pnl;
-
   /// Leaderboard rank (1-indexed).
   final int rank;
 
+  /// User profile/proxy wallet address.
+  final String proxyWallet;
+
+  /// Polymarket username.
+  final String userName;
+
+  /// The trader's X/Twitter username, if available.
+  final String xUsername;
+
+  /// Whether the trader has a verified badge.
+  final bool verifiedBadge;
+
+  /// Trading volume for this trader.
+  final double volume;
+
+  /// Profit and loss for this trader.
+  final double pnl;
+
+  /// URL to the trader's profile image.
+  final String profileImage;
+
   const LeaderboardEntry({
-    required this.address,
-    required this.pseudonym,
+    required this.rank,
+    required this.proxyWallet,
+    required this.userName,
+    required this.xUsername,
+    required this.verifiedBadge,
     required this.volume,
     required this.pnl,
-    required this.rank,
+    required this.profileImage,
   });
 
   factory LeaderboardEntry.fromJson(Map<String, dynamic> json) {
     return LeaderboardEntry(
-      address: json['address'] as String? ?? '',
-      pseudonym: json['pseudonym'] as String? ?? '',
-      volume: _toDouble(json['volume']),
+      rank: _toInt(json['rank']),
+      proxyWallet: json['proxyWallet'] as String? ?? '',
+      userName: json['userName'] as String? ?? '',
+      xUsername: json['xUsername'] as String? ?? '',
+      verifiedBadge: json['verifiedBadge'] as bool? ?? false,
+      volume: _toDouble(json['vol'] ?? json['volume']),
       pnl: _toDouble(json['pnl']),
-      rank: json['rank'] as int? ?? 0,
+      profileImage: json['profileImage'] as String? ?? '',
     );
   }
 
   @override
   String toString() =>
-      'LeaderboardEntry(rank: $rank, address: $address, pnl: $pnl)';
+      'LeaderboardEntry(rank: $rank, proxyWallet: $proxyWallet, pnl: $pnl)';
+}
+
+// ---------------------------------------------------------------------------
+// ClosedPosition
+// ---------------------------------------------------------------------------
+
+/// A user's closed position in a Polymarket market.
+///
+/// Returned by [DataClient.getClosedPositions].
+class ClosedPosition {
+  final String proxyWallet;
+  final String asset;
+  final String conditionId;
+  final double avgPrice;
+  final double totalBought;
+  final double realizedPnl;
+  final double curPrice;
+  final int timestamp;
+  final String? title;
+  final String? slug;
+  final String? icon;
+  final String? eventSlug;
+  final String outcome;
+  final int outcomeIndex;
+  final String oppositeOutcome;
+  final String oppositeAsset;
+  final String? endDate;
+
+  const ClosedPosition({
+    required this.proxyWallet,
+    required this.asset,
+    required this.conditionId,
+    required this.avgPrice,
+    required this.totalBought,
+    required this.realizedPnl,
+    required this.curPrice,
+    required this.timestamp,
+    required this.outcome,
+    required this.outcomeIndex,
+    required this.oppositeOutcome,
+    required this.oppositeAsset,
+    this.title,
+    this.slug,
+    this.icon,
+    this.eventSlug,
+    this.endDate,
+  });
+
+  factory ClosedPosition.fromJson(Map<String, dynamic> json) {
+    return ClosedPosition(
+      proxyWallet: json['proxyWallet'] as String? ?? '',
+      asset: json['asset'] as String? ?? '',
+      conditionId: json['conditionId'] as String? ?? '',
+      avgPrice: _toDouble(json['avgPrice']),
+      totalBought: _toDouble(json['totalBought']),
+      realizedPnl: _toDouble(json['realizedPnl']),
+      curPrice: _toDouble(json['curPrice']),
+      timestamp: _toInt(json['timestamp']),
+      title: json['title'] as String?,
+      slug: json['slug'] as String?,
+      icon: json['icon'] as String?,
+      eventSlug: json['eventSlug'] as String?,
+      outcome: json['outcome'] as String? ?? '',
+      outcomeIndex: _toInt(json['outcomeIndex']),
+      oppositeOutcome: json['oppositeOutcome'] as String? ?? '',
+      oppositeAsset: json['oppositeAsset'] as String? ?? '',
+      endDate: json['endDate'] as String?,
+    );
+  }
+
+  @override
+  String toString() =>
+      'ClosedPosition(asset: $asset, outcome: $outcome, pnl: $realizedPnl)';
+}
+
+// ---------------------------------------------------------------------------
+// UserPositionValue / UserTradedMarkets
+// ---------------------------------------------------------------------------
+
+/// Total current position value returned by [DataClient.getTotalValue].
+class UserPositionValue {
+  final String user;
+  final double value;
+
+  const UserPositionValue({required this.user, required this.value});
+
+  factory UserPositionValue.fromJson(Map<String, dynamic> json) {
+    return UserPositionValue(
+      user: json['user'] as String? ?? '',
+      value: _toDouble(json['value']),
+    );
+  }
+}
+
+/// Total number of markets traded returned by [DataClient.getTotalMarketsTraded].
+class UserTradedMarkets {
+  final String user;
+  final int traded;
+
+  const UserTradedMarkets({required this.user, required this.traded});
+
+  factory UserTradedMarkets.fromJson(Map<String, dynamic> json) {
+    return UserTradedMarkets(
+      user: json['user'] as String? ?? '',
+      traded: _toInt(json['traded']),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// MarketPosition
+// ---------------------------------------------------------------------------
+
+/// Positions for a single outcome token returned by [DataClient.getPositionsForMarket].
+class MarketPositionGroup {
+  final String token;
+  final List<MarketPosition> positions;
+
+  const MarketPositionGroup({required this.token, required this.positions});
+
+  factory MarketPositionGroup.fromJson(Map<String, dynamic> json) {
+    return MarketPositionGroup(
+      token: json['token'] as String? ?? '',
+      positions: (json['positions'] as List<dynamic>? ?? [])
+          .map((j) => MarketPosition.fromJson(j as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+/// A user position within a market-position outcome group.
+class MarketPosition {
+  final String proxyWallet;
+  final String name;
+  final String profileImage;
+  final bool verified;
+  final String asset;
+  final String conditionId;
+  final double avgPrice;
+  final double size;
+  final double currPrice;
+  final double currentValue;
+  final double cashPnl;
+  final double totalBought;
+  final double realizedPnl;
+  final double totalPnl;
+  final String outcome;
+  final int outcomeIndex;
+
+  const MarketPosition({
+    required this.proxyWallet,
+    required this.name,
+    required this.profileImage,
+    required this.verified,
+    required this.asset,
+    required this.conditionId,
+    required this.avgPrice,
+    required this.size,
+    required this.currPrice,
+    required this.currentValue,
+    required this.cashPnl,
+    required this.totalBought,
+    required this.realizedPnl,
+    required this.totalPnl,
+    required this.outcome,
+    required this.outcomeIndex,
+  });
+
+  factory MarketPosition.fromJson(Map<String, dynamic> json) {
+    return MarketPosition(
+      proxyWallet: json['proxyWallet'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      profileImage: json['profileImage'] as String? ?? '',
+      verified: json['verified'] as bool? ?? false,
+      asset: json['asset'] as String? ?? '',
+      conditionId: json['conditionId'] as String? ?? '',
+      avgPrice: _toDouble(json['avgPrice']),
+      size: _toDouble(json['size']),
+      currPrice: _toDouble(json['currPrice'] ?? json['curPrice']),
+      currentValue: _toDouble(json['currentValue']),
+      cashPnl: _toDouble(json['cashPnl']),
+      totalBought: _toDouble(json['totalBought']),
+      realizedPnl: _toDouble(json['realizedPnl']),
+      totalPnl: _toDouble(json['totalPnl']),
+      outcome: json['outcome'] as String? ?? '',
+      outcomeIndex: _toInt(json['outcomeIndex']),
+    );
+  }
 }

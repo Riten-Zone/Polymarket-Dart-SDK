@@ -51,8 +51,10 @@ void main() {
 
     test('getPositions with sizeThreshold=0 returns all positions', () async {
       final all = await client.getPositions(eoaAddress, sizeThreshold: 0);
-      final filtered =
-          await client.getPositions(eoaAddress, sizeThreshold: 100);
+      final filtered = await client.getPositions(
+        eoaAddress,
+        sizeThreshold: 100,
+      );
       expect(all.length, greaterThanOrEqualTo(filtered.length));
     });
 
@@ -78,8 +80,11 @@ void main() {
       if (positions.length < 2) return;
 
       final proxies = positions.map((p) => p.proxyWallet).toSet();
-      expect(proxies.length, equals(1),
-          reason: 'One EOA maps to exactly one proxy wallet');
+      expect(
+        proxies.length,
+        equals(1),
+        reason: 'One EOA maps to exactly one proxy wallet',
+      );
     });
 
     test('getProxyWallet returns checksummed 0x address or null', () async {
@@ -113,24 +118,32 @@ void main() {
       expect(trades, isA<List<UserTrade>>());
     }, timeout: const Timeout(Duration(seconds: 10)));
 
-    test('trade fields are well-formed when trades exist', () async {
-      final trades = await client.getTrades(eoaAddress, limit: 10);
-      if (trades.isEmpty) return;
+    test(
+      'trade fields are well-formed when trades exist',
+      () async {
+        final trades = await client.getTrades(eoaAddress, limit: 10);
+        if (trades.isEmpty) return;
 
-      final t = trades.first;
-      expect(t.transactionHash, isNotEmpty);
-      expect(t.proxyWallet, startsWith('0x'));
-      expect(t.price, inInclusiveRange(0.0, 1.0));
-      expect(t.size, isNonNegative);
-      expect(t.timestamp, greaterThan(0));
-    }, timeout: const Timeout(Duration(seconds: 10)));
+        final t = trades.first;
+        expect(t.transactionHash, isNotEmpty);
+        expect(t.proxyWallet, startsWith('0x'));
+        expect(t.price, inInclusiveRange(0.0, 1.0));
+        expect(t.size, isNonNegative);
+        expect(t.timestamp, greaterThan(0));
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
 
-    test('limit parameter reduces result count', () async {
-      final all = await client.getTrades(eoaAddress, limit: 20);
-      final limited = await client.getTrades(eoaAddress, limit: 5);
-      expect(limited.length, lessThanOrEqualTo(all.length));
-      expect(limited.length, lessThanOrEqualTo(5));
-    }, timeout: const Timeout(Duration(seconds: 15)));
+    test(
+      'limit parameter reduces result count',
+      () async {
+        final all = await client.getTrades(eoaAddress, limit: 20);
+        final limited = await client.getTrades(eoaAddress, limit: 5);
+        expect(limited.length, lessThanOrEqualTo(all.length));
+        expect(limited.length, lessThanOrEqualTo(5));
+      },
+      timeout: const Timeout(Duration(seconds: 15)),
+    );
   });
 
   // ---------------------------------------------------------------------------
@@ -138,19 +151,97 @@ void main() {
   // ---------------------------------------------------------------------------
 
   group('DataClient.getActivity', () {
-    test('returns a list of activity events', () async {
-      final activity = await client.getActivity(eoaAddress);
-      expect(activity, isA<List<Activity>>());
-    }, timeout: const Timeout(Duration(seconds: 10)));
+    test(
+      'returns a list of activity events',
+      () async {
+        final activity = await client.getActivity(eoaAddress);
+        expect(activity, isA<List<Activity>>());
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
 
-    test('activity fields are well-formed when activity exists', () async {
-      final activity = await client.getActivity(eoaAddress, limit: 5);
-      if (activity.isEmpty) return;
+    test(
+      'activity fields are well-formed when activity exists',
+      () async {
+        final activity = await client.getActivity(eoaAddress, limit: 5);
+        if (activity.isEmpty) return;
 
-      final a = activity.first;
-      expect(a.type, isNotEmpty);
-      expect(a.timestamp, greaterThan(0));
-    }, timeout: const Timeout(Duration(seconds: 10)));
+        final a = activity.first;
+        expect(a.type, isNotEmpty);
+        expect(a.timestamp, greaterThan(0));
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
   });
 
+  // ---------------------------------------------------------------------------
+  // Public REST parity
+  // ---------------------------------------------------------------------------
+
+  group('DataClient public REST parity', () {
+    test(
+      'getLeaderboard returns current leaderboard entries',
+      () async {
+        final entries = await client.getLeaderboard(limit: 5);
+        expect(entries, isA<List<LeaderboardEntry>>());
+        expect(entries.length, lessThanOrEqualTo(5));
+        if (entries.isEmpty) return;
+
+        final first = entries.first;
+        expect(first.rank, greaterThan(0));
+        expect(first.proxyWallet, startsWith('0x'));
+        expect(first.volume, isNonNegative);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    test(
+      'getClosedPositions returns a list',
+      () async {
+        final positions = await client.getClosedPositions(eoaAddress, limit: 5);
+        expect(positions, isA<List<ClosedPosition>>());
+        expect(positions.length, lessThanOrEqualTo(5));
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    test(
+      'getTotalValue returns documented value rows',
+      () async {
+        final values = await client.getTotalValue(eoaAddress);
+        expect(values, isA<List<UserPositionValue>>());
+        if (values.isEmpty) return;
+
+        expect(values.first.user, startsWith('0x'));
+        expect(values.first.value, isNonNegative);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    test(
+      'getTotalMarketsTraded returns traded count',
+      () async {
+        final traded = await client.getTotalMarketsTraded(eoaAddress);
+        expect(traded.user, startsWith('0x'));
+        expect(traded.traded, isNonNegative);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    test(
+      'getPositionsForMarket returns groups when the wallet has positions',
+      () async {
+        final positions = await client.getPositions(eoaAddress);
+        if (positions.isEmpty) return;
+
+        final groups = await client.getPositionsForMarket(
+          positions.first.conditionId,
+          limit: 5,
+        );
+        expect(groups, isA<List<MarketPositionGroup>>());
+        expect(groups.length, lessThanOrEqualTo(2));
+      },
+      timeout: const Timeout(Duration(seconds: 15)),
+    );
+  });
 }

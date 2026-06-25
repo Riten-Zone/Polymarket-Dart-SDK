@@ -23,7 +23,7 @@ class DataClient {
   final HttpTransport _transport;
 
   DataClient({HttpTransport? transport})
-      : _transport = transport ?? HttpTransport();
+    : _transport = transport ?? HttpTransport();
 
   /// Returns all active positions held by [userAddress].
   ///
@@ -54,6 +54,46 @@ class DataClient {
         .toList();
   }
 
+  // ---------------------------------------------------------------------------
+  // Leaderboard
+  // ---------------------------------------------------------------------------
+
+  /// Returns trader leaderboard rankings from `/v1/leaderboard`.
+  ///
+  /// [category] accepts values like `OVERALL`, `POLITICS`, `SPORTS`, `CRYPTO`.
+  /// [timePeriod] accepts `DAY`, `WEEK`, `MONTH`, or `ALL`.
+  /// [orderBy] accepts `PNL` or `VOL`.
+  Future<List<LeaderboardEntry>> getLeaderboard({
+    String? category,
+    String? timePeriod,
+    String? orderBy,
+    int? limit,
+    int? offset,
+    String? user,
+    String? userName,
+  }) async {
+    final params = <String, String>{};
+    if (category != null) params['category'] = category;
+    if (timePeriod != null) params['timePeriod'] = timePeriod;
+    if (orderBy != null) params['orderBy'] = orderBy;
+    if (limit != null) params['limit'] = limit.toString();
+    if (offset != null) params['offset'] = offset.toString();
+    if (user != null) params['user'] = user;
+    if (userName != null) params['userName'] = userName;
+
+    final response = await _transport.get(
+      PolymarketUrls.data,
+      '/v1/leaderboard',
+      queryParams: params.isEmpty ? null : params,
+    );
+
+    if (response == null) return [];
+    final list = response as List<dynamic>;
+    return list
+        .map((j) => LeaderboardEntry.fromJson(j as Map<String, dynamic>))
+        .toList();
+  }
+
   /// Returns the Polymarket Safe proxy wallet address associated with [eoaAddress].
   ///
   /// Polymarket deploys a Gnosis Safe proxy for every user on first login.
@@ -65,6 +105,125 @@ class DataClient {
     final positions = await getPositions(eoaAddress);
     if (positions.isEmpty) return null;
     return positions.first.proxyWallet;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Closed positions
+  // ---------------------------------------------------------------------------
+
+  /// Returns closed positions for [userAddress].
+  ///
+  /// [markets] and [eventIds] are sent as comma-separated values to match the
+  /// Data API's documented multi-value query format.
+  Future<List<ClosedPosition>> getClosedPositions(
+    String userAddress, {
+    List<String>? markets,
+    String? title,
+    List<int>? eventIds,
+    int? limit,
+    int? offset,
+    String? sortBy,
+    String? sortDirection,
+  }) async {
+    final params = <String, String>{'user': userAddress};
+    if (markets != null && markets.isNotEmpty) {
+      params['market'] = markets.join(',');
+    }
+    if (title != null) params['title'] = title;
+    if (eventIds != null && eventIds.isNotEmpty) {
+      params['eventId'] = eventIds.join(',');
+    }
+    if (limit != null) params['limit'] = limit.toString();
+    if (offset != null) params['offset'] = offset.toString();
+    if (sortBy != null) params['sortBy'] = sortBy;
+    if (sortDirection != null) params['sortDirection'] = sortDirection;
+
+    final response = await _transport.get(
+      PolymarketUrls.data,
+      '/closed-positions',
+      queryParams: params,
+    );
+
+    if (response == null) return [];
+    final list = response as List<dynamic>;
+    return list
+        .map((j) => ClosedPosition.fromJson(j as Map<String, dynamic>))
+        .toList();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Portfolio value / traded count
+  // ---------------------------------------------------------------------------
+
+  /// Returns total current position value for [userAddress].
+  ///
+  /// The API returns a list, even for a single user.
+  Future<List<UserPositionValue>> getTotalValue(
+    String userAddress, {
+    List<String>? markets,
+  }) async {
+    final params = <String, String>{'user': userAddress};
+    if (markets != null && markets.isNotEmpty) {
+      params['market'] = markets.join(',');
+    }
+
+    final response = await _transport.get(
+      PolymarketUrls.data,
+      '/value',
+      queryParams: params,
+    );
+
+    if (response == null) return [];
+    final list = response as List<dynamic>;
+    return list
+        .map((j) => UserPositionValue.fromJson(j as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Returns the total number of markets [userAddress] has traded.
+  Future<UserTradedMarkets> getTotalMarketsTraded(String userAddress) async {
+    final response = await _transport.get(
+      PolymarketUrls.data,
+      '/traded',
+      queryParams: {'user': userAddress},
+    );
+
+    return UserTradedMarkets.fromJson(response as Map<String, dynamic>);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Market positions
+  // ---------------------------------------------------------------------------
+
+  /// Returns user positions grouped by outcome token for [conditionId].
+  Future<List<MarketPositionGroup>> getPositionsForMarket(
+    String conditionId, {
+    String? user,
+    String? status,
+    String? sortBy,
+    String? sortDirection,
+    int? limit,
+    int? offset,
+  }) async {
+    final params = <String, String>{'market': conditionId};
+    if (user != null) params['user'] = user;
+    if (status != null) params['status'] = status;
+    if (sortBy != null) params['sortBy'] = sortBy;
+    if (sortDirection != null) params['sortDirection'] = sortDirection;
+    if (limit != null) params['limit'] = limit.toString();
+    if (offset != null) params['offset'] = offset.toString();
+
+    final response = await _transport.get(
+      PolymarketUrls.data,
+      '/v1/market-positions',
+      queryParams: params,
+    );
+
+    if (response == null) return [];
+    final list = response as List<dynamic>;
+    return list
+        .map((j) => MarketPositionGroup.fromJson(j as Map<String, dynamic>))
+        .toList();
   }
 
   // ---------------------------------------------------------------------------
@@ -104,10 +263,7 @@ class DataClient {
   /// Returns activity events for [userAddress] (trades, redemptions, etc.).
   ///
   /// [limit] — max number of results.
-  Future<List<Activity>> getActivity(
-    String userAddress, {
-    int? limit,
-  }) async {
+  Future<List<Activity>> getActivity(String userAddress, {int? limit}) async {
     final params = <String, String>{'user': userAddress};
     if (limit != null) params['limit'] = limit.toString();
 
@@ -133,10 +289,7 @@ class DataClient {
   /// [conditionId] — the CTF condition ID (0x-prefixed hex). Passed to the API
   /// as the `market` query parameter.
   /// [limit] — max number of results.
-  Future<List<Holder>> getHolders(
-    String conditionId, {
-    int? limit,
-  }) async {
+  Future<List<Holder>> getHolders(String conditionId, {int? limit}) async {
     final params = <String, String>{'market': conditionId};
     if (limit != null) params['limit'] = limit.toString();
 
@@ -148,9 +301,7 @@ class DataClient {
 
     if (response == null) return [];
     final list = response as List<dynamic>;
-    return list
-        .map((j) => Holder.fromJson(j as Map<String, dynamic>))
-        .toList();
+    return list.map((j) => Holder.fromJson(j as Map<String, dynamic>)).toList();
   }
 
   /// Closes the underlying HTTP client.
