@@ -18,11 +18,7 @@ class Tag {
   /// URL slug for the tag.
   final String slug;
 
-  const Tag({
-    required this.id,
-    required this.label,
-    required this.slug,
-  });
+  const Tag({required this.id, required this.label, required this.slug});
 
   factory Tag.fromJson(Map<String, dynamic> json) {
     return Tag(
@@ -155,14 +151,14 @@ class GammaMarket {
             .toList();
       }
     } else if (rawPrices is List) {
-      outcomePrices =
-          rawPrices.map((e) => double.tryParse(e.toString()) ?? 0.0).toList();
+      outcomePrices = rawPrices
+          .map((e) => double.tryParse(e.toString()) ?? 0.0)
+          .toList();
     }
 
     final rawTags = json['tags'] as List?;
-    final tags = rawTags
-            ?.map((t) => Tag.fromJson(t as Map<String, dynamic>))
-            .toList() ??
+    final tags =
+        rawTags?.map((t) => Tag.fromJson(t as Map<String, dynamic>)).toList() ??
         [];
 
     return GammaMarket(
@@ -248,15 +244,15 @@ class GammaEvent {
 
   factory GammaEvent.fromJson(Map<String, dynamic> json) {
     final rawMarkets = json['markets'] as List?;
-    final markets = rawMarkets
+    final markets =
+        rawMarkets
             ?.map((m) => GammaMarket.fromJson(m as Map<String, dynamic>))
             .toList() ??
         [];
 
     final rawTags = json['tags'] as List?;
-    final tags = rawTags
-            ?.map((t) => Tag.fromJson(t as Map<String, dynamic>))
-            .toList() ??
+    final tags =
+        rawTags?.map((t) => Tag.fromJson(t as Map<String, dynamic>)).toList() ??
         [];
 
     return GammaEvent(
@@ -275,6 +271,292 @@ class GammaEvent {
 
   @override
   String toString() => 'GammaEvent(id: $id, title: $title, active: $active)';
+}
+
+// ---------------------------------------------------------------------------
+// GammaSeries
+// ---------------------------------------------------------------------------
+
+/// A Polymarket series — a recurring or grouped set of events.
+class GammaSeries {
+  final String id;
+  final String ticker;
+  final String slug;
+  final String title;
+  final String subtitle;
+  final String seriesType;
+  final String recurrence;
+  final String description;
+  final String? image;
+  final String? icon;
+  final String layout;
+  final bool active;
+  final bool closed;
+  final bool archived;
+  final bool featured;
+  final bool restricted;
+  final bool commentsEnabled;
+  final double volume24hr;
+  final double volume;
+  final double liquidity;
+  final int score;
+  final int commentCount;
+  final List<GammaEvent> events;
+  final List<Tag> tags;
+  final String? startDate;
+  final String? createdAt;
+  final String? updatedAt;
+
+  const GammaSeries({
+    required this.id,
+    required this.ticker,
+    required this.slug,
+    required this.title,
+    required this.subtitle,
+    required this.seriesType,
+    required this.recurrence,
+    required this.description,
+    required this.layout,
+    required this.active,
+    required this.closed,
+    required this.archived,
+    required this.featured,
+    required this.restricted,
+    required this.commentsEnabled,
+    required this.volume24hr,
+    required this.volume,
+    required this.liquidity,
+    required this.score,
+    required this.commentCount,
+    required this.events,
+    required this.tags,
+    this.image,
+    this.icon,
+    this.startDate,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  factory GammaSeries.fromJson(Map<String, dynamic> json) {
+    final rawEvents = json['events'] as List?;
+    final events =
+        rawEvents
+            ?.map((e) => GammaEvent.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        [];
+
+    final rawTags = json['tags'] as List?;
+    final tags =
+        rawTags?.map((t) => Tag.fromJson(t as Map<String, dynamic>)).toList() ??
+        [];
+
+    return GammaSeries(
+      id: json['id']?.toString() ?? '',
+      ticker: json['ticker'] as String? ?? '',
+      slug: json['slug'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      subtitle: json['subtitle'] as String? ?? '',
+      seriesType: json['seriesType'] as String? ?? '',
+      recurrence: json['recurrence'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      image: json['image'] as String?,
+      icon: json['icon'] as String?,
+      layout: json['layout'] as String? ?? '',
+      active: json['active'] as bool? ?? false,
+      closed: json['closed'] as bool? ?? false,
+      archived: json['archived'] as bool? ?? false,
+      featured: json['featured'] as bool? ?? false,
+      restricted: json['restricted'] as bool? ?? false,
+      commentsEnabled: json['commentsEnabled'] as bool? ?? false,
+      volume24hr: _toDouble(json['volume24hr']),
+      volume: _toDouble(json['volume']),
+      liquidity: _toDouble(json['liquidity']),
+      score: _parseInt(json['score']),
+      commentCount: _parseInt(json['commentCount']),
+      events: events,
+      tags: tags,
+      startDate: json['startDate'] as String?,
+      createdAt: json['createdAt'] as String?,
+      updatedAt: json['updatedAt'] as String?,
+    );
+  }
+
+  @override
+  String toString() => 'GammaSeries(id: $id, title: $title, active: $active)';
+}
+
+// ---------------------------------------------------------------------------
+// GammaComment
+// ---------------------------------------------------------------------------
+
+/// A comment on a Gamma entity such as an event, series, or market.
+class GammaComment {
+  final String id;
+  final String body;
+  final String parentEntityType;
+  final int parentEntityId;
+  final String parentCommentId;
+  final String userAddress;
+  final String replyAddress;
+  final String? createdAt;
+  final String? updatedAt;
+  final GammaCommentProfile? profile;
+  final List<GammaCommentReaction> reactions;
+  final int reportCount;
+  final int reactionCount;
+
+  const GammaComment({
+    required this.id,
+    required this.body,
+    required this.parentEntityType,
+    required this.parentEntityId,
+    required this.parentCommentId,
+    required this.userAddress,
+    required this.replyAddress,
+    required this.reactions,
+    required this.reportCount,
+    required this.reactionCount,
+    this.createdAt,
+    this.updatedAt,
+    this.profile,
+  });
+
+  factory GammaComment.fromJson(Map<String, dynamic> json) {
+    final rawReactions = json['reactions'] as List?;
+    final reactions =
+        rawReactions
+            ?.map(
+              (r) => GammaCommentReaction.fromJson(r as Map<String, dynamic>),
+            )
+            .toList() ??
+        [];
+
+    return GammaComment(
+      id: json['id']?.toString() ?? '',
+      body: json['body'] as String? ?? '',
+      parentEntityType: json['parentEntityType'] as String? ?? '',
+      parentEntityId: _parseInt(json['parentEntityID']),
+      parentCommentId: json['parentCommentID']?.toString() ?? '',
+      userAddress: json['userAddress'] as String? ?? '',
+      replyAddress: json['replyAddress'] as String? ?? '',
+      createdAt: json['createdAt'] as String?,
+      updatedAt: json['updatedAt'] as String?,
+      profile: json['profile'] is Map<String, dynamic>
+          ? GammaCommentProfile.fromJson(
+              json['profile'] as Map<String, dynamic>,
+            )
+          : null,
+      reactions: reactions,
+      reportCount: _parseInt(json['reportCount']),
+      reactionCount: _parseInt(json['reactionCount']),
+    );
+  }
+}
+
+/// Profile metadata attached to a Gamma comment or reaction.
+class GammaCommentProfile {
+  final String name;
+  final String pseudonym;
+  final bool displayUsernamePublic;
+  final String bio;
+  final bool isMod;
+  final bool isCreator;
+  final String proxyWallet;
+  final String baseAddress;
+  final String profileImage;
+  final List<GammaCommentPosition> positions;
+
+  const GammaCommentProfile({
+    required this.name,
+    required this.pseudonym,
+    required this.displayUsernamePublic,
+    required this.bio,
+    required this.isMod,
+    required this.isCreator,
+    required this.proxyWallet,
+    required this.baseAddress,
+    required this.profileImage,
+    required this.positions,
+  });
+
+  factory GammaCommentProfile.fromJson(Map<String, dynamic> json) {
+    final rawPositions = json['positions'] as List?;
+    final positions =
+        rawPositions
+            ?.map(
+              (p) => GammaCommentPosition.fromJson(p as Map<String, dynamic>),
+            )
+            .toList() ??
+        [];
+
+    return GammaCommentProfile(
+      name: json['name'] as String? ?? '',
+      pseudonym: json['pseudonym'] as String? ?? '',
+      displayUsernamePublic: json['displayUsernamePublic'] as bool? ?? false,
+      bio: json['bio'] as String? ?? '',
+      isMod: json['isMod'] as bool? ?? false,
+      isCreator: json['isCreator'] as bool? ?? false,
+      proxyWallet: json['proxyWallet'] as String? ?? '',
+      baseAddress: json['baseAddress'] as String? ?? '',
+      profileImage: json['profileImage'] as String? ?? '',
+      positions: positions,
+    );
+  }
+}
+
+/// A user position summary included with comment profile metadata.
+class GammaCommentPosition {
+  final String tokenId;
+  final String positionSize;
+
+  const GammaCommentPosition({
+    required this.tokenId,
+    required this.positionSize,
+  });
+
+  factory GammaCommentPosition.fromJson(Map<String, dynamic> json) {
+    return GammaCommentPosition(
+      tokenId: json['tokenId']?.toString() ?? '',
+      positionSize: json['positionSize']?.toString() ?? '',
+    );
+  }
+}
+
+/// A reaction attached to a Gamma comment.
+class GammaCommentReaction {
+  final String id;
+  final int commentId;
+  final String reactionType;
+  final String icon;
+  final String userAddress;
+  final String? createdAt;
+  final GammaCommentProfile? profile;
+
+  const GammaCommentReaction({
+    required this.id,
+    required this.commentId,
+    required this.reactionType,
+    required this.icon,
+    required this.userAddress,
+    this.createdAt,
+    this.profile,
+  });
+
+  factory GammaCommentReaction.fromJson(Map<String, dynamic> json) {
+    return GammaCommentReaction(
+      id: json['id']?.toString() ?? '',
+      commentId: _parseInt(json['commentID']),
+      reactionType: json['reactionType'] as String? ?? '',
+      icon: json['icon'] as String? ?? '',
+      userAddress: json['userAddress'] as String? ?? '',
+      createdAt: json['createdAt'] as String?,
+      profile: json['profile'] is Map<String, dynamic>
+          ? GammaCommentProfile.fromJson(
+              json['profile'] as Map<String, dynamic>,
+            )
+          : null,
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------

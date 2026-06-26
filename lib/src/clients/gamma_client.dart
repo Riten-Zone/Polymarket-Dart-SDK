@@ -31,7 +31,7 @@ class GammaClient {
   final HttpTransport _transport;
 
   GammaClient({HttpTransport? transport})
-      : _transport = transport ?? HttpTransport();
+    : _transport = transport ?? HttpTransport();
 
   // ---------------------------------------------------------------------------
   // Events
@@ -73,11 +73,71 @@ class GammaClient {
 
   /// Returns the event identified by [eventId].
   Future<GammaEvent> getEvent(int eventId) async {
+    final response =
+        await _transport.get(PolymarketUrls.gamma, '/events/$eventId')
+            as Map<String, dynamic>;
+    return GammaEvent.fromJson(response);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Series
+  // ---------------------------------------------------------------------------
+
+  /// Returns a list of Polymarket series.
+  ///
+  /// [slugs], [categoryIds], and [categoryLabels] are sent as comma-separated
+  /// values to match the Gamma API's documented array query filters.
+  Future<List<GammaSeries>> getSeries({
+    int? limit,
+    int? offset,
+    String? order,
+    bool? ascending,
+    List<String>? slugs,
+    List<int>? categoryIds,
+    List<String>? categoryLabels,
+    bool? closed,
+    bool? includeChat,
+    String? recurrence,
+    bool? excludeEvents,
+  }) async {
+    final params = <String, String>{};
+    if (limit != null) params['limit'] = limit.toString();
+    if (offset != null) params['offset'] = offset.toString();
+    if (order != null) params['order'] = order;
+    if (ascending != null) params['ascending'] = ascending.toString();
+    if (slugs != null && slugs.isNotEmpty) params['slug'] = slugs.join(',');
+    if (categoryIds != null && categoryIds.isNotEmpty) {
+      params['categories_ids'] = categoryIds.join(',');
+    }
+    if (categoryLabels != null && categoryLabels.isNotEmpty) {
+      params['categories_labels'] = categoryLabels.join(',');
+    }
+    if (closed != null) params['closed'] = closed.toString();
+    if (includeChat != null) params['include_chat'] = includeChat.toString();
+    if (recurrence != null) params['recurrence'] = recurrence;
+    if (excludeEvents != null) {
+      params['exclude_events'] = excludeEvents.toString();
+    }
+
     final response = await _transport.get(
       PolymarketUrls.gamma,
-      '/events/$eventId',
-    ) as Map<String, dynamic>;
-    return GammaEvent.fromJson(response);
+      '/series',
+      queryParams: params.isEmpty ? null : params,
+    );
+
+    if (response == null) return [];
+    final list = response as List<dynamic>;
+    return list
+        .map((j) => GammaSeries.fromJson(j as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Returns a single series by its [id].
+  Future<GammaSeries> getSeriesById(String id) async {
+    final response =
+        await _transport.get(PolymarketUrls.gamma, '/series/$id')
+            as Map<String, dynamic>;
+    return GammaSeries.fromJson(response);
   }
 
   // ---------------------------------------------------------------------------
@@ -127,10 +187,9 @@ class GammaClient {
   /// Note: the Gamma API does NOT accept conditionId or slug as path parameters —
   /// only the numeric integer ID works.
   Future<GammaMarket> getMarket(int id) async {
-    final response = await _transport.get(
-      PolymarketUrls.gamma,
-      '/markets/$id',
-    ) as Map<String, dynamic>;
+    final response =
+        await _transport.get(PolymarketUrls.gamma, '/markets/$id')
+            as Map<String, dynamic>;
     return GammaMarket.fromJson(response);
   }
 
@@ -140,14 +199,87 @@ class GammaClient {
 
   /// Returns all available market category tags.
   Future<List<Tag>> getTags() async {
-    final response = await _transport.get(
-      PolymarketUrls.gamma,
-      '/tags',
-    );
+    final response = await _transport.get(PolymarketUrls.gamma, '/tags');
 
     if (response == null) return [];
     final list = response as List<dynamic>;
     return list.map((j) => Tag.fromJson(j as Map<String, dynamic>)).toList();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Comments
+  // ---------------------------------------------------------------------------
+
+  /// Returns comments for a parent entity.
+  ///
+  /// The Gamma API documents [parentEntityType] as `Event`, `Series`, or
+  /// `market`. In practice, the API rejects unscoped `/comments` requests, so
+  /// callers should provide both [parentEntityType] and [parentEntityId].
+  Future<List<GammaComment>> getComments({
+    int? limit,
+    int? offset,
+    String? order,
+    bool? ascending,
+    String? parentEntityType,
+    int? parentEntityId,
+    bool? getPositions,
+    bool? holdersOnly,
+  }) async {
+    final params = <String, String>{};
+    if (limit != null) params['limit'] = limit.toString();
+    if (offset != null) params['offset'] = offset.toString();
+    if (order != null) params['order'] = order;
+    if (ascending != null) params['ascending'] = ascending.toString();
+    if (parentEntityType != null) {
+      params['parent_entity_type'] = parentEntityType;
+    }
+    if (parentEntityId != null) {
+      params['parent_entity_id'] = parentEntityId.toString();
+    }
+    if (getPositions != null) params['get_positions'] = getPositions.toString();
+    if (holdersOnly != null) params['holders_only'] = holdersOnly.toString();
+
+    final response = await _transport.get(
+      PolymarketUrls.gamma,
+      '/comments',
+      queryParams: params.isEmpty ? null : params,
+    );
+
+    if (response == null) return [];
+    final list = response as List<dynamic>;
+    return list
+        .map((j) => GammaComment.fromJson(j as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Returns replies/children for a comment [id].
+  Future<List<GammaComment>> getCommentsById(String id) async {
+    final response = await _transport.get(
+      PolymarketUrls.gamma,
+      '/comments/$id',
+    );
+
+    if (response == null) return [];
+    final list = response as List<dynamic>;
+    return list
+        .map((j) => GammaComment.fromJson(j as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Returns comments made by [userAddress].
+  Future<List<GammaComment>> getCommentsByUserAddress(
+    String userAddress,
+  ) async {
+    final response = await _transport.get(
+      PolymarketUrls.gamma,
+      '/comments/user_address/$userAddress',
+    );
+
+    if (response == null) return [];
+    final list = response as List<dynamic>;
+    return list
+        .map((j) => GammaComment.fromJson(j as Map<String, dynamic>))
+        .toList();
   }
 
   // ---------------------------------------------------------------------------

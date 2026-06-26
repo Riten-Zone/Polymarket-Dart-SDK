@@ -63,14 +63,14 @@ Already covered:
 - events
 - tags
 - simple market search
+- series
+- comments
 
 Still missing:
 
 - event by slug
 - market by slug
 - market-by-token style helpers where applicable
-- series
-- comments
 - sports metadata and teams
 - richer tag relation endpoints
 - unified search across markets, events, and profiles
@@ -159,14 +159,14 @@ Do not assume the existing RFQ client maps 1:1 to the current docs without reval
 
 Implement public endpoints that do not require new auth flows:
 
-- `getClobMarketInfo`
+- `getClobMarketInfo`: done
 - trader leaderboard: done
 - closed positions: done
 - total value: done
 - total markets traded: done
 - positions for a market: done
-- series
-- comments
+- series: done
+- comments: done
 - sports metadata
 - teams
 - tag relationship endpoints

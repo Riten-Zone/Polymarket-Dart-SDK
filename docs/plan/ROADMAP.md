@@ -86,9 +86,9 @@ These are the highest-value gaps because they are clearly documented today and m
 - Done: add total portfolio value
 - Done: add total markets traded
 - Done: add positions-for-market
+- Done: add Gamma comments endpoints
+- Done: add Gamma series endpoints
 - Add builder analytics endpoints
-- Add Gamma comments endpoints
-- Add Gamma series endpoints
 - Add Gamma sports endpoints
 - Add Gamma tag relationship endpoints
 - Add unified search for markets, events, and profiles
@@ -196,8 +196,8 @@ Focus on pUSD and public REST parity:
 - total value: done
 - total markets traded: done
 - positions-for-market: done
-- series
-- comments
+- series: done
+- comments: done
 - sports metadata
 - teams
 - tag relationships
