@@ -12,7 +12,7 @@ void main() {
     return GammaClient(transport: HttpTransport(client: MockClient(handler)));
   }
 
-  group('GammaClient series/comments parity', () {
+  group('GammaClient public REST parity', () {
     test('getSeries calls /series and parses series fields', () async {
       final client = clientFor((request) async {
         expect(request.url.path, equals('/series'));
@@ -208,5 +208,103 @@ void main() {
         client.close();
       },
     );
+
+    test('getSportsMetadata calls /sports and parses metadata', () async {
+      final client = clientFor((request) async {
+        expect(request.url.path, equals('/sports'));
+        return http.Response(
+          jsonEncode([
+            {
+              'id': 10,
+              'sport': 'nfl',
+              'image': 'https://example.com/nfl.png',
+              'resolution': 'https://nfl.com/',
+              'ordering': 'away',
+              'tags': '1,450,100639',
+              'series': '10187',
+              'createdAt': '2025-11-05T19:27:45.399303Z',
+            },
+          ]),
+          200,
+        );
+      });
+
+      final sports = await client.getSportsMetadata();
+
+      expect(sports, hasLength(1));
+      expect(sports.single.id, equals(10));
+      expect(sports.single.sport, equals('nfl'));
+      expect(sports.single.tagIds, equals([1, 450, 100639]));
+      expect(sports.single.series, equals('10187'));
+      client.close();
+    });
+
+    test('getSportsMarketTypes calls /sports/market-types', () async {
+      final client = clientFor((request) async {
+        expect(request.url.path, equals('/sports/market-types'));
+        return http.Response(
+          jsonEncode({
+            r'$schema':
+                'https://gamma-api.polymarket.com/schemas/SportsMarketTypesResponse.json',
+            'marketTypes': ['moneyline', 'spreads', 'totals'],
+          }),
+          200,
+        );
+      });
+
+      final marketTypes = await client.getSportsMarketTypes();
+
+      expect(marketTypes, equals(['moneyline', 'spreads', 'totals']));
+      client.close();
+    });
+
+    test('getTeams serializes filters and parses team fields', () async {
+      final client = clientFor((request) async {
+        expect(request.url.path, equals('/teams'));
+        expect(request.url.queryParameters['limit'], equals('2'));
+        expect(request.url.queryParameters['offset'], equals('4'));
+        expect(request.url.queryParameters['order'], equals('name'));
+        expect(request.url.queryParameters['ascending'], equals('true'));
+        expect(request.url.queryParameters['league'], equals('nfl,nba'));
+        expect(request.url.queryParameters['name'], equals('Giants,Knicks'));
+        expect(request.url.queryParameters['abbreviation'], equals('nyg,nyk'));
+        return http.Response(
+          jsonEncode([
+            {
+              'id': 1,
+              'name': 'New York Giants',
+              'league': 'nfl',
+              'record': '0-0',
+              'logo': 'https://example.com/nyg.png',
+              'abbreviation': 'nyg',
+              'alias': 'giants',
+              'providerId': '12345',
+              'color': '#003C7F',
+              'createdAt': '2025-01-01T00:00:00Z',
+              'updatedAt': '2025-01-02T00:00:00Z',
+            },
+          ]),
+          200,
+        );
+      });
+
+      final teams = await client.getTeams(
+        limit: 2,
+        offset: 4,
+        order: 'name',
+        ascending: true,
+        leagues: ['nfl', 'nba'],
+        names: ['Giants', 'Knicks'],
+        abbreviations: ['nyg', 'nyk'],
+      );
+
+      expect(teams, hasLength(1));
+      expect(teams.single.id, equals(1));
+      expect(teams.single.name, equals('New York Giants'));
+      expect(teams.single.league, equals('nfl'));
+      expect(teams.single.providerId, equals(12345));
+      expect(teams.single.color, equals('#003C7F'));
+      client.close();
+    });
   });
 }

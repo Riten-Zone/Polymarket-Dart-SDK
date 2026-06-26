@@ -207,6 +207,70 @@ class GammaClient {
   }
 
   // ---------------------------------------------------------------------------
+  // Sports
+  // ---------------------------------------------------------------------------
+
+  /// Returns sports metadata configuration from `/sports`.
+  Future<List<SportsMetadata>> getSportsMetadata() async {
+    final response = await _transport.get(PolymarketUrls.gamma, '/sports');
+
+    if (response == null) return [];
+    final list = response as List<dynamic>;
+    return list
+        .map((j) => SportsMetadata.fromJson(j as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Returns all valid sports market type identifiers.
+  Future<List<String>> getSportsMarketTypes() async {
+    final response =
+        await _transport.get(PolymarketUrls.gamma, '/sports/market-types')
+            as Map<String, dynamic>;
+
+    final list = response['marketTypes'] as List<dynamic>? ?? [];
+    return list.map((e) => e.toString()).toList();
+  }
+
+  /// Returns teams from `/teams`.
+  ///
+  /// [leagues], [names], and [abbreviations] are sent as comma-separated
+  /// values to match the Gamma API's documented array query filters.
+  Future<List<SportsTeam>> getTeams({
+    int? limit,
+    int? offset,
+    String? order,
+    bool? ascending,
+    List<String>? leagues,
+    List<String>? names,
+    List<String>? abbreviations,
+  }) async {
+    final params = <String, String>{};
+    if (limit != null) params['limit'] = limit.toString();
+    if (offset != null) params['offset'] = offset.toString();
+    if (order != null) params['order'] = order;
+    if (ascending != null) params['ascending'] = ascending.toString();
+    if (leagues != null && leagues.isNotEmpty) {
+      params['league'] = leagues.join(',');
+    }
+    if (names != null && names.isNotEmpty) params['name'] = names.join(',');
+    if (abbreviations != null && abbreviations.isNotEmpty) {
+      params['abbreviation'] = abbreviations.join(',');
+    }
+
+    final response = await _transport.get(
+      PolymarketUrls.gamma,
+      '/teams',
+      queryParams: params.isEmpty ? null : params,
+    );
+
+    if (response == null) return [];
+    final list = response as List<dynamic>;
+    return list
+        .map((j) => SportsTeam.fromJson(j as Map<String, dynamic>))
+        .toList();
+  }
+
+  // ---------------------------------------------------------------------------
   // Comments
   // ---------------------------------------------------------------------------
 

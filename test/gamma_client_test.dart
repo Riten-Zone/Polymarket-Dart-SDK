@@ -198,6 +198,40 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
+  // Sports
+  // ---------------------------------------------------------------------------
+
+  group('GammaClient sports', () {
+    test('returns sports metadata', () async {
+      final sports = await client.getSportsMetadata();
+      expect(sports, isA<List<SportsMetadata>>());
+      expect(sports, isNotEmpty);
+
+      final first = sports.first;
+      expect(first.sport, isNotEmpty);
+      expect(first.ordering, isNotEmpty);
+      expect(first.tags, isNotEmpty);
+    }, timeout: const Timeout(Duration(seconds: 15)));
+
+    test('returns sports market types', () async {
+      final marketTypes = await client.getSportsMarketTypes();
+      expect(marketTypes, isA<List<String>>());
+      expect(marketTypes, isNotEmpty);
+    }, timeout: const Timeout(Duration(seconds: 15)));
+
+    test('returns teams', () async {
+      final teams = await client.getTeams(limit: 3);
+      expect(teams, isA<List<SportsTeam>>());
+      expect(teams.length, lessThanOrEqualTo(3));
+      if (teams.isEmpty) return;
+
+      final first = teams.first;
+      expect(first.id, greaterThan(0));
+      expect(first.league, isNotEmpty);
+    }, timeout: const Timeout(Duration(seconds: 15)));
+  });
+
+  // ---------------------------------------------------------------------------
   // Search
   // ---------------------------------------------------------------------------
 

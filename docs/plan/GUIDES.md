@@ -65,13 +65,14 @@ Already covered:
 - simple market search
 - series
 - comments
+- sports metadata
+- teams
 
 Still missing:
 
 - event by slug
 - market by slug
 - market-by-token style helpers where applicable
-- sports metadata and teams
 - richer tag relation endpoints
 - unified search across markets, events, and profiles
 - public profile endpoint support
@@ -167,8 +168,8 @@ Implement public endpoints that do not require new auth flows:
 - positions for a market: done
 - series: done
 - comments: done
-- sports metadata
-- teams
+- sports metadata: done
+- teams: done
 - tag relationship endpoints
 - unified search
 

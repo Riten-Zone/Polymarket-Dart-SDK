@@ -560,6 +560,100 @@ class GammaCommentReaction {
 }
 
 // ---------------------------------------------------------------------------
+// Sports
+// ---------------------------------------------------------------------------
+
+/// Sports metadata configuration returned by [GammaClient.getSportsMetadata].
+class SportsMetadata {
+  final int id;
+  final String sport;
+  final String image;
+  final String resolution;
+  final String ordering;
+  final String tags;
+  final String series;
+  final String? createdAt;
+
+  const SportsMetadata({
+    required this.id,
+    required this.sport,
+    required this.image,
+    required this.resolution,
+    required this.ordering,
+    required this.tags,
+    required this.series,
+    this.createdAt,
+  });
+
+  factory SportsMetadata.fromJson(Map<String, dynamic> json) {
+    return SportsMetadata(
+      id: _parseInt(json['id']),
+      sport: json['sport'] as String? ?? '',
+      image: json['image'] as String? ?? '',
+      resolution: json['resolution'] as String? ?? '',
+      ordering: json['ordering'] as String? ?? '',
+      tags: json['tags']?.toString() ?? '',
+      series: json['series']?.toString() ?? '',
+      createdAt: json['createdAt'] as String?,
+    );
+  }
+
+  /// Tag IDs parsed from the comma-separated [tags] field.
+  List<int> get tagIds => tags
+      .split(',')
+      .where((e) => e.trim().isNotEmpty)
+      .map((e) => int.tryParse(e.trim()) ?? 0)
+      .where((e) => e != 0)
+      .toList();
+}
+
+/// A sports team returned by [GammaClient.getTeams].
+class SportsTeam {
+  final int id;
+  final String? name;
+  final String? league;
+  final String? record;
+  final String? logo;
+  final String? abbreviation;
+  final String? alias;
+  final int? providerId;
+  final String? color;
+  final String? createdAt;
+  final String? updatedAt;
+
+  const SportsTeam({
+    required this.id,
+    this.name,
+    this.league,
+    this.record,
+    this.logo,
+    this.abbreviation,
+    this.alias,
+    this.providerId,
+    this.color,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  factory SportsTeam.fromJson(Map<String, dynamic> json) {
+    final providerId = json['providerId'];
+    return SportsTeam(
+      id: _parseInt(json['id']),
+      name: json['name'] as String?,
+      league: json['league'] as String?,
+      record: json['record'] as String?,
+      logo: json['logo'] as String?,
+      abbreviation: json['abbreviation'] as String?,
+      alias: json['alias'] as String?,
+      providerId: providerId == null ? null : _parseInt(providerId),
+      color: json['color'] as String?,
+      createdAt: json['createdAt'] as String?,
+      updatedAt: json['updatedAt'] as String?,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
