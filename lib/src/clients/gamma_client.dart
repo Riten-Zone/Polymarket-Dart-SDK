@@ -206,6 +206,126 @@ class GammaClient {
     return list.map((j) => Tag.fromJson(j as Map<String, dynamic>)).toList();
   }
 
+  /// Returns a single tag by numeric [id].
+  Future<Tag> getTag(int id, {bool? includeTemplate}) async {
+    final params = <String, String>{};
+    if (includeTemplate != null) {
+      params['include_template'] = includeTemplate.toString();
+    }
+
+    final response =
+        await _transport.get(
+              PolymarketUrls.gamma,
+              '/tags/$id',
+              queryParams: params.isEmpty ? null : params,
+            )
+            as Map<String, dynamic>;
+    return Tag.fromJson(response);
+  }
+
+  /// Returns a single tag by URL [slug].
+  Future<Tag> getTagBySlug(String slug, {bool? includeTemplate}) async {
+    final params = <String, String>{};
+    if (includeTemplate != null) {
+      params['include_template'] = includeTemplate.toString();
+    }
+
+    final encodedSlug = Uri.encodeComponent(slug);
+    final response =
+        await _transport.get(
+              PolymarketUrls.gamma,
+              '/tags/slug/$encodedSlug',
+              queryParams: params.isEmpty ? null : params,
+            )
+            as Map<String, dynamic>;
+    return Tag.fromJson(response);
+  }
+
+  /// Returns raw related-tag relationship rows for tag [id].
+  Future<List<RelatedTag>> getRelatedTagsById(
+    int id, {
+    bool? omitEmpty,
+    String? status,
+  }) async {
+    final params = _relatedTagParams(omitEmpty: omitEmpty, status: status);
+    final response = await _transport.get(
+      PolymarketUrls.gamma,
+      '/tags/$id/related-tags',
+      queryParams: params.isEmpty ? null : params,
+    );
+
+    if (response == null) return [];
+    final list = response as List<dynamic>;
+    return list
+        .map((j) => RelatedTag.fromJson(j as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Returns raw related-tag relationship rows for tag [slug].
+  Future<List<RelatedTag>> getRelatedTagsBySlug(
+    String slug, {
+    bool? omitEmpty,
+    String? status,
+  }) async {
+    final params = _relatedTagParams(omitEmpty: omitEmpty, status: status);
+    final encodedSlug = Uri.encodeComponent(slug);
+    final response = await _transport.get(
+      PolymarketUrls.gamma,
+      '/tags/slug/$encodedSlug/related-tags',
+      queryParams: params.isEmpty ? null : params,
+    );
+
+    if (response == null) return [];
+    final list = response as List<dynamic>;
+    return list
+        .map((j) => RelatedTag.fromJson(j as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Returns full related tag objects for tag [id].
+  Future<List<Tag>> getTagsRelatedToTagById(
+    int id, {
+    bool? omitEmpty,
+    String? status,
+  }) async {
+    final params = _relatedTagParams(omitEmpty: omitEmpty, status: status);
+    final response = await _transport.get(
+      PolymarketUrls.gamma,
+      '/tags/$id/related-tags/tags',
+      queryParams: params.isEmpty ? null : params,
+    );
+
+    if (response == null) return [];
+    final list = response as List<dynamic>;
+    return list.map((j) => Tag.fromJson(j as Map<String, dynamic>)).toList();
+  }
+
+  /// Returns full related tag objects for tag [slug].
+  Future<List<Tag>> getTagsRelatedToTagBySlug(
+    String slug, {
+    bool? omitEmpty,
+    String? status,
+  }) async {
+    final params = _relatedTagParams(omitEmpty: omitEmpty, status: status);
+    final encodedSlug = Uri.encodeComponent(slug);
+    final response = await _transport.get(
+      PolymarketUrls.gamma,
+      '/tags/slug/$encodedSlug/related-tags/tags',
+      queryParams: params.isEmpty ? null : params,
+    );
+
+    if (response == null) return [];
+    final list = response as List<dynamic>;
+    return list.map((j) => Tag.fromJson(j as Map<String, dynamic>)).toList();
+  }
+
+  Map<String, String> _relatedTagParams({bool? omitEmpty, String? status}) {
+    final params = <String, String>{};
+    if (omitEmpty != null) params['omit_empty'] = omitEmpty.toString();
+    if (status != null) params['status'] = status;
+    return params;
+  }
+
   // ---------------------------------------------------------------------------
   // Sports
   // ---------------------------------------------------------------------------

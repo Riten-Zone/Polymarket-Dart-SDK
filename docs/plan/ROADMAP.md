@@ -89,8 +89,8 @@ These are the highest-value gaps because they are clearly documented today and m
 - Done: add Gamma comments endpoints
 - Done: add Gamma series endpoints
 - Done: add Gamma sports endpoints
+- Done: add Gamma tag relationship endpoints
 - Add builder analytics endpoints
-- Add Gamma tag relationship endpoints
 - Add unified search for markets, events, and profiles
 - Add public profile lookup
 
@@ -200,7 +200,7 @@ Focus on pUSD and public REST parity:
 - comments: done
 - sports metadata: done
 - teams: done
-- tag relationships
+- tag relationships: done
 - unified search
 - public profile
 

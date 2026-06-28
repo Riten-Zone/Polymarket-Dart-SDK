@@ -306,5 +306,168 @@ void main() {
       expect(teams.single.color, equals('#003C7F'));
       client.close();
     });
+
+    test('getTag calls /tags/{id} and parses optional fields', () async {
+      final client = clientFor((request) async {
+        expect(request.url.path, equals('/tags/1'));
+        expect(request.url.queryParameters['include_template'], equals('true'));
+        return http.Response(
+          jsonEncode({
+            'id': '1',
+            'label': 'Sports',
+            'slug': 'sports',
+            'forceShow': false,
+            'forceHide': true,
+            'requiresTranslation': false,
+            'publishedAt': '2023-10-24 22:37:50.296+00',
+            'createdBy': '15',
+            'updatedBy': 16,
+            'createdAt': '2023-10-24T22:37:50.31Z',
+            'updatedAt': '2026-04-17T20:47:16.461062Z',
+            'activeEventsCount': '20',
+          }),
+          200,
+        );
+      });
+
+      final tag = await client.getTag(1, includeTemplate: true);
+
+      expect(tag.id, equals(1));
+      expect(tag.label, equals('Sports'));
+      expect(tag.forceHide, isTrue);
+      expect(tag.createdBy, equals(15));
+      expect(tag.updatedBy, equals(16));
+      expect(tag.activeEventsCount, equals(20));
+      client.close();
+    });
+
+    test('getTagBySlug calls /tags/slug/{slug}', () async {
+      final client = clientFor((request) async {
+        expect(request.url.path, equals('/tags/slug/sports'));
+        expect(
+          request.url.queryParameters['include_template'],
+          equals('false'),
+        );
+        return http.Response(
+          jsonEncode({'id': '1', 'label': 'Sports', 'slug': 'sports'}),
+          200,
+        );
+      });
+
+      final tag = await client.getTagBySlug('sports', includeTemplate: false);
+
+      expect(tag.id, equals(1));
+      expect(tag.slug, equals('sports'));
+      client.close();
+    });
+
+    test('getRelatedTagsById parses relationship rows', () async {
+      final client = clientFor((request) async {
+        expect(request.url.path, equals('/tags/1/related-tags'));
+        expect(request.url.queryParameters['omit_empty'], equals('true'));
+        expect(request.url.queryParameters['status'], equals('all'));
+        return http.Response(
+          jsonEncode([
+            {'id': '34736', 'tagID': 1, 'relatedTagID': '450', 'rank': 1},
+          ]),
+          200,
+        );
+      });
+
+      final related = await client.getRelatedTagsById(
+        1,
+        omitEmpty: true,
+        status: 'all',
+      );
+
+      expect(related, hasLength(1));
+      expect(related.single.id, equals('34736'));
+      expect(related.single.tagId, equals(1));
+      expect(related.single.relatedTagId, equals(450));
+      expect(related.single.rank, equals(1));
+      client.close();
+    });
+
+    test('getRelatedTagsBySlug calls slug relationship endpoint', () async {
+      final client = clientFor((request) async {
+        expect(request.url.path, equals('/tags/slug/sports/related-tags'));
+        expect(request.url.queryParameters['omit_empty'], equals('false'));
+        expect(request.url.queryParameters['status'], equals('active'));
+        return http.Response(
+          jsonEncode([
+            {'id': '34736', 'tagID': 1, 'relatedTagID': 450, 'rank': 1},
+          ]),
+          200,
+        );
+      });
+
+      final related = await client.getRelatedTagsBySlug(
+        'sports',
+        omitEmpty: false,
+        status: 'active',
+      );
+
+      expect(related.single.relatedTagId, equals(450));
+      client.close();
+    });
+
+    test('getTagsRelatedToTagById parses related tag objects', () async {
+      final client = clientFor((request) async {
+        expect(request.url.path, equals('/tags/1/related-tags/tags'));
+        expect(request.url.queryParameters['omit_empty'], equals('true'));
+        expect(request.url.queryParameters['status'], equals('closed'));
+        return http.Response(
+          jsonEncode([
+            {
+              'id': '450',
+              'label': 'NFL',
+              'slug': 'nfl',
+              'activeEventsCount': 48,
+            },
+          ]),
+          200,
+        );
+      });
+
+      final tags = await client.getTagsRelatedToTagById(
+        1,
+        omitEmpty: true,
+        status: 'closed',
+      );
+
+      expect(tags, hasLength(1));
+      expect(tags.single.id, equals(450));
+      expect(tags.single.activeEventsCount, equals(48));
+      client.close();
+    });
+
+    test(
+      'getTagsRelatedToTagBySlug calls related tag object endpoint',
+      () async {
+        final client = clientFor((request) async {
+          expect(
+            request.url.path,
+            equals('/tags/slug/sports/related-tags/tags'),
+          );
+          expect(request.url.queryParameters['omit_empty'], equals('true'));
+          expect(request.url.queryParameters['status'], equals('all'));
+          return http.Response(
+            jsonEncode([
+              {'id': '450', 'label': 'NFL', 'slug': 'nfl'},
+            ]),
+            200,
+          );
+        });
+
+        final tags = await client.getTagsRelatedToTagBySlug(
+          'sports',
+          omitEmpty: true,
+          status: 'all',
+        );
+
+        expect(tags.single.slug, equals('nfl'));
+        client.close();
+      },
+    );
   });
 }

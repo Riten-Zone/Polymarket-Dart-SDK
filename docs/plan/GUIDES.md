@@ -67,13 +67,13 @@ Already covered:
 - comments
 - sports metadata
 - teams
+- tag relationship endpoints
 
 Still missing:
 
 - event by slug
 - market by slug
 - market-by-token style helpers where applicable
-- richer tag relation endpoints
 - unified search across markets, events, and profiles
 - public profile endpoint support
 
@@ -170,7 +170,7 @@ Implement public endpoints that do not require new auth flows:
 - comments: done
 - sports metadata: done
 - teams: done
-- tag relationship endpoints
+- tag relationship endpoints: done
 - unified search
 
 This gives the fastest increase in official coverage with the lowest risk.

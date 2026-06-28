@@ -195,6 +195,58 @@ void main() {
       expect(t.label, isNotEmpty);
       expect(t.slug, isNotEmpty);
     }, timeout: const Timeout(Duration(seconds: 15)));
+
+    test('returns tag by id and slug', () async {
+      final byId = await client.getTag(1, includeTemplate: true);
+      expect(byId.id, equals(1));
+      expect(byId.slug, isNotEmpty);
+
+      final bySlug = await client.getTagBySlug('sports');
+      expect(bySlug.id, equals(byId.id));
+      expect(bySlug.slug, equals('sports'));
+    }, timeout: const Timeout(Duration(seconds: 15)));
+
+    test(
+      'returns related tag relationship rows',
+      () async {
+        final byId = await client.getRelatedTagsById(
+          1,
+          omitEmpty: true,
+          status: 'all',
+        );
+        expect(byId, isA<List<RelatedTag>>());
+        expect(byId, isNotEmpty);
+        expect(byId.first.tagId, equals(1));
+
+        final bySlug = await client.getRelatedTagsBySlug(
+          'sports',
+          omitEmpty: true,
+          status: 'all',
+        );
+        expect(bySlug, isA<List<RelatedTag>>());
+        expect(bySlug, isNotEmpty);
+      },
+      timeout: const Timeout(Duration(seconds: 15)),
+    );
+
+    test('returns related tag objects', () async {
+      final byId = await client.getTagsRelatedToTagById(
+        1,
+        omitEmpty: true,
+        status: 'all',
+      );
+      expect(byId, isA<List<Tag>>());
+      expect(byId, isNotEmpty);
+      expect(byId.first.id, greaterThan(0));
+
+      final bySlug = await client.getTagsRelatedToTagBySlug(
+        'sports',
+        omitEmpty: true,
+        status: 'all',
+      );
+      expect(bySlug, isA<List<Tag>>());
+      expect(bySlug, isNotEmpty);
+    }, timeout: const Timeout(Duration(seconds: 15)));
   });
 
   // ---------------------------------------------------------------------------

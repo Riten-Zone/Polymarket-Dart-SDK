@@ -18,18 +18,85 @@ class Tag {
   /// URL slug for the tag.
   final String slug;
 
-  const Tag({required this.id, required this.label, required this.slug});
+  final bool? forceShow;
+  final bool? forceHide;
+  final bool? isCarousel;
+  final bool? requiresTranslation;
+  final String? publishedAt;
+  final int? createdBy;
+  final int? updatedBy;
+  final String? createdAt;
+  final String? updatedAt;
+  final int? activeEventsCount;
+
+  const Tag({
+    required this.id,
+    required this.label,
+    required this.slug,
+    this.forceShow,
+    this.forceHide,
+    this.isCarousel,
+    this.requiresTranslation,
+    this.publishedAt,
+    this.createdBy,
+    this.updatedBy,
+    this.createdAt,
+    this.updatedAt,
+    this.activeEventsCount,
+  });
 
   factory Tag.fromJson(Map<String, dynamic> json) {
     return Tag(
       id: _parseInt(json['id']),
       label: json['label'] as String? ?? '',
       slug: json['slug'] as String? ?? '',
+      forceShow: json['forceShow'] as bool?,
+      forceHide: json['forceHide'] as bool?,
+      isCarousel: json['isCarousel'] as bool?,
+      requiresTranslation: json['requiresTranslation'] as bool?,
+      publishedAt: json['publishedAt'] as String?,
+      createdBy: json['createdBy'] == null
+          ? null
+          : _parseInt(json['createdBy']),
+      updatedBy: json['updatedBy'] == null
+          ? null
+          : _parseInt(json['updatedBy']),
+      createdAt: json['createdAt'] as String?,
+      updatedAt: json['updatedAt'] as String?,
+      activeEventsCount: json['activeEventsCount'] == null
+          ? null
+          : _parseInt(json['activeEventsCount']),
     );
   }
 
   @override
   String toString() => 'Tag(id: $id, label: $label)';
+}
+
+/// A relationship row linking one tag to another.
+class RelatedTag {
+  final String id;
+  final int? tagId;
+  final int? relatedTagId;
+  final int? rank;
+
+  const RelatedTag({
+    required this.id,
+    this.tagId,
+    this.relatedTagId,
+    this.rank,
+  });
+
+  factory RelatedTag.fromJson(Map<String, dynamic> json) {
+    return RelatedTag(
+      id: json['id']?.toString() ?? '',
+      tagId: json['tagID'] == null ? null : _parseInt(json['tagID']),
+      relatedTagId: json['relatedTagID'] == null
+          ? null
+          : _parseInt(json['relatedTagID']),
+      rank: json['rank'] == null ? null : _parseInt(json['rank']),
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------
