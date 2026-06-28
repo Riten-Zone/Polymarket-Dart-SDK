@@ -297,6 +297,30 @@ void main() {
       },
       timeout: const Timeout(Duration(seconds: 15)),
     );
+
+    test(
+      'publicSearch returns unified live results',
+      () async {
+        final result = await client.publicSearch(
+          'election',
+          limitPerType: 2,
+          searchTags: true,
+          searchProfiles: true,
+        );
+
+        expect(result.events, isA<List<GammaEvent>>());
+        expect(result.tags, isA<List<GammaSearchTag>>());
+        expect(result.profiles, isA<List<GammaProfile>>());
+        expect(result.pagination?.totalResults, isNonNegative);
+        expect(
+          result.events.isNotEmpty ||
+              result.tags.isNotEmpty ||
+              result.profiles.isNotEmpty,
+          isTrue,
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 15)),
+    );
   });
 
   // ---------------------------------------------------------------------------

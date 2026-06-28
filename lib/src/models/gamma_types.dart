@@ -721,6 +721,153 @@ class SportsTeam {
 }
 
 // ---------------------------------------------------------------------------
+// Search
+// ---------------------------------------------------------------------------
+
+/// Unified public search results returned by [GammaClient.publicSearch].
+class GammaSearchResult {
+  final List<GammaEvent> events;
+  final List<GammaSearchTag> tags;
+  final List<GammaProfile> profiles;
+  final GammaSearchPagination? pagination;
+
+  const GammaSearchResult({
+    required this.events,
+    required this.tags,
+    required this.profiles,
+    this.pagination,
+  });
+
+  factory GammaSearchResult.fromJson(Map<String, dynamic> json) {
+    return GammaSearchResult(
+      events: (json['events'] as List<dynamic>? ?? [])
+          .map((e) => GammaEvent.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      tags: (json['tags'] as List<dynamic>? ?? [])
+          .map((t) => GammaSearchTag.fromJson(t as Map<String, dynamic>))
+          .toList(),
+      profiles: (json['profiles'] as List<dynamic>? ?? [])
+          .map((p) => GammaProfile.fromJson(p as Map<String, dynamic>))
+          .toList(),
+      pagination: json['pagination'] is Map<String, dynamic>
+          ? GammaSearchPagination.fromJson(
+              json['pagination'] as Map<String, dynamic>,
+            )
+          : null,
+    );
+  }
+}
+
+/// Pagination metadata for unified public search.
+class GammaSearchPagination {
+  final bool hasMore;
+  final int totalResults;
+
+  const GammaSearchPagination({
+    required this.hasMore,
+    required this.totalResults,
+  });
+
+  factory GammaSearchPagination.fromJson(Map<String, dynamic> json) {
+    return GammaSearchPagination(
+      hasMore: json['hasMore'] as bool? ?? false,
+      totalResults: _parseInt(json['totalResults']),
+    );
+  }
+}
+
+/// Tag result returned by unified public search.
+class GammaSearchTag {
+  final String id;
+  final String label;
+  final String slug;
+  final int eventCount;
+
+  const GammaSearchTag({
+    required this.id,
+    required this.label,
+    required this.slug,
+    required this.eventCount,
+  });
+
+  factory GammaSearchTag.fromJson(Map<String, dynamic> json) {
+    return GammaSearchTag(
+      id: json['id']?.toString() ?? '',
+      label: json['label'] as String? ?? '',
+      slug: json['slug'] as String? ?? '',
+      eventCount: _parseInt(json['event_count']),
+    );
+  }
+}
+
+/// Public profile result returned by unified public search.
+class GammaProfile {
+  final String id;
+  final String? name;
+  final int? user;
+  final String? referral;
+  final int? createdBy;
+  final int? updatedBy;
+  final String? createdAt;
+  final String? updatedAt;
+  final String? pseudonym;
+  final bool displayUsernamePublic;
+  final String? profileImage;
+  final String? bio;
+  final String? proxyWallet;
+  final bool walletActivated;
+  final bool isCloseOnly;
+  final bool isCertReq;
+  final String? certReqDate;
+
+  const GammaProfile({
+    required this.id,
+    this.name,
+    this.user,
+    this.referral,
+    this.createdBy,
+    this.updatedBy,
+    this.createdAt,
+    this.updatedAt,
+    this.pseudonym,
+    required this.displayUsernamePublic,
+    this.profileImage,
+    this.bio,
+    this.proxyWallet,
+    required this.walletActivated,
+    required this.isCloseOnly,
+    required this.isCertReq,
+    this.certReqDate,
+  });
+
+  factory GammaProfile.fromJson(Map<String, dynamic> json) {
+    return GammaProfile(
+      id: json['id']?.toString() ?? '',
+      name: json['name'] as String?,
+      user: json['user'] == null ? null : _parseInt(json['user']),
+      referral: json['referral'] as String?,
+      createdBy: json['createdBy'] == null
+          ? null
+          : _parseInt(json['createdBy']),
+      updatedBy: json['updatedBy'] == null
+          ? null
+          : _parseInt(json['updatedBy']),
+      createdAt: json['createdAt'] as String?,
+      updatedAt: json['updatedAt'] as String?,
+      pseudonym: json['pseudonym'] as String?,
+      displayUsernamePublic: json['displayUsernamePublic'] as bool? ?? false,
+      profileImage: json['profileImage'] as String?,
+      bio: json['bio'] as String?,
+      proxyWallet: json['proxyWallet'] as String?,
+      walletActivated: json['walletActivated'] as bool? ?? false,
+      isCloseOnly: json['isCloseOnly'] as bool? ?? false,
+      isCertReq: json['isCertReq'] as bool? ?? false,
+      certReqDate: json['certReqDate'] as String?,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 

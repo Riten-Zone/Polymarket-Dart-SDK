@@ -469,5 +469,122 @@ void main() {
         client.close();
       },
     );
+
+    test(
+      'publicSearch calls /public-search and parses result groups',
+      () async {
+        final client = clientFor((request) async {
+          expect(request.url.path, equals('/public-search'));
+          expect(request.url.queryParameters['q'], equals('election'));
+          expect(request.url.queryParameters['cache'], equals('true'));
+          expect(request.url.queryParameters['events_status'], equals('all'));
+          expect(request.url.queryParameters['limit_per_type'], equals('2'));
+          expect(request.url.queryParameters['page'], equals('3'));
+          expect(
+            request.url.queryParameters['events_tag'],
+            equals('politics,us'),
+          );
+          expect(
+            request.url.queryParameters['keep_closed_markets'],
+            equals('1'),
+          );
+          expect(request.url.queryParameters['sort'], equals('volume'));
+          expect(request.url.queryParameters['ascending'], equals('false'));
+          expect(request.url.queryParameters['search_tags'], equals('true'));
+          expect(
+            request.url.queryParameters['search_profiles'],
+            equals('true'),
+          );
+          expect(request.url.queryParameters['recurrence'], equals('daily'));
+          expect(request.url.queryParameters['exclude_tag_id'], equals('1,2'));
+          expect(request.url.queryParameters['optimized'], equals('true'));
+          return http.Response(
+            jsonEncode({
+              'events': [
+                {
+                  'id': '42',
+                  'title': 'Election event',
+                  'description': 'Event description',
+                  'slug': 'election-event',
+                  'active': true,
+                  'closed': false,
+                  'markets': [
+                    {
+                      'id': '100',
+                      'conditionId': '0xcondition',
+                      'slug': 'market-slug',
+                      'question': 'Election market?',
+                      'active': true,
+                      'closed': false,
+                      'acceptingOrders': true,
+                      'negRisk': false,
+                      'volume': '12.5',
+                      'volume24hr': 3.5,
+                      'liquidity': '4.5',
+                      'clobTokenIds': '["1","2"]',
+                      'outcomePrices': '["0.4","0.6"]',
+                    },
+                  ],
+                },
+              ],
+              'tags': [
+                {
+                  'id': '339',
+                  'label': 'election',
+                  'slug': 'election',
+                  'event_count': 10,
+                },
+              ],
+              'profiles': [
+                {
+                  'id': 'profile-1',
+                  'name': 'Alice',
+                  'user': '123',
+                  'pseudonym': 'alice',
+                  'displayUsernamePublic': true,
+                  'profileImage': 'https://example.com/alice.png',
+                  'bio': 'bio',
+                  'proxyWallet': '0xproxy',
+                  'walletActivated': true,
+                  'isCloseOnly': false,
+                  'isCertReq': false,
+                },
+              ],
+              'pagination': {'hasMore': true, 'totalResults': '27'},
+            }),
+            200,
+          );
+        });
+
+        final result = await client.publicSearch(
+          'election',
+          cache: true,
+          eventsStatus: 'all',
+          limitPerType: 2,
+          page: 3,
+          eventTags: ['politics', 'us'],
+          keepClosedMarkets: 1,
+          sort: 'volume',
+          ascending: false,
+          searchTags: true,
+          searchProfiles: true,
+          recurrence: 'daily',
+          excludeTagIds: [1, 2],
+          optimized: true,
+        );
+
+        expect(result.events, hasLength(1));
+        expect(
+          result.events.single.markets.single.conditionId,
+          equals('0xcondition'),
+        );
+        expect(result.tags.single.eventCount, equals(10));
+        expect(result.profiles.single.user, equals(123));
+        expect(result.profiles.single.walletActivated, isTrue);
+        expect(result.pagination?.hasMore, isTrue);
+        expect(result.pagination?.totalResults, equals(27));
+        client.close();
+      },
+    );
   });
 }

@@ -95,7 +95,7 @@ These areas are implemented and still broadly aligned with the current official 
 ### Other clients
 
 - `GammaClient`: markets, events, tags, series, comments, sports metadata,
-  teams, tag relationships, market search
+  teams, tag relationships, market search, unified search
 - `DataClient`: positions, proxy wallet lookup, trades, activity, holders,
   leaderboard, closed positions, total value, total markets traded, positions for market
 - `BridgeClient`: supported assets, deposit address creation, quote, status

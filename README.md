@@ -5,7 +5,7 @@ A Dart SDK for the [Polymarket](https://polymarket.com) CLOB API — REST, WebSo
 ## Features
 
 - **53 CLOB API methods** — markets, CLOB market info, orderbook, pricing, order management, rewards, auth
-- **GammaClient** — 20 methods for market/event discovery, tags, tag relationships, series, comments, sports, teams, and search (no auth required)
+- **GammaClient** — 21 methods for market/event discovery, tags, tag relationships, series, comments, sports, teams, and unified search (no auth required)
 - **DataClient** — 10 methods for positions, trades, activity, holders, leaderboard, and portfolio analytics
 - **EIP-712 signing** — order signing for both EOA and GnosisSafe wallets
 - **HMAC Level 2 auth** — API key management and authenticated requests

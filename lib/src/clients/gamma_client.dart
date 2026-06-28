@@ -487,6 +487,61 @@ class GammaClient {
         .toList();
   }
 
+  /// Searches public markets, events, tags, and profiles via `/public-search`.
+  ///
+  /// This is the current unified Gamma search endpoint. Market matches are
+  /// returned inside [GammaSearchResult.events] as nested event markets.
+  Future<GammaSearchResult> publicSearch(
+    String query, {
+    bool? cache,
+    String? eventsStatus,
+    int? limitPerType,
+    int? page,
+    List<String>? eventTags,
+    int? keepClosedMarkets,
+    String? sort,
+    bool? ascending,
+    bool? searchTags,
+    bool? searchProfiles,
+    String? recurrence,
+    List<int>? excludeTagIds,
+    bool? optimized,
+  }) async {
+    final params = <String, String>{'q': query};
+    if (cache != null) params['cache'] = cache.toString();
+    if (eventsStatus != null) params['events_status'] = eventsStatus;
+    if (limitPerType != null) {
+      params['limit_per_type'] = limitPerType.toString();
+    }
+    if (page != null) params['page'] = page.toString();
+    if (eventTags != null && eventTags.isNotEmpty) {
+      params['events_tag'] = eventTags.join(',');
+    }
+    if (keepClosedMarkets != null) {
+      params['keep_closed_markets'] = keepClosedMarkets.toString();
+    }
+    if (sort != null) params['sort'] = sort;
+    if (ascending != null) params['ascending'] = ascending.toString();
+    if (searchTags != null) params['search_tags'] = searchTags.toString();
+    if (searchProfiles != null) {
+      params['search_profiles'] = searchProfiles.toString();
+    }
+    if (recurrence != null) params['recurrence'] = recurrence;
+    if (excludeTagIds != null && excludeTagIds.isNotEmpty) {
+      params['exclude_tag_id'] = excludeTagIds.join(',');
+    }
+    if (optimized != null) params['optimized'] = optimized.toString();
+
+    final response =
+        await _transport.get(
+              PolymarketUrls.gamma,
+              '/public-search',
+              queryParams: params,
+            )
+            as Map<String, dynamic>;
+    return GammaSearchResult.fromJson(response);
+  }
+
   /// Closes the underlying HTTP client.
   void close() => _transport.close();
 }
