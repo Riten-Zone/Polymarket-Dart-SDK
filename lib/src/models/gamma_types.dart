@@ -627,6 +627,89 @@ class GammaCommentReaction {
 }
 
 // ---------------------------------------------------------------------------
+// PublicProfile
+// ---------------------------------------------------------------------------
+
+/// Public profile information returned by [GammaClient.getPublicProfile].
+class PublicProfile {
+  final String? createdAt;
+  final String? proxyWallet;
+  final String? profileImage;
+  final bool displayUsernamePublic;
+  final String? bio;
+  final String? pseudonym;
+  final String? name;
+  final List<PublicProfileUser> users;
+  final String? xUsername;
+  final bool verifiedBadge;
+  final int? takerTier;
+  final String? takerTierName;
+  final double weightedVolume;
+
+  const PublicProfile({
+    this.createdAt,
+    this.proxyWallet,
+    this.profileImage,
+    required this.displayUsernamePublic,
+    this.bio,
+    this.pseudonym,
+    this.name,
+    required this.users,
+    this.xUsername,
+    required this.verifiedBadge,
+    this.takerTier,
+    this.takerTierName,
+    required this.weightedVolume,
+  });
+
+  factory PublicProfile.fromJson(Map<String, dynamic> json) {
+    return PublicProfile(
+      createdAt: json['createdAt'] as String?,
+      proxyWallet: json['proxyWallet'] as String?,
+      profileImage: json['profileImage'] as String?,
+      displayUsernamePublic: json['displayUsernamePublic'] as bool? ?? false,
+      bio: json['bio'] as String?,
+      pseudonym: json['pseudonym'] as String?,
+      name: json['name'] as String?,
+      users: (json['users'] as List<dynamic>? ?? [])
+          .map((u) => PublicProfileUser.fromJson(u as Map<String, dynamic>))
+          .toList(),
+      xUsername: json['xUsername'] as String?,
+      verifiedBadge: json['verifiedBadge'] as bool? ?? false,
+      takerTier: json['takerTier'] == null
+          ? null
+          : _parseInt(json['takerTier']),
+      takerTierName: json['takerTierName'] as String?,
+      weightedVolume: _toDouble(json['weightedVolume']),
+    );
+  }
+}
+
+/// User object associated with a public profile.
+class PublicProfileUser {
+  final String id;
+  final bool creator;
+  final bool mod;
+  final bool communityMod;
+
+  const PublicProfileUser({
+    required this.id,
+    required this.creator,
+    required this.mod,
+    required this.communityMod,
+  });
+
+  factory PublicProfileUser.fromJson(Map<String, dynamic> json) {
+    return PublicProfileUser(
+      id: json['id']?.toString() ?? '',
+      creator: json['creator'] as bool? ?? false,
+      mod: json['mod'] as bool? ?? false,
+      communityMod: json['communityMod'] as bool? ?? false,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Sports
 // ---------------------------------------------------------------------------
 

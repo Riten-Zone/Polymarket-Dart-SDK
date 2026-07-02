@@ -586,5 +586,53 @@ void main() {
         client.close();
       },
     );
+
+    test(
+      'getPublicProfile calls /public-profile and parses response',
+      () async {
+        final client = clientFor((request) async {
+          expect(request.url.path, equals('/public-profile'));
+          expect(request.url.queryParameters['address'], equals('0xproxy'));
+          return http.Response(
+            jsonEncode({
+              'createdAt': '2024-06-29T02:55:23.61062Z',
+              'proxyWallet': '0xproxy',
+              'profileImage': 'https://example.com/profile.png',
+              'displayUsernamePublic': true,
+              'bio': 'bio',
+              'pseudonym': 'Oblong-Gale',
+              'name': 'ElectionInsider',
+              'users': [
+                {
+                  'id': '571987',
+                  'creator': false,
+                  'mod': true,
+                  'communityMod': false,
+                },
+              ],
+              'xUsername': 'electioninsider',
+              'verifiedBadge': true,
+              'takerTier': '2',
+              'takerTierName': 'Tier 2',
+              'weightedVolume': '123.45',
+            }),
+            200,
+          );
+        });
+
+        final profile = await client.getPublicProfile('0xproxy');
+
+        expect(profile.proxyWallet, equals('0xproxy'));
+        expect(profile.name, equals('ElectionInsider'));
+        expect(profile.pseudonym, equals('Oblong-Gale'));
+        expect(profile.displayUsernamePublic, isTrue);
+        expect(profile.users.single.id, equals('571987'));
+        expect(profile.users.single.mod, isTrue);
+        expect(profile.verifiedBadge, isTrue);
+        expect(profile.takerTier, equals(2));
+        expect(profile.weightedVolume, equals(123.45));
+        client.close();
+      },
+    );
   });
 }

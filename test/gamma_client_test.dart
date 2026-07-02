@@ -324,6 +324,28 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
+  // Profiles
+  // ---------------------------------------------------------------------------
+
+  group('GammaClient.getPublicProfile', () {
+    test(
+      'returns public profile for a known public proxy wallet',
+      () async {
+        final profile = await client.getPublicProfile(
+          '0xfa49a4f54e1bdd3e24a12c583e613c195cfffdf3',
+        );
+
+        expect(profile, isA<PublicProfile>());
+        expect(profile.proxyWallet, startsWith('0x'));
+        expect(profile.name, isNotEmpty);
+        expect(profile.pseudonym, isNotEmpty);
+        expect(profile.users, isA<List<PublicProfileUser>>());
+      },
+      timeout: const Timeout(Duration(seconds: 15)),
+    );
+  });
+
+  // ---------------------------------------------------------------------------
   // Comments
   // ---------------------------------------------------------------------------
 

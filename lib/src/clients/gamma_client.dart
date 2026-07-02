@@ -467,6 +467,22 @@ class GammaClient {
   }
 
   // ---------------------------------------------------------------------------
+  // Profiles
+  // ---------------------------------------------------------------------------
+
+  /// Returns public profile information for a proxy wallet or user [address].
+  Future<PublicProfile> getPublicProfile(String address) async {
+    final response =
+        await _transport.get(
+              PolymarketUrls.gamma,
+              '/public-profile',
+              queryParams: {'address': address},
+            )
+            as Map<String, dynamic>;
+    return PublicProfile.fromJson(response);
+  }
+
+  // ---------------------------------------------------------------------------
   // Search
   // ---------------------------------------------------------------------------
 
