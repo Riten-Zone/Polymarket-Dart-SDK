@@ -94,6 +94,57 @@ class DataClient {
         .toList();
   }
 
+  // ---------------------------------------------------------------------------
+  // Builder analytics
+  // ---------------------------------------------------------------------------
+
+  /// Returns the aggregated builder leaderboard from `/v1/builders/leaderboard`.
+  ///
+  /// [timePeriod] accepts `DAY`, `WEEK`, `MONTH`, or `ALL`.
+  Future<List<DataBuilderLeaderboardEntry>> getBuilderLeaderboard({
+    String timePeriod = 'DAY',
+    int limit = 25,
+    int offset = 0,
+  }) async {
+    final response = await _transport.get(
+      PolymarketUrls.data,
+      '/v1/builders/leaderboard',
+      queryParams: {
+        'timePeriod': timePeriod,
+        'limit': limit.toString(),
+        'offset': offset.toString(),
+      },
+    );
+
+    if (response == null) return [];
+    final list = response as List<dynamic>;
+    return list
+        .map(
+          (j) =>
+              DataBuilderLeaderboardEntry.fromJson(j as Map<String, dynamic>),
+        )
+        .toList();
+  }
+
+  /// Returns daily builder volume records from `/v1/builders/volume`.
+  ///
+  /// [timePeriod] accepts `DAY`, `WEEK`, `MONTH`, or `ALL`.
+  Future<List<DataBuilderVolumeEntry>> getBuilderVolume({
+    String timePeriod = 'DAY',
+  }) async {
+    final response = await _transport.get(
+      PolymarketUrls.data,
+      '/v1/builders/volume',
+      queryParams: {'timePeriod': timePeriod},
+    );
+
+    if (response == null) return [];
+    final list = response as List<dynamic>;
+    return list
+        .map((j) => DataBuilderVolumeEntry.fromJson(j as Map<String, dynamic>))
+        .toList();
+  }
+
   /// Returns the Polymarket Safe proxy wallet address associated with [eoaAddress].
   ///
   /// Polymarket deploys a Gnosis Safe proxy for every user on first login.

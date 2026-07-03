@@ -91,10 +91,10 @@ Already covered:
 - total markets traded by user
 - positions for a market
 - trader leaderboard rankings
+- builder analytics endpoints
 
 Still missing:
 
-- builder analytics endpoints
 - accounting snapshot download
 - combo positions
 - combo activity
@@ -173,6 +173,7 @@ Implement public endpoints that do not require new auth flows:
 - tag relationship endpoints: done
 - unified search: done
 - public profile: done
+- builder analytics: done
 
 This gives the fastest increase in official coverage with the lowest risk.
 

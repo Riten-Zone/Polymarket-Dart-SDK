@@ -382,6 +382,79 @@ class LeaderboardEntry {
 }
 
 // ---------------------------------------------------------------------------
+// Builder analytics
+// ---------------------------------------------------------------------------
+
+/// Aggregated builder leaderboard entry returned by [DataClient.getBuilderLeaderboard].
+class DataBuilderLeaderboardEntry {
+  final int rank;
+  final String builder;
+  final String builderCode;
+  final double volume;
+  final int activeUsers;
+  final bool verified;
+  final String builderLogo;
+
+  const DataBuilderLeaderboardEntry({
+    required this.rank,
+    required this.builder,
+    required this.builderCode,
+    required this.volume,
+    required this.activeUsers,
+    required this.verified,
+    required this.builderLogo,
+  });
+
+  factory DataBuilderLeaderboardEntry.fromJson(Map<String, dynamic> json) {
+    return DataBuilderLeaderboardEntry(
+      rank: _toInt(json['rank']),
+      builder: json['builder'] as String? ?? '',
+      builderCode: json['builderCode'] as String? ?? '',
+      volume: _toDouble(json['volume']),
+      activeUsers: _toInt(json['activeUsers']),
+      verified: json['verified'] as bool? ?? false,
+      builderLogo: json['builderLogo'] as String? ?? '',
+    );
+  }
+}
+
+/// Daily builder volume entry returned by [DataClient.getBuilderVolume].
+class DataBuilderVolumeEntry {
+  final String dateTime;
+  final String builder;
+  final String builderCode;
+  final String builderLogo;
+  final bool verified;
+  final double volume;
+  final int activeUsers;
+  final int rank;
+
+  const DataBuilderVolumeEntry({
+    required this.dateTime,
+    required this.builder,
+    required this.builderCode,
+    required this.builderLogo,
+    required this.verified,
+    required this.volume,
+    required this.activeUsers,
+    required this.rank,
+  });
+
+  factory DataBuilderVolumeEntry.fromJson(Map<String, dynamic> json) {
+    return DataBuilderVolumeEntry(
+      dateTime: json['dt'] as String? ?? '',
+      builder: json['builder'] as String? ?? '',
+      builderCode: json['builderCode'] as String? ?? '',
+      builderLogo: json['builderLogo'] as String? ?? '',
+      verified: json['verified'] as bool? ?? false,
+      volume: _toDouble(json['volume']),
+      activeUsers: _toInt(json['activeUsers']),
+      rank: _toInt(json['rank']),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // ClosedPosition
 // ---------------------------------------------------------------------------
 

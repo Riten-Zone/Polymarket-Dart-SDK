@@ -243,5 +243,39 @@ void main() {
       },
       timeout: const Timeout(Duration(seconds: 15)),
     );
+
+    test(
+      'getBuilderLeaderboard returns live builder analytics',
+      () async {
+        final entries = await client.getBuilderLeaderboard(limit: 5);
+        expect(entries, isA<List<DataBuilderLeaderboardEntry>>());
+        expect(entries.length, lessThanOrEqualTo(5));
+        if (entries.isEmpty) return;
+
+        final first = entries.first;
+        expect(first.rank, greaterThan(0));
+        expect(first.builder, isNotEmpty);
+        expect(first.volume, isNonNegative);
+        expect(first.activeUsers, isNonNegative);
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
+
+    test(
+      'getBuilderVolume returns live daily builder volume',
+      () async {
+        final entries = await client.getBuilderVolume();
+        expect(entries, isA<List<DataBuilderVolumeEntry>>());
+        if (entries.isEmpty) return;
+
+        final first = entries.first;
+        expect(first.dateTime, isNotEmpty);
+        expect(first.builder, isNotEmpty);
+        expect(first.volume, isNonNegative);
+        expect(first.activeUsers, isNonNegative);
+        expect(first.rank, greaterThan(0));
+      },
+      timeout: const Timeout(Duration(seconds: 10)),
+    );
   });
 }

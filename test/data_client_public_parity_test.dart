@@ -209,5 +209,75 @@ void main() {
         client.close();
       },
     );
+
+    test('getBuilderLeaderboard calls builder leaderboard endpoint', () async {
+      final client = clientFor((request) async {
+        expect(request.url.path, equals('/v1/builders/leaderboard'));
+        expect(request.url.queryParameters['timePeriod'], equals('WEEK'));
+        expect(request.url.queryParameters['limit'], equals('2'));
+        expect(request.url.queryParameters['offset'], equals('4'));
+        return http.Response(
+          jsonEncode([
+            {
+              'rank': '1',
+              'builder': 'Gate',
+              'builderCode': '0xabc',
+              'volume': '100.5',
+              'activeUsers': 7,
+              'verified': true,
+              'builderLogo': 'https://example.com/gate.png',
+            },
+          ]),
+          200,
+        );
+      });
+
+      final entries = await client.getBuilderLeaderboard(
+        timePeriod: 'WEEK',
+        limit: 2,
+        offset: 4,
+      );
+
+      expect(entries, hasLength(1));
+      expect(entries.single.rank, equals(1));
+      expect(entries.single.builder, equals('Gate'));
+      expect(entries.single.builderCode, equals('0xabc'));
+      expect(entries.single.volume, equals(100.5));
+      expect(entries.single.activeUsers, equals(7));
+      expect(entries.single.verified, isTrue);
+      client.close();
+    });
+
+    test('getBuilderVolume calls builder volume endpoint', () async {
+      final client = clientFor((request) async {
+        expect(request.url.path, equals('/v1/builders/volume'));
+        expect(request.url.queryParameters['timePeriod'], equals('MONTH'));
+        return http.Response(
+          jsonEncode([
+            {
+              'dt': '2026-07-02T00:00:00Z',
+              'builder': 'traderline',
+              'builderCode': '0xdef',
+              'builderLogo': 'https://example.com/traderline.png',
+              'verified': true,
+              'volume': 123.45,
+              'activeUsers': '218',
+              'rank': '1',
+            },
+          ]),
+          200,
+        );
+      });
+
+      final entries = await client.getBuilderVolume(timePeriod: 'MONTH');
+
+      expect(entries, hasLength(1));
+      expect(entries.single.dateTime, equals('2026-07-02T00:00:00Z'));
+      expect(entries.single.builder, equals('traderline'));
+      expect(entries.single.volume, equals(123.45));
+      expect(entries.single.activeUsers, equals(218));
+      expect(entries.single.rank, equals(1));
+      client.close();
+    });
   });
 }
