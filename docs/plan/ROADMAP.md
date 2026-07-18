@@ -60,7 +60,7 @@ Before treating the rest of the roadmap as endpoint parity work, the SDK docs an
 - Done: update CLOB V2 exchange addresses and order domain version
 - Done: add high-level helpers that sign and submit wrap/unwrap transactions end to end
 - Done: add live wrap/unwrap round-trip test
-- Remaining: complete a deeper audit of examples and comments that still describe accounting values as USDC-denominated
+- Done: audit examples and comments that described accounting values as USDC-denominated (now USD, since pUSD is $1-pegged)
 
 ### Official client direction
 

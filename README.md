@@ -19,7 +19,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  polymarket_dart: ^0.3.1
+  polymarket_dart: ^0.4.1
 ```
 
 Then run:

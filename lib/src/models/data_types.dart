@@ -25,25 +25,25 @@ class Position {
   /// Current position size in outcome tokens.
   final double size;
 
-  /// Average entry price (0–1 range, where 1 = $1 USDC).
+  /// Average entry price (0–1 range, where 1 = $1 USD).
   final double avgPrice;
 
   /// Current market price for this outcome.
   final double curPrice;
 
-  /// Initial investment value in USDC.
+  /// Initial investment value in USD.
   final double? initialValue;
 
-  /// Current market value in USDC.
+  /// Current market value in USD.
   final double? currentValue;
 
-  /// Unrealized P&L in USDC.
+  /// Unrealized P&L in USD.
   final double? cashPnl;
 
   /// Unrealized P&L as a percentage.
   final double? percentPnl;
 
-  /// Realized P&L in USDC from closed portions.
+  /// Realized P&L in USD from closed portions.
   final double? realizedPnl;
 
   /// Whether the position has been redeemed after market resolution.
@@ -175,7 +175,7 @@ class UserTrade {
   /// Trade side (`"BUY"` or `"SELL"`).
   final String side;
 
-  /// Execution price (0–1 range, where 1 = $1 USDC).
+  /// Execution price (0–1 range, where 1 = $1 USD).
   final double price;
 
   /// Size of the trade in outcome tokens.

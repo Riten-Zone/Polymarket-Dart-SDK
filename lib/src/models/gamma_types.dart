@@ -142,13 +142,13 @@ class GammaMarket {
   /// Market icon URL (smaller than [image]).
   final String? icon;
 
-  /// Total cumulative volume (USDC).
+  /// Total cumulative volume (USD).
   final double volume;
 
-  /// 24-hour trading volume (USDC).
+  /// 24-hour trading volume (USD).
   final double volume24hr;
 
-  /// Total on-book liquidity (USDC).
+  /// Total on-book liquidity (USD).
   final double liquidity;
 
   /// CLOB token IDs for each outcome (YES/NO).
