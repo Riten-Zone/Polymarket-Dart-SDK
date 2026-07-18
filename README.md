@@ -118,6 +118,12 @@ dart test test/clob_client_test.dart --tags integration
 # Gamma API (market discovery)
 dart test test/gamma_client_test.dart --tags gamma
 
+# Combos / RFQ (live combo markets, positions, activity, maker endpoint)
+dart test test/combo_client_integration_test.dart --tags combo
+
+# Relayer v2 public endpoints (relay-payload / nonce, transaction lookup)
+dart test test/relayer_integration_test.dart --tags relayer
+
 # Data API (user analytics)
 dart test test/data_client_test.dart --tags data
 
