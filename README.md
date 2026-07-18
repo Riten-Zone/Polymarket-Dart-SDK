@@ -7,6 +7,9 @@ A Dart SDK for the [Polymarket](https://polymarket.com) CLOB API — REST, WebSo
 - **53 CLOB API methods** — markets, CLOB market info, orderbook, pricing, order management, rewards, auth
 - **GammaClient** — 22 methods for market/event discovery, tags, tag relationships, series, comments, sports, teams, profiles, and unified search (no auth required)
 - **DataClient** — 12 methods for positions, trades, activity, holders, leaderboard, builder analytics, and portfolio analytics
+- **ComboClient** — combo markets, user combo positions & activity, and the Level 2 maker quote flow (submit/cancel quote, Last Look confirm/decline)
+- **QuoterGatewayClient** — Quoter Gateway WebSocket for market makers (RFQ requests, signed quotes, Last Look)
+- **RelayerClient** — gasless relayer v2: transaction submit/lookup, recent transactions, nonce, API keys, and Deposit Wallet deployment
 - **EIP-712 signing** — order signing for both EOA and GnosisSafe wallets
 - **HMAC Level 2 auth** — API key management and authenticated requests
 - **On-chain approvals** — EOA (direct Polygon RPC) and GnosisSafe (gasless relayer)
@@ -19,7 +22,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  polymarket_dart: ^0.4.1
+  polymarket_dart: ^0.5.0
 ```
 
 Then run:

@@ -102,39 +102,35 @@ This closes the largest doc-visible holes without introducing new signing comple
 
 ## P1 — combo and RFQ parity
 
-The official docs now expose combos as a first-class feature set. This SDK currently does not match that surface.
+The official docs now expose combos as a first-class feature set. Shipped in v0.5.0:
 
-- Add combo markets
-- Add combo user positions
-- Add combo user activity
-- Add quote submission
-- Add quote cancellation
-- Add confirm/decline last look
-- Add Quoter Gateway WebSocket
+- Done: combo markets (`ComboClient.getComboMarkets`)
+- Done: combo user positions (`ComboClient.getComboPositions`)
+- Done: combo user activity (`ComboClient.getComboActivity`)
+- Done: quote submission (`ComboClient.submitQuote`)
+- Done: quote cancellation (`ComboClient.cancelQuote`)
+- Done: confirm/decline last look (`ComboClient.submitConfirmation`)
+- Done: Quoter Gateway WebSocket (`QuoterGatewayClient`)
 
-### Design decision required
+### Design decision taken
 
-Pick one of:
-
-- keep `RfqClient` and retrofit it to the current combo docs
-- introduce a new `ComboClient` and leave `RfqClient` as legacy
-
-Preferred direction: add `ComboClient` and deprecate the older RFQ naming later if needed.
+Introduced a new `ComboClient` (plus `QuoterGatewayClient`) and left the legacy
+`RfqClient` in place. The older RFQ naming can be deprecated later if needed.
 
 ---
 
 ## P1 — relayer and deposit-wallet workflows
 
-The current official SDK direction is more deposit-wallet and relayer centric than this Dart SDK.
+The current official SDK direction is more deposit-wallet and relayer centric than this Dart SDK. Shipped in v0.5.0:
 
-- Add withdrawal-address creation
-- Add relayer transaction submission
-- Add relayer transaction lookup
-- Add relayer recent-transactions query
-- Add relayer nonce helpers
-- Add wallet deployment check
-- Add relayer API key queries
-- Add a higher-level trading setup abstraction for deposit-wallet onboarding
+- Done: relayer transaction submission (`RelayerClient.submitTransaction`)
+- Done: relayer transaction lookup (`RelayerClient.getTransaction`, `waitForTransaction`)
+- Done: relayer recent-transactions query (`RelayerClient.getRecentTransactions`)
+- Done: relayer nonce helper (`RelayerClient.getRelayPayload`)
+- Done: wallet deployment via relayer (`RelayerClient.deployDepositWallet`)
+- Done: relayer API key queries (`RelayerClient.getApiKeys`)
+- Remaining: withdrawal-address creation — docs describe withdrawals as relayer `WALLET` batches to the deposit wallet, no separate creation endpoint
+- Remaining: higher-level trading-setup abstraction for deposit-wallet onboarding (derive + deploy + first-batch), plus POLY_1271 (`signatureType: 3`) order signing
 
 ### Result
 
@@ -209,11 +205,11 @@ Focus on pUSD and public REST parity:
 
 Focus on combos and relayer breadth:
 
-- combo endpoints
-- quoter gateway
-- relayer transaction endpoints
-- deposit-wallet workflow helpers
-- higher-level unified-client style trading setup
+- combo endpoints: done
+- quoter gateway: done
+- relayer transaction endpoints: done
+- deposit-wallet deploy helper: done
+- higher-level unified-client style trading setup: deferred to v0.6.0 (deposit-wallet onboarding + POLY_1271 signing)
 
 ### v0.6.0
 

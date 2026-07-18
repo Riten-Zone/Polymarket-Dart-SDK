@@ -10,11 +10,13 @@ import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
+import '../models/relayer_types.dart';
 import '../signing/builder_auth.dart';
 import '../signing/private_key_wallet_adapter.dart';
 import '../signing/safe_tx.dart';
 import '../utils/contracts.dart';
 
+export '../models/relayer_types.dart';
 export '../signing/builder_auth.dart' show BuilderCredentials;
 
 /// Polymarket relayer client for gasless Gnosis Safe transactions.
@@ -111,6 +113,156 @@ class RelayerClient {
     // 7. Poll until confirmed
     await _pollUntilDone(transactionId, log: log);
     log('✅ All Safe approvals complete!');
+  }
+
+  // ---------------------------------------------------------------------------
+  // General relayer endpoints (documented v2 API)
+  // ---------------------------------------------------------------------------
+
+  /// `GET /relay-payload` — the relayer address and current nonce for [address].
+  ///
+  /// Fetch a fresh nonce immediately before each submission. Public (no auth).
+  Future<RelayerPayload> getRelayPayload(
+    String address, {
+    RelayerWalletType type = RelayerWalletType.safe,
+  }) async {
+    final query = 'address=$address&type=${type.toApi()}';
+    final response =
+        await _http.get(Uri.parse('$_relayerUrl/relay-payload?$query'));
+    _checkStatus(response, '/relay-payload');
+    return RelayerPayload.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  /// `POST /submit` — submit a signed transaction through the relayer.
+  ///
+  /// Returns the created transaction id and initial state. Poll
+  /// [getTransaction] (or [waitForTransaction]) until it confirms.
+  Future<SubmitTransactionResult> submitTransaction(
+    RelayerSubmitRequest request, {
+    String metadata = '',
+  }) async {
+    final body = {
+      ...request.toJson(),
+      if (metadata.isNotEmpty && request.metadata == null) 'metadata': metadata,
+    };
+    final id = await _submitRaw(body);
+    return id;
+  }
+
+  /// `GET /transaction?id=` — look up a relayer transaction by id.
+  ///
+  /// Returns every record the relayer holds for [id] (usually one). Public.
+  Future<List<RelayerTransaction>> getTransaction(String id) async {
+    final response =
+        await _http.get(Uri.parse('$_relayerUrl/transaction?id=$id'));
+    _checkStatus(response, '/transaction');
+    return _parseTransactions(response.body);
+  }
+
+  /// `GET /transactions` — the authenticated user's recent relayer
+  /// transactions. Requires builder credentials.
+  Future<List<RelayerTransaction>> getRecentTransactions() async {
+    const path = '/transactions';
+    final response = await _http.get(
+      Uri.parse('$_relayerUrl$path'),
+      headers: generateBuilderHeaders(
+          creds: _creds, method: 'GET', path: path),
+    );
+    _checkStatus(response, path);
+    return _parseTransactions(response.body);
+  }
+
+  /// `GET /relayer/api/keys` — list the relayer API keys for the authenticated
+  /// account. Requires builder credentials.
+  Future<List<RelayerApiKey>> getApiKeys() async {
+    const path = '/relayer/api/keys';
+    final response = await _http.get(
+      Uri.parse('$_relayerUrl$path'),
+      headers: generateBuilderHeaders(
+          creds: _creds, method: 'GET', path: path),
+    );
+    _checkStatus(response, path);
+    final decoded = jsonDecode(response.body);
+    if (decoded is! List) return const [];
+    return decoded
+        .map((e) => RelayerApiKey.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Deploy a Deposit Wallet for [owner] through the relayer
+  /// (`POST /submit` with `type: WALLET-CREATE`).
+  ///
+  /// There is no user signature in this payload — the relayer deploys the
+  /// deterministic CREATE2 wallet. Poll [waitForTransaction] until it reaches
+  /// `STATE_CONFIRMED` before submitting any wallet batches; `STATE_MINED` can
+  /// appear before the relayer registry finishes updating.
+  Future<SubmitTransactionResult> deployDepositWallet(String owner) async {
+    final body = {
+      'type': 'WALLET-CREATE',
+      'from': owner,
+      'to': PolymarketContracts.depositWalletFactory,
+    };
+    return _submitRaw(body);
+  }
+
+  /// Poll [getTransaction] until [transactionId] confirms (or fails/times out).
+  ///
+  /// Returns the confirmed [RelayerTransaction]. Throws [RelayerException] if
+  /// the transaction fails or does not confirm within the polling window.
+  Future<RelayerTransaction> waitForTransaction(
+    String transactionId, {
+    int maxPolls = 20,
+    Duration interval = const Duration(seconds: 3),
+  }) async {
+    for (var i = 0; i < maxPolls; i++) {
+      await Future<void>.delayed(interval);
+      final txns = await getTransaction(transactionId);
+      if (txns.isEmpty) continue;
+      final txn = txns.first;
+      if (txn.isConfirmed) return txn;
+      if (txn.isFailed) {
+        throw RelayerException(
+            'Transaction $transactionId failed with state: ${txn.state}');
+      }
+    }
+    throw RelayerException(
+        'Transaction $transactionId did not confirm within polling window');
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /// Submit an arbitrary relayer body to `POST /submit`, authenticated with
+  /// builder headers. Returns the parsed [SubmitTransactionResult].
+  Future<SubmitTransactionResult> _submitRaw(Map<String, dynamic> body) async {
+    const path = '/submit';
+    final bodyStr = jsonEncode(body);
+    final headers = {
+      'Content-Type': 'application/json',
+      ...generateBuilderHeaders(
+          creds: _creds, method: 'POST', path: path, body: bodyStr),
+    };
+    final response = await _http.post(
+      Uri.parse('$_relayerUrl$path'),
+      headers: headers,
+      body: bodyStr,
+    );
+    _checkStatus(response, path);
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final result = SubmitTransactionResult.fromJson(json);
+    if (result.transactionId.isEmpty) {
+      throw RelayerException('No transactionID in response: ${response.body}');
+    }
+    return result;
+  }
+
+  List<RelayerTransaction> _parseTransactions(String body) {
+    final decoded = jsonDecode(body);
+    final list = decoded is List ? decoded : [decoded];
+    return list
+        .whereType<Map<String, dynamic>>()
+        .map(RelayerTransaction.fromJson)
+        .toList();
   }
 
   // ---------------------------------------------------------------------------

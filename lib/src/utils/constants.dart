@@ -6,9 +6,20 @@ class PolymarketUrls {
   static const String gamma = 'https://gamma-api.polymarket.com';
   static const String data = 'https://data-api.polymarket.com';
   static const String bridge = 'https://bridge.polymarket.com';
+
+  /// Combos / RFQ REST API (combo markets, maker quotes, last-look).
+  static const String combosRfq = 'https://combos-rfq-api.polymarket.com';
+
+  /// Gasless relayer (v2) REST API — transaction submit/lookup, nonce, keys.
+  static const String relayer = 'https://relayer-v2.polymarket.com';
+
   static const String clobWs =
       'wss://ws-subscriptions-clob.polymarket.com/ws/market';
   static const String rtdsWs = 'wss://ws-live-data.polymarket.com/ws';
+
+  /// Quoter Gateway WebSocket — market makers stream RFQ requests and quotes.
+  static const String quoterGatewayWs =
+      'wss://combos-rfq-gateway-quoter.polymarket.com/ws/rfq';
 }
 
 class PolymarketChain {

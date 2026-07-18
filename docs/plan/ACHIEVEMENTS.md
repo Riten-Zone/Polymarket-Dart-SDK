@@ -30,6 +30,37 @@ That changes the shape of the gap. The SDK is not just missing extra endpoints; 
 
 ---
 
+## v0.5.0 — combos, quoter gateway, and relayer breadth (2026-07-18)
+
+Closed the two largest platform gaps from the roadmap: combo/RFQ support and
+the documented relayer v2 surface.
+
+**Combos / RFQ (`ComboClient`)**
+
+- `getComboMarkets()` — public combo-eligible markets (combos-rfq-api), cursor-paginated
+- `getComboPositions()` / `getComboActivity()` — public user combo positions and lifecycle activity (Data API)
+- `submitQuote()`, `cancelQuote()`, `submitConfirmation()` — Level 2 maker flow with Last Look confirm/decline
+
+**Quoter Gateway (`QuoterGatewayClient`)**
+
+- WebSocket auth handshake, inbound `RFQ_REQUEST` / `RFQ_CONFIRMATION_REQUEST` streams
+- Outbound signed quote, cancel, and confirmation frames
+
+**Relayer v2 (`RelayerClient`)**
+
+- `getRelayPayload()` (address + nonce), `submitTransaction()`, `getTransaction()`,
+  `getRecentTransactions()`, `getApiKeys()`, `deployDepositWallet()`, `waitForTransaction()`
+
+**Design decision:** added a dedicated `ComboClient` + `QuoterGatewayClient` and
+left the legacy `RfqClient` untouched.
+
+**Tests:** offline mock-client coverage for the combo REST flow (`combo_client_test.dart`),
+the relayer v2 endpoints (`relayer_api_test.dart`), and the quoter gateway with an
+injected fake channel (`quoter_gateway_test.dart`).
+
+**Still open (deferred to v0.6.0):** deposit-wallet onboarding abstraction and
+POLY_1271 (`signatureType: 3`) order signing; authenticated user + sports WebSocket channels.
+
 ## v0.4.1 — pUSD + CLOB V2 foundation (2026-06-24)
 
 Added the first slice of the pUSD/CLOB V2 roadmap:

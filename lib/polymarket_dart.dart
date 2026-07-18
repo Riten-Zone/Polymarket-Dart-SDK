@@ -38,8 +38,10 @@ library;
 // Clients
 export 'src/clients/bridge_client.dart';
 export 'src/clients/clob_client.dart';
+export 'src/clients/combo_client.dart';
 export 'src/clients/data_client.dart';
 export 'src/clients/gamma_client.dart';
+export 'src/clients/quoter_gateway_client.dart';
 export 'src/clients/relayer_client.dart';
 export 'src/clients/rfq_client.dart';
 export 'src/clients/websocket_client.dart';
@@ -47,8 +49,10 @@ export 'src/clients/websocket_client.dart';
 // Models
 export 'src/models/bridge_types.dart';
 export 'src/models/clob_types.dart';
+export 'src/models/combo_types.dart';
 export 'src/models/data_types.dart';
 export 'src/models/gamma_types.dart';
+export 'src/models/relayer_types.dart';
 export 'src/models/rfq_types.dart';
 export 'src/models/websocket_types.dart';
 

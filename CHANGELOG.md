@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-07-18
+
+### Added
+
+- **`ComboClient`** — Combos / RFQ REST client:
+  - `getComboMarkets()` — public combo-eligible markets (combos-rfq-api), volume-ordered with cursor pagination
+  - `getComboPositions()` / `getComboActivity()` — public user combo positions and lifecycle activity (Data API)
+  - `submitQuote()`, `cancelQuote()`, `submitConfirmation()` — Level 2 maker quote flow, including Last Look confirm/decline
+- **`QuoterGatewayClient`** — Quoter Gateway WebSocket for market makers: auth handshake, inbound `RFQ_REQUEST` / `RFQ_CONFIRMATION_REQUEST` streams, and outbound quote / cancel / confirmation frames
+- **Combo models** — `ComboMarket`, `ComboMarketsPage`, `ComboPosition`(`sPage`), `ComboActivity`(`Page`), `SignedRfqOrder`, `SubmitQuoteParams`, `CancelQuoteParams`, `ConfirmationParams`, `RfqSnapshot`, `RfqRequestEvent`, `RfqConfirmationRequestEvent`, `LastLookDecision`
+- **Relayer v2 breadth** — new `RelayerClient` methods: `getRelayPayload()` (address + nonce), `submitTransaction()`, `getTransaction()`, `getRecentTransactions()`, `getApiKeys()`, `deployDepositWallet()` (deposit-wallet `WALLET-CREATE`), and `waitForTransaction()` polling helper
+- **Relayer models** — `RelayerPayload`, `RelayerSubmitRequest`, `RelayerSignatureParams`, `SubmitTransactionResult`, `RelayerTransaction` (with `isConfirmed` / `isFailed`), `RelayerApiKey`, `RelayerWalletType`
+- **New endpoints/constants** — `combos-rfq-api.polymarket.com`, `relayer-v2.polymarket.com`, and the `combos-rfq-gateway-quoter` WebSocket URL
+- **Tests** — offline mock-client coverage for the combo REST flow, the relayer v2 endpoints, and the quoter gateway (auth, inbound routing, outbound frames)
+
 ## [0.4.1] - 2026-07-17
 
 ### Added
