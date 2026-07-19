@@ -153,8 +153,8 @@ class RtdsComment {
 // CLOB user channel (authenticated)
 // ---------------------------------------------------------------------------
 
-/// One maker order inside a [UserTrade] match.
-class UserTradeMakerOrder {
+/// One maker order inside a [UserChannelTrade] match.
+class UserChannelMakerOrder {
   final String assetId;
   final String matchedAmount;
   final String orderId;
@@ -162,7 +162,7 @@ class UserTradeMakerOrder {
   final String owner;
   final String price;
 
-  const UserTradeMakerOrder({
+  const UserChannelMakerOrder({
     required this.assetId,
     required this.matchedAmount,
     required this.orderId,
@@ -171,8 +171,8 @@ class UserTradeMakerOrder {
     required this.price,
   });
 
-  factory UserTradeMakerOrder.fromJson(Map<String, dynamic> json) =>
-      UserTradeMakerOrder(
+  factory UserChannelMakerOrder.fromJson(Map<String, dynamic> json) =>
+      UserChannelMakerOrder(
         assetId: json['asset_id']?.toString() ?? '',
         matchedAmount: json['matched_amount']?.toString() ?? '',
         orderId: json['order_id']?.toString() ?? '',
@@ -185,7 +185,7 @@ class UserTradeMakerOrder {
 /// A `trade` event on the authenticated user channel — fires when the user's
 /// orders match or a match changes status
 /// (MATCHED → MINED → CONFIRMED, or → FAILED).
-class UserTrade {
+class UserChannelTrade {
   final String id;
   final String assetId;
   final String market;
@@ -199,10 +199,10 @@ class UserTrade {
   final String? takerOrderId;
   final String? tradeOwner;
   final String? timestamp;
-  final List<UserTradeMakerOrder> makerOrders;
+  final List<UserChannelMakerOrder> makerOrders;
   final Map<String, dynamic> raw;
 
-  const UserTrade({
+  const UserChannelTrade({
     required this.id,
     required this.assetId,
     required this.market,
@@ -220,9 +220,9 @@ class UserTrade {
     required this.raw,
   });
 
-  factory UserTrade.fromJson(Map<String, dynamic> json) {
+  factory UserChannelTrade.fromJson(Map<String, dynamic> json) {
     final makers = json['maker_orders'] as List<dynamic>? ?? const [];
-    return UserTrade(
+    return UserChannelTrade(
       id: json['id']?.toString() ?? '',
       assetId: json['asset_id']?.toString() ?? '',
       market: json['market']?.toString() ?? '',
@@ -238,7 +238,7 @@ class UserTrade {
       timestamp: json['timestamp']?.toString(),
       makerOrders: makers
           .whereType<Map<String, dynamic>>()
-          .map(UserTradeMakerOrder.fromJson)
+          .map(UserChannelMakerOrder.fromJson)
           .toList(),
       raw: json,
     );
@@ -248,7 +248,7 @@ class UserTrade {
 /// An `order` event on the authenticated user channel — fires on placement,
 /// partial matching, or cancellation. [type] is PLACEMENT, UPDATE, or
 /// CANCELLATION.
-class UserOrder {
+class UserChannelOrder {
   final String id;
   final String assetId;
   final String market;
@@ -266,7 +266,7 @@ class UserOrder {
   final List<String> associateTrades;
   final Map<String, dynamic> raw;
 
-  const UserOrder({
+  const UserChannelOrder({
     required this.id,
     required this.assetId,
     required this.market,
@@ -283,9 +283,9 @@ class UserOrder {
     required this.raw,
   });
 
-  factory UserOrder.fromJson(Map<String, dynamic> json) {
+  factory UserChannelOrder.fromJson(Map<String, dynamic> json) {
     final trades = json['associate_trades'] as List<dynamic>? ?? const [];
-    return UserOrder(
+    return UserChannelOrder(
       id: json['id']?.toString() ?? '',
       assetId: json['asset_id']?.toString() ?? '',
       market: json['market']?.toString() ?? '',

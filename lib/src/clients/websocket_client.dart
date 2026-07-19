@@ -3,6 +3,7 @@ library;
 
 import 'dart:async';
 
+import '../models/clob_types.dart';
 import '../models/websocket_types.dart';
 import '../transport/websocket_transport.dart';
 import '../utils/constants.dart';
@@ -41,6 +42,13 @@ class WebSocketClient {
 
   StreamSubscription<Map<String, dynamic>>? _clobSub;
   StreamSubscription<Map<String, dynamic>>? _rtdsSub;
+
+  // Authenticated user channel
+  WebSocketTransport? _userTransport;
+  StreamSubscription<Map<String, dynamic>>? _userSub;
+  ApiCredentials? _userCredentials;
+  StreamController<UserChannelOrder>? _userOrderController;
+  StreamController<UserChannelTrade>? _userTradeController;
 
   // ---------------------------------------------------------------------------
   // CLOB WebSocket
@@ -238,6 +246,91 @@ class WebSocketClient {
   }
 
   // ---------------------------------------------------------------------------
+  // CLOB user channel (authenticated)
+  // ---------------------------------------------------------------------------
+
+  /// Connect to the authenticated CLOB user channel.
+  ///
+  /// [credentials] are your Level 2 CLOB API credentials. They are sent in the
+  /// subscribe message, so only use the user channel from server environments.
+  Future<void> connectUser({required ApiCredentials credentials}) async {
+    _userCredentials = credentials;
+    _userTransport ??= WebSocketTransport(
+      url: PolymarketUrls.clobUserWs,
+      pingInterval: const Duration(seconds: 10),
+    );
+    await _userTransport!.connect();
+    _userSub ??= _userTransport!.messages.listen(_onUserMessage);
+  }
+
+  /// Subscribe to the user's order updates for the given [markets]
+  /// (condition ids). Connects with [connectUser] first if needed.
+  ///
+  /// Returns a broadcast stream of [UserChannelOrder] events.
+  Stream<UserChannelOrder> subscribeUserChannelOrders(List<String> markets) {
+    _ensureUserSubscribed(markets);
+    _userOrderController ??= StreamController<UserChannelOrder>.broadcast();
+    return _userOrderController!.stream;
+  }
+
+  /// Subscribe to the user's trade updates for the given [markets]
+  /// (condition ids). Connects with [connectUser] first if needed.
+  ///
+  /// Returns a broadcast stream of [UserChannelTrade] events.
+  Stream<UserChannelTrade> subscribeUserChannelTrades(List<String> markets) {
+    _ensureUserSubscribed(markets);
+    _userTradeController ??= StreamController<UserChannelTrade>.broadcast();
+    return _userTradeController!.stream;
+  }
+
+  void _ensureUserSubscribed(List<String> markets) {
+    final creds = _userCredentials;
+    if (creds == null) {
+      throw StateError(
+        'User channel requires credentials — call connectUser(credentials: ...) first.',
+      );
+    }
+    if (_userTransport == null || !_userTransport!.isConnected) {
+      connectUser(credentials: creds);
+    }
+    // User channel subscribe: {auth, markets: [condition_ids], type: "user"}.
+    _userTransport!.send({
+      'auth': {
+        'apiKey': creds.apiKey,
+        'secret': creds.secret,
+        'passphrase': creds.passphrase,
+      },
+      'markets': markets,
+      'type': 'user',
+    });
+  }
+
+  void _onUserMessage(Map<String, dynamic> msg) {
+    final type = (msg['event_type'] ?? msg['type'])?.toString() ?? '';
+    if (type == 'trade') {
+      final ctrl = _userTradeController;
+      if (ctrl != null && !ctrl.isClosed) ctrl.add(UserChannelTrade.fromJson(msg));
+    } else if (type == 'order' ||
+        type == 'PLACEMENT' ||
+        type == 'UPDATE' ||
+        type == 'CANCELLATION') {
+      final ctrl = _userOrderController;
+      if (ctrl != null && !ctrl.isClosed) ctrl.add(UserChannelOrder.fromJson(msg));
+    }
+  }
+
+  /// Disconnect the authenticated user channel.
+  Future<void> disconnectUser() async {
+    await _userSub?.cancel();
+    _userSub = null;
+    await _userTransport?.disconnect();
+    _userTransport = null;
+  }
+
+  /// Whether the user channel is connected.
+  bool get isUserConnected => _userTransport?.isConnected ?? false;
+
+  // ---------------------------------------------------------------------------
   // Lifecycle
   // ---------------------------------------------------------------------------
 
@@ -259,6 +352,11 @@ class WebSocketClient {
   Future<void> dispose() async {
     await disconnectClob();
     await disconnectRtds();
+    await disconnectUser();
+    await _userOrderController?.close();
+    await _userTradeController?.close();
+    _userOrderController = null;
+    _userTradeController = null;
 
     for (final ctrl in _orderbookControllers.values) {
       await ctrl.close();
