@@ -213,12 +213,33 @@ Focus on combos and relayer breadth:
 
 ### v0.6.0
 
-Focus on WebSocket and unified-SDK alignment:
+Focus on WebSocket parity, pUSD position settlement, and deposit-wallet /
+unified-SDK alignment. Implemented one piece at a time, in this order:
 
-- user channel
-- sports channel
-- message-format audit cleanup
-- docs/examples aligned to the current official platform story
+1. **Authenticated user WebSocket channel** — `wss://ws-subscriptions-clob.polymarket.com/ws/user`
+   - subscribe by condition id with `{auth, markets, type: "user"}`
+   - inbound `trade` and `order` messages (typed models)
+2. **Sports WebSocket channel** — live sports event/score stream
+3. **pUSD position settlement** — `split`, `merge`, `redeem` through the pUSD
+   CTF collateral adapters (`ctfCollateralAdapter`, `negRiskCtfCollateralAdapter`)
+   - parentCollectionId = 32 zero bytes, binary partition `[1, 2]`
+   - **blocked on sourcing the exact adapter ABI** — the public docs describe
+     the flow but do not publish the adapter's Solidity signatures; confirm
+     against `docs.polymarket.com/llms.txt` or the on-chain contract before
+     shipping calldata (do not guess signatures)
+4. **Deposit-wallet onboarding** — CREATE2 address derivation (UUPS vs
+   BeaconProxy via factory `BEACON()` probe) + high-level derive → deploy →
+   wait-confirmed helper
+5. **POLY_1271 order signing** (`signatureType: 3`) — ERC-7739-wrapped nested
+   `TypedDataSign`, domain `{name: "DepositWallet", version: "1",
+   verifyingContract: <wallet>, salt: 0}` — validate signatures against a live
+   deposit wallet before release
+6. **message-format audit** of market/RTDS channels; docs/examples aligned to
+   the current official platform story
+
+Sequencing note: items 1–2 are fully specced and low-risk; 3–5 involve
+on-chain calldata / signing and must be validated against authoritative ABIs
+and a live wallet, not inferred.
 
 ---
 
