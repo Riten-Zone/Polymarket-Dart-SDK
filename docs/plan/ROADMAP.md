@@ -241,6 +241,22 @@ Sequencing note: items 1–2 are fully specced and low-risk; 3–5 involve
 on-chain calldata / signing and must be validated against authoritative ABIs
 and a live wallet, not inferred.
 
+**Shipped in 0.6.0:**
+
+- Done: authenticated user WebSocket channel
+- Done: sports WebSocket channel
+- Done: pUSD settlement calldata — `AbiEncoder.encodeCtf{Split,Merge,Redeem}`
+  and `encodeNegRisk{Split,Merge,Redeem,Convert}`, selectors verified against
+  the canonical Gnosis CTF values + NegRiskAdapter source, and confirmed live
+  via read-only `eth_call` reaching the real functions
+
+**Deferred to 0.6.1** (need validation against a deployed deposit wallet):
+
+- deposit-wallet CREATE2 derivation + onboarding helper
+- POLY_1271 (`signatureType: 3`) ERC-7739 order signing
+- a higher-level "sign + send" settlement client wrapper (the 0.6.0 encoders are
+  pure calldata; the caller currently chooses the target and signs/sends)
+
 ---
 
 ## Bottom line

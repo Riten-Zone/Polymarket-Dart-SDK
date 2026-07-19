@@ -10,6 +10,8 @@ A Dart SDK for the [Polymarket](https://polymarket.com) CLOB API — REST, WebSo
 - **ComboClient** — combo markets, user combo positions & activity, and the Level 2 maker quote flow (submit/cancel quote, Last Look confirm/decline)
 - **QuoterGatewayClient** — Quoter Gateway WebSocket for market makers (RFQ requests, signed quotes, Last Look)
 - **RelayerClient** — gasless relayer v2: transaction submit/lookup, recent transactions, nonce, API keys, and Deposit Wallet deployment
+- **User + sports WebSocket channels** — authenticated per-user order/trade updates, plus an unauthenticated live sports score feed
+- **pUSD settlement calldata** — split / merge / redeem / convert encoders for standard and neg-risk markets
 - **EIP-712 signing** — order signing for both EOA and GnosisSafe wallets
 - **HMAC Level 2 auth** — API key management and authenticated requests
 - **On-chain approvals** — EOA (direct Polygon RPC) and GnosisSafe (gasless relayer)
@@ -22,7 +24,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  polymarket_dart: ^0.5.0
+  polymarket_dart: ^0.6.0
 ```
 
 Then run:
@@ -123,6 +125,12 @@ dart test test/combo_client_integration_test.dart --tags combo
 
 # Relayer v2 public endpoints (relay-payload / nonce, transaction lookup)
 dart test test/relayer_integration_test.dart --tags relayer
+
+# Settlement calldata reaches the real CTF / neg-risk contracts (read-only eth_call)
+dart test test/settlement_integration_test.dart --tags integration
+
+# Sports WebSocket (live scores)
+dart test test/sports_websocket_integration_test.dart --tags sports
 
 # Data API (user analytics)
 dart test test/data_client_test.dart --tags data

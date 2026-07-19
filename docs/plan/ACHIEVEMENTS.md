@@ -30,6 +30,39 @@ That changes the shape of the gap. The SDK is not just missing extra endpoints; 
 
 ---
 
+## v0.6.0 — WebSocket parity + pUSD settlement (2026-07-20)
+
+Shipped 3 of the 6 planned v0.6.0 pieces; the two signing-heavy pieces
+(deposit-wallet derivation, POLY_1271) are deferred to 0.6.1 pending validation
+against a deployed deposit wallet.
+
+**WebSocket channels**
+
+- Authenticated CLOB user channel (`WebSocketClient.connectUser`,
+  `subscribeUserChannelOrders/Trades`) with `UserChannelTrade/Order/MakerOrder`
+- `SportsWebSocketClient` — unauthenticated live scores, auto ping/pong, `SportResult`
+
+**pUSD settlement calldata**
+
+- `AbiEncoder.encodeCtf{Split,Merge,Redeem}` (standard binary markets) and
+  `encodeNegRisk{Split,Merge,Redeem,Convert}` (neg-risk), with correct
+  dynamic-array ABI encoding
+- Standard selectors match the canonical Gnosis ConditionalTokens values;
+  neg-risk signatures taken from the NegRiskAdapter contract source
+
+**Verification**
+
+- Offline: user-channel parsing, sports parsing + heartbeat (fake channel),
+  settlement selectors + ABI layout — every piece has tests
+- Live (tagged): `settlement_integration_test.dart` proves the calldata reaches
+  the real CTF / NegRiskAdapter functions via read-only `eth_call` (contract-logic
+  revert, zero funds); `sports_websocket_integration_test.dart` receives real
+  live scores
+
+**Deferred to 0.6.1:** deposit-wallet CREATE2 derivation + onboarding, POLY_1271
+ERC-7739 signing, and a high-level sign+send settlement wrapper (0.6.0 ships the
+pure calldata encoders).
+
 ## v0.5.0 — combos, quoter gateway, and relayer breadth (2026-07-18)
 
 Closed the two largest platform gaps from the roadmap: combo/RFQ support and

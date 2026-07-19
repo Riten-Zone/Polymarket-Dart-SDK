@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Deferred to 0.6.1
+
+- Deposit-wallet CREATE2 address derivation and onboarding helper
+- POLY_1271 (`signatureType: 3`) ERC-7739 order signing — both need validation
+  against a deployed deposit wallet
+
+## [0.6.0] - 2026-07-20
+
+### Added
+
+- **Authenticated CLOB user WebSocket channel** — `WebSocketClient.connectUser()`
+  plus `subscribeUserChannelOrders()` / `subscribeUserChannelTrades()` (subscribe
+  by condition id with L2 auth), and `UserChannelTrade` / `UserChannelOrder` /
+  `UserChannelMakerOrder` models
+- **Sports WebSocket channel** — `SportsWebSocketClient`, an unauthenticated live
+  score feed with automatic ping/pong heartbeat and the `SportResult` model
+- **pUSD position settlement calldata** — `AbiEncoder.encodeCtf{Split,Merge,Redeem}`
+  for standard binary markets and `encodeNegRisk{Split,Merge,Redeem,Convert}` for
+  neg-risk markets, with correct dynamic-array ABI encoding
+  - standard selectors are the canonical Gnosis ConditionalTokens values
+    (`0x72ce4275` / `0x9e7212ad` / `0x01b7037c`); neg-risk signatures come from
+    the NegRiskAdapter contract source
+  - verified live via read-only `eth_call` that the calldata reaches the real
+    on-chain functions (contract-logic revert, not a selector error)
+- **Tests** — offline coverage for all three (user-channel parsing, sports
+  parsing + heartbeat via a fake channel, settlement selectors + ABI layout);
+  sports and settlement additionally verified against live infrastructure
+
 ## [0.5.0] - 2026-07-18
 
 ### Added
