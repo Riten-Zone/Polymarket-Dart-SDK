@@ -195,6 +195,176 @@ class AbiEncoder {
     return _encodeSelectorAndArgs(selector, [_encodeAddress(account)]);
   }
 
+  // ---------------------------------------------------------------------------
+  // Conditional Token Framework (CTF) — split / merge / redeem calldata.
+  //
+  // Two routing options per market kind:
+  // - Standard (binary) markets: the ConditionalTokens contract, which takes an
+  //   explicit collateral token, parentCollectionId (zero), conditionId, and a
+  //   partition / indexSets array.
+  // - Neg-risk markets: the NegRiskAdapter, which handles the collateral token
+  //   and parentCollectionId internally — callers pass only conditionId/amount.
+  //
+  // Binary markets use partition/indexSets `[1, 2]` (index 0 = YES, 1 = NO) and
+  // parentCollectionId = 32 zero bytes. Amounts are pUSD base units (6 dp).
+  // ---------------------------------------------------------------------------
+
+  /// Standard binary partition / index sets for a two-outcome market.
+  static final List<BigInt> binaryPartition = [BigInt.one, BigInt.two];
+
+  static final Uint8List _zeroBytes32 = Uint8List(32);
+
+  /// `splitPosition(address,bytes32,bytes32,uint256[],uint256)` on the CTF.
+  static Uint8List encodeCtfSplit({
+    required String collateralToken,
+    required String conditionId,
+    required BigInt amount,
+    List<BigInt>? partition,
+  }) {
+    final part = partition ?? binaryPartition;
+    // Head: collateral, parentCollectionId(0), conditionId, offset(partition), amount.
+    final head = <Uint8List>[
+      _encodeAddress(collateralToken),
+      _zeroBytes32,
+      _encodeBytes32(conditionId),
+      _encodeUint256(BigInt.from(5 * 32)), // offset to the dynamic array tail
+      _encodeUint256(amount),
+    ];
+    return _assemble(
+      _selector('splitPosition(address,bytes32,bytes32,uint256[],uint256)'),
+      head,
+      _encodeUint256ArrayTail(part),
+    );
+  }
+
+  /// `mergePositions(address,bytes32,bytes32,uint256[],uint256)` on the CTF.
+  static Uint8List encodeCtfMerge({
+    required String collateralToken,
+    required String conditionId,
+    required BigInt amount,
+    List<BigInt>? partition,
+  }) {
+    final part = partition ?? binaryPartition;
+    final head = <Uint8List>[
+      _encodeAddress(collateralToken),
+      _zeroBytes32,
+      _encodeBytes32(conditionId),
+      _encodeUint256(BigInt.from(5 * 32)),
+      _encodeUint256(amount),
+    ];
+    return _assemble(
+      _selector('mergePositions(address,bytes32,bytes32,uint256[],uint256)'),
+      head,
+      _encodeUint256ArrayTail(part),
+    );
+  }
+
+  /// `redeemPositions(address,bytes32,bytes32,uint256[])` on the CTF.
+  static Uint8List encodeCtfRedeem({
+    required String collateralToken,
+    required String conditionId,
+    List<BigInt>? indexSets,
+  }) {
+    final sets = indexSets ?? binaryPartition;
+    final head = <Uint8List>[
+      _encodeAddress(collateralToken),
+      _zeroBytes32,
+      _encodeBytes32(conditionId),
+      _encodeUint256(BigInt.from(4 * 32)),
+    ];
+    return _assemble(
+      _selector('redeemPositions(address,bytes32,bytes32,uint256[])'),
+      head,
+      _encodeUint256ArrayTail(sets),
+    );
+  }
+
+  /// `splitPosition(bytes32,uint256)` on the NegRiskAdapter.
+  static Uint8List encodeNegRiskSplit({
+    required String conditionId,
+    required BigInt amount,
+  }) =>
+      _assemble(
+        _selector('splitPosition(bytes32,uint256)'),
+        [_encodeBytes32(conditionId), _encodeUint256(amount)],
+      );
+
+  /// `mergePositions(bytes32,uint256)` on the NegRiskAdapter.
+  static Uint8List encodeNegRiskMerge({
+    required String conditionId,
+    required BigInt amount,
+  }) =>
+      _assemble(
+        _selector('mergePositions(bytes32,uint256)'),
+        [_encodeBytes32(conditionId), _encodeUint256(amount)],
+      );
+
+  /// `redeemPositions(bytes32,uint256[])` on the NegRiskAdapter.
+  ///
+  /// [amounts] holds the amount to redeem per outcome index.
+  static Uint8List encodeNegRiskRedeem({
+    required String conditionId,
+    required List<BigInt> amounts,
+  }) =>
+      _assemble(
+        _selector('redeemPositions(bytes32,uint256[])'),
+        [_encodeBytes32(conditionId), _encodeUint256(BigInt.from(2 * 32))],
+        _encodeUint256ArrayTail(amounts),
+      );
+
+  /// `convertPositions(bytes32,uint256,uint256)` on the NegRiskAdapter.
+  static Uint8List encodeNegRiskConvert({
+    required String marketId,
+    required BigInt indexSet,
+    required BigInt amount,
+  }) =>
+      _assemble(
+        _selector('convertPositions(bytes32,uint256,uint256)'),
+        [
+          _encodeBytes32(marketId),
+          _encodeUint256(indexSet),
+          _encodeUint256(amount),
+        ],
+      );
+
+  /// Assemble calldata from a 4-byte selector, fixed 32-byte head words, and an
+  /// optional dynamic tail (already ABI-encoded).
+  static Uint8List _assemble(
+    String selectorHex,
+    List<Uint8List> head, [
+    Uint8List? tail,
+  ]) {
+    final tailBytes = tail ?? Uint8List(0);
+    final out = Uint8List(4 + head.length * 32 + tailBytes.length);
+    out.setRange(0, 4, _hexToBytes(selectorHex));
+    var off = 4;
+    for (final word in head) {
+      out.setRange(off, off + 32, word);
+      off += 32;
+    }
+    out.setRange(off, off + tailBytes.length, tailBytes);
+    return out;
+  }
+
+  /// ABI tail for a `uint256[]`: length word followed by one word per element.
+  static Uint8List _encodeUint256ArrayTail(List<BigInt> values) {
+    final out = Uint8List(32 * (1 + values.length));
+    out.setRange(0, 32, _encodeUint256(BigInt.from(values.length)));
+    for (var i = 0; i < values.length; i++) {
+      out.setRange(32 * (i + 1), 32 * (i + 2), _encodeUint256(values[i]));
+    }
+    return out;
+  }
+
+  /// Encode a 32-byte value (e.g. conditionId), left-aligned per `bytes32`.
+  static Uint8List _encodeBytes32(String hex) {
+    final h = hex.startsWith('0x') ? hex.substring(2) : hex;
+    final bytes = _hexToBytes(h);
+    final padded = Uint8List(32);
+    padded.setRange(0, bytes.length > 32 ? 32 : bytes.length, bytes);
+    return padded;
+  }
+
   static Uint8List _encodeSelectorAndArgs(
     String selectorHex,
     List<Uint8List> args,
