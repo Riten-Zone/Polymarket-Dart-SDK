@@ -44,6 +44,7 @@ export 'src/clients/gamma_client.dart';
 export 'src/clients/quoter_gateway_client.dart';
 export 'src/clients/relayer_client.dart';
 export 'src/clients/rfq_client.dart';
+export 'src/clients/sports_websocket_client.dart';
 export 'src/clients/websocket_client.dart';
 
 // Models

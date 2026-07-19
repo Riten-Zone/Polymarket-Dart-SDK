@@ -22,6 +22,9 @@ class PolymarketUrls {
 
   static const String rtdsWs = 'wss://ws-live-data.polymarket.com/ws';
 
+  /// Sports data WebSocket — unauthenticated live scores for all active games.
+  static const String sportsWs = 'wss://sports-api.polymarket.com/ws';
+
   /// Quoter Gateway WebSocket — market makers stream RFQ requests and quotes.
   static const String quoterGatewayWs =
       'wss://combos-rfq-gateway-quoter.polymarket.com/ws/rfq';

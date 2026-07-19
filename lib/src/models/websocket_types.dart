@@ -303,3 +303,74 @@ class UserChannelOrder {
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// Sports channel
+// ---------------------------------------------------------------------------
+
+/// A `sport_result` event from the sports WebSocket — emitted when matches go
+/// live, scores or periods change, matches end, or possession changes
+/// (NFL/CFB only). The feed is unauthenticated and broadcasts every active
+/// game; filter by [gameId] / [slug] / [leagueAbbreviation] as needed.
+class SportResult {
+  final int gameId;
+  final String leagueAbbreviation;
+
+  /// `{league}-{team1}-{team2}-{date}`.
+  final String slug;
+  final String homeTeam;
+  final String awayTeam;
+
+  /// Sport-specific status string (e.g. `InProgress`, `Final`).
+  final String status;
+
+  /// Current score, e.g. `"3-16"`.
+  final String score;
+  final String period;
+
+  /// Game clock, when live.
+  final String? elapsed;
+  final bool live;
+  final bool ended;
+
+  /// Possession indicator (NFL/CFB only).
+  final String? turn;
+
+  /// ISO 8601 end time, present only when [ended] is true.
+  final String? finishedTimestamp;
+  final Map<String, dynamic> raw;
+
+  const SportResult({
+    required this.gameId,
+    required this.leagueAbbreviation,
+    required this.slug,
+    required this.homeTeam,
+    required this.awayTeam,
+    required this.status,
+    required this.score,
+    required this.period,
+    this.elapsed,
+    required this.live,
+    required this.ended,
+    this.turn,
+    this.finishedTimestamp,
+    required this.raw,
+  });
+
+  factory SportResult.fromJson(Map<String, dynamic> json) => SportResult(
+        gameId: (json['gameId'] as num?)?.toInt() ?? 0,
+        leagueAbbreviation: json['leagueAbbreviation']?.toString() ?? '',
+        slug: json['slug']?.toString() ?? '',
+        homeTeam: json['homeTeam']?.toString() ?? '',
+        awayTeam: json['awayTeam']?.toString() ?? '',
+        status: json['status']?.toString() ?? '',
+        score: json['score']?.toString() ?? '',
+        period: json['period']?.toString() ?? '',
+        elapsed: json['elapsed']?.toString(),
+        live: json['live'] as bool? ?? false,
+        ended: json['ended'] as bool? ?? false,
+        turn: json['turn']?.toString(),
+        finishedTimestamp: json['finished_timestamp']?.toString(),
+        raw: json,
+      );
+}
