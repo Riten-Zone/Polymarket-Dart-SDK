@@ -15,6 +15,11 @@ class PolymarketUrls {
 
   static const String clobWs =
       'wss://ws-subscriptions-clob.polymarket.com/ws/market';
+
+  /// Authenticated CLOB user channel — per-user order and trade updates.
+  static const String clobUserWs =
+      'wss://ws-subscriptions-clob.polymarket.com/ws/user';
+
   static const String rtdsWs = 'wss://ws-live-data.polymarket.com/ws';
 
   /// Quoter Gateway WebSocket — market makers stream RFQ requests and quotes.
