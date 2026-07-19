@@ -54,9 +54,23 @@ the documented relayer v2 surface.
 **Design decision:** added a dedicated `ComboClient` + `QuoterGatewayClient` and
 left the legacy `RfqClient` untouched.
 
-**Tests:** offline mock-client coverage for the combo REST flow (`combo_client_test.dart`),
-the relayer v2 endpoints (`relayer_api_test.dart`), and the quoter gateway with an
-injected fake channel (`quoter_gateway_test.dart`).
+**Tests:** every v0.5.0 public method is exercised by at least one test.
+
+- Offline (default suite, no network): combo REST flow (`combo_client_test.dart`),
+  relayer v2 endpoints incl. `waitForTransaction` confirm/fail polling
+  (`relayer_api_test.dart`), and the quoter gateway auth/routing/outbound frames
+  via an injected fake channel (`quoter_gateway_test.dart`).
+- Live against the real API (`--tags combo` / `--tags relayer`):
+  `combo_client_integration_test.dart` (real combo markets with YES/NO
+  array-alignment + price-range checks, cursor pagination, positions/activity,
+  and a live maker `cancelQuote` verifying path + L2 auth + body end-to-end) and
+  `relayer_integration_test.dart` (`getRelayPayload` for SAFE + PROXY,
+  `getTransaction` 404 handling).
+- Not runnable without special access, so mock/fake-only: the maker quote
+  happy-path (`submitQuote`/`submitConfirmation` — needs RFQ maker eligibility),
+  the quoter gateway live socket, and state-mutating relayer calls
+  (`submitTransaction`, `deployDepositWallet`, `getRecentTransactions`,
+  `getApiKeys` — need builder creds or would spend/deploy on-chain).
 
 **Still open (deferred to v0.6.0):** deposit-wallet onboarding abstraction and
 POLY_1271 (`signatureType: 3`) order signing; authenticated user + sports WebSocket channels.

@@ -154,6 +154,49 @@ void main() {
     client.close();
   });
 
+  test('waitForTransaction polls until STATE_CONFIRMED', () async {
+    var polls = 0;
+    final client = clientFor((request) async {
+      expect(request.url.path, equals('/transaction'));
+      polls++;
+      final state = polls < 3 ? 'STATE_MINED' : 'STATE_CONFIRMED';
+      return http.Response(
+        jsonEncode([
+          {'transactionID': 'tx-1', 'state': state},
+        ]),
+        200,
+      );
+    });
+
+    final txn = await client.waitForTransaction(
+      'tx-1',
+      interval: const Duration(milliseconds: 1),
+    );
+    expect(txn.isConfirmed, isTrue);
+    expect(polls, greaterThanOrEqualTo(3));
+    client.close();
+  });
+
+  test('waitForTransaction throws when the relayer reports failure', () async {
+    final client = clientFor((request) async {
+      return http.Response(
+        jsonEncode([
+          {'transactionID': 'tx-2', 'state': 'STATE_FAILED'},
+        ]),
+        200,
+      );
+    });
+
+    expect(
+      () => client.waitForTransaction(
+        'tx-2',
+        interval: const Duration(milliseconds: 1),
+      ),
+      throwsA(isA<RelayerException>()),
+    );
+    client.close();
+  });
+
   test('deployDepositWallet POSTs WALLET-CREATE to the factory', () async {
     final client = clientFor((request) async {
       expect(request.url.path, equals('/submit'));

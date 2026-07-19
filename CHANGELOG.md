@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Relayer v2 breadth** — new `RelayerClient` methods: `getRelayPayload()` (address + nonce), `submitTransaction()`, `getTransaction()`, `getRecentTransactions()`, `getApiKeys()`, `deployDepositWallet()` (deposit-wallet `WALLET-CREATE`), and `waitForTransaction()` polling helper
 - **Relayer models** — `RelayerPayload`, `RelayerSubmitRequest`, `RelayerSignatureParams`, `SubmitTransactionResult`, `RelayerTransaction` (with `isConfirmed` / `isFailed`), `RelayerApiKey`, `RelayerWalletType`
 - **New endpoints/constants** — `combos-rfq-api.polymarket.com`, `relayer-v2.polymarket.com`, and the `combos-rfq-gateway-quoter` WebSocket URL
-- **Tests** — offline mock-client coverage for the combo REST flow, the relayer v2 endpoints, and the quoter gateway (auth, inbound routing, outbound frames)
+- **Tests** — every v0.5.0 public method is covered: offline mock/fake-channel tests for the combo REST flow, relayer v2 endpoints (incl. `waitForTransaction` polling), and the quoter gateway; plus tagged live-API integration tests against real combo markets (`--tags combo`) and the relayer (`--tags relayer`)
 
 ## [0.4.1] - 2026-07-17
 
