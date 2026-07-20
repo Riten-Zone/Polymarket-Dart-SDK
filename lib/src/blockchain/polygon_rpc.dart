@@ -26,10 +26,16 @@ class PolygonRpc {
 
   /// Execute a read-only contract call (`eth_call`).
   ///
-  /// Returns the raw hex result string (e.g. `"0x0000...0001"`).
-  Future<String> ethCall({required String to, required String data}) async {
+  /// [from] optionally sets the caller (`msg.sender`) — required to simulate
+  /// balance/allowance-gated calls (e.g. dry-running a settlement) as a real
+  /// account. Returns the raw hex result string (e.g. `"0x0000...0001"`).
+  Future<String> ethCall({
+    required String to,
+    required String data,
+    String? from,
+  }) async {
     final result = await _rpc('eth_call', [
-      {'to': to, 'data': data},
+      {'to': to, 'data': data, 'from': ?from},
       'latest',
     ]);
     return result as String;
